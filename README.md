@@ -4,7 +4,7 @@ A modern, professional numerology report generator built with React, Vite, and F
 
 ## Features
 
-- 🎯 **Numerology Calculations**: Life Path, Expression, Soul Urge, Personality, Birthday, and Personal Year numbers
+- 🎯 **Numerology Calculations**: Life Path,git pull origin main --allow-unrelated-histories Expression, Soul Urge, Personality, Birthday, and Personal Year numbers
 - 📊 **Lo Shu Grid Analysis**: Visual representation of number distribution
 - 📄 **PDF Generation**: Professional, beautifully formatted PDF reports
 - ✏️ **Editable Reports**: Edit client information and regenerate reports
