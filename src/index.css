@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Exact colors from the reference UI */
+  --primary-brown: #c86f2c;
+  --primary-orange: #d97634;
+  --bg-cream: #f5ede4;
+  --bg-light: #ffffff;
+  --text-dark: #2d4a3e;
+  --text-dark-green: #1a3a2e;
+  --text-gray: #6b7280;
+  --text-light-gray: #9ca3af;
+  --border-light: #e5d5c3;
+  --card-bg: #fefdfb;
+  --success-green: #4caf50;
+  --error-red: #f44336;
+  --accent-gold: #d4a574;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-cream);
+  color: var(--text-dark);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+#root {
+  min-height: 100vh;
+}
