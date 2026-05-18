@@ -1,21 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 :root {
-  /* Exact colors from the reference UI */
-  --primary-brown: #c86f2c;
-  --primary-orange: #d97634;
-  --bg-cream: #f5ede4;
-  --bg-light: #ffffff;
-  --text-dark: #2d4a3e;
+  /* ─── New Warm Peach Theme (matching screenshot) ─── */
+  --gold-primary:    #b5820a;
+  --gold-dark:       #9a6e08;
+  --gold-light:      #d4a93a;
+  --gold-accent:     #c9a227;
+
+  --bg-peach:        #f5e6d3;
+  --bg-peach-dark:   #edd5bc;
+  --bg-gradient:     linear-gradient(145deg, #f7e8d6 0%, #f0d5bc 40%, #ead0b8 100%);
+
+  --card-white:      #fffef9;
+  --card-yellow:     #fef9e7;
+  --card-yellow-2:   #fdf5d8;
+  --card-pink:       #fdeaea;
+  --card-blue:       #eaeefc;
+  --card-blue-2:     #e4ebfb;
+
+  --text-brand:      #1a3a2e;   /* brand name only */
+  --text-heading:    #3d2c1e;   /* main headings */
+  --text-body:       #5a4230;   /* body text */
+  --text-label:      #8c6f58;   /* small labels */
+  --text-muted:      #a88b78;   /* muted/placeholder */
+  --text-gold:       #b5820a;   /* gold numbers & accents */
+
+  --border-warm:     #e8d5bf;
+  --border-gold:     #d4b896;
+
+  --success:         #4caf50;
+  --error:           #e53e3e;
+
+  /* Legacy aliases kept for backward compat */
+  --primary-brown:   #b5820a;
+  --primary-orange:  #c9892c;
+  --bg-cream:        #f5e6d3;
+  --bg-light:        #fffef9;
+  --text-dark:       #3d2c1e;
   --text-dark-green: #1a3a2e;
-  --text-gray: #6b7280;
-  --text-light-gray: #9ca3af;
-  --border-light: #e5d5c3;
-  --card-bg: #fefdfb;
-  --success-green: #4caf50;
-  --error-red: #f44336;
-  --accent-gold: #d4a574;
+  --text-gray:       #8c6f58;
+  --text-light-gray: #a88b78;
+  --border-light:    #e8d5bf;
+  --card-bg:         #fffef9;
+  --accent-gold:     #c9a227;
 }
 
 * {
@@ -25,19 +54,16 @@
 }
 
 body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-cream);
-  color: var(--text-dark);
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  color: var(--text-body);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 #root {

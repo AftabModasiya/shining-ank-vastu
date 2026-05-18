@@ -17,39 +17,54 @@ export const generatePDF = (reportData) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Colors matching Shining Ank Vastu theme - Premium Palette
-  const primaryBrown = [200, 111, 44];
-  const darkGreen = [26, 58, 46];
-  const lightCream = [245, 237, 228];
-  const accentGold = [212, 165, 116];
-  const softBeige = [252, 248, 242];
+  // ── Colors matching Shining Ank Vastu theme — Warm Peach & Gold ──
+  const goldPrimary   = [181, 130, 10];   // #b5820a
+  const goldDark      = [154, 110, 8];    // #9a6e08
+  const goldAccent    = [201, 162, 39];   // #c9a227
+  const warmBrown     = [61, 44, 30];     // #3d2c1e  (footer only)
+  const peachBg       = [247, 232, 214];  // #f7e8d6
+  const peachMid      = [240, 213, 188];  // #f0d5bc
+  const cardWhite     = [255, 254, 249];  // #fffef9
+  const cardYellow    = [254, 249, 231];  // #fef9e7
+  const cardPink      = [253, 234, 234];  // #fdeaea
+  const cardBlue      = [234, 238, 252];  // #eaeefc
+  const textHeading   = [61, 44, 30];     // #3d2c1e
+  const textLabel     = [140, 111, 88];   // #8c6f58
+  const textBrand     = [26, 58, 46];     // kept only for brand name
+  const borderWarm    = [232, 213, 191];  // #e8d5bf
+
+  // Legacy aliases (kept so existing code below still works)
+  const primaryBrown  = goldPrimary;
+  const darkGreen     = warmBrown;       // ← NO more dark green pages
+  const lightCream    = peachBg;
+  const accentGold    = goldAccent;
+  const softBeige     = cardWhite;
 
   // Helper for footer
   const drawFooter = (doc) => {
     const pWidth = doc.internal.pageSize.getWidth();
     const pHeight = doc.internal.pageSize.getHeight();
     
-    // Golden bar at bottom
-    doc.setFillColor(212, 165, 116); // accentGold
-    doc.rect(0, pHeight - 15, pWidth, 15, "F");
+    // Gold footer bar
+    doc.setFillColor(181, 130, 10); // goldPrimary
+    doc.rect(0, pHeight - 14, pWidth, 14, "F");
     
-    // Design element (subtle line)
-    doc.setDrawColor(255, 255, 255, 0.5);
-    doc.setLineWidth(0.2);
-    doc.line(10, pHeight - 7.5, pWidth - 10, pHeight - 7.5);
+    // Subtle separator line
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.15);
+    doc.line(10, pHeight - 8.5, pWidth - 10, pHeight - 8.5);
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
-    doc.text("SHINING ANK VASTU", pWidth / 2, pHeight - 9, { align: "center" });
+    doc.text("SHINING ANK VASTU", pWidth / 2, pHeight - 9, { align: "center", charSpace: 1.5 });
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.text("Empowering Lives Through Cosmic Numbers", pWidth / 2, pHeight - 4, { align: "center" });
     
     // Page number
-    const pageNum = doc.internal.getNumberOfPages();
-    doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`, pWidth - 15, pHeight - 7.5, { align: "right" });
+    doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`, pWidth - 12, pHeight - 6.5, { align: "right" });
   };
 
   // Helper for page border
@@ -74,73 +89,96 @@ export const generatePDF = (reportData) => {
     doc.line(pageWidth - 15, pageHeight - 5, pageWidth - 5, pageHeight - 5);
   };
 
-  // PAGE 1: Luxury Cover Page
-  doc.setFillColor(...darkGreen);
+  // PAGE 1: Warm Peach Cover Page
+  // Gradient-like peach background (two rects blend)
+  doc.setFillColor(...peachBg);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
-  
-  // Decorative pattern (centered circle)
-  doc.setDrawColor(...accentGold);
+  doc.setFillColor(...peachMid);
+  doc.rect(0, pageHeight * 0.55, pageWidth, pageHeight * 0.45, "F");
+
+  // Decorative concentric gold circles
+  doc.setDrawColor(...goldAccent);
+  doc.setLineWidth(0.3);
+  doc.circle(pageWidth / 2, pageHeight / 2, 75);
   doc.setLineWidth(0.1);
-  doc.circle(pageWidth / 2, pageHeight / 2, 80);
-  doc.circle(pageWidth / 2, pageHeight / 2, 82);
+  doc.circle(pageWidth / 2, pageHeight / 2, 85);
 
-  // Logo/Icon - Golden Sun/Star
-  doc.setTextColor(...accentGold);
-  doc.setFontSize(60);
-  doc.text("★", pageWidth / 2, 70, { align: "center" });
-
-  // Title with Premium Typography feel
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(40);
+  // Brand label (small caps)
+  doc.setTextColor(...textBrand);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("SHINING ANK", pageWidth / 2, 100, { align: "center" });
-  doc.text("VASTU", pageWidth / 2, 115, { align: "center" });
+  doc.text("SHINING ANK VASTU", pageWidth / 2, 52, { align: "center", charSpace: 2.5 });
 
-  doc.setDrawColor(...accentGold);
-  doc.setLineWidth(1);
-  doc.line(pageWidth / 2 - 30, 122, pageWidth / 2 + 30, 122);
+  // Decorative gold line
+  doc.setDrawColor(...goldAccent);
+  doc.setLineWidth(0.8);
+  doc.line(pageWidth / 2 - 40, 57, pageWidth / 2 + 40, 57);
 
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...accentGold);
-  doc.text("NUMEROLOGY REPORT", pageWidth / 2, 135, { align: "center" });
+  // Logo Star
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(52);
+  doc.text("★", pageWidth / 2, 100, { align: "center" });
 
-  // Client Details Box
-  doc.setFillColor(...softBeige);
-  doc.roundedRect(25, 160, pageWidth - 50, 45, 5, 5, "F");
-  
-  doc.setTextColor(...darkGreen);
-  doc.setFontSize(14);
+  // Main title — large gold serif feel
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(38);
   doc.setFont("helvetica", "bold");
-  doc.text("PREPARED FOR", pageWidth / 2, 175, { align: "center" });
-  
-  doc.setFontSize(24);
-  doc.setTextColor(...primaryBrown);
-  doc.text(reportData.name.toUpperCase(), pageWidth / 2, 188, { align: "center" });
-  
-  doc.setFontSize(12);
-  doc.setTextColor(...darkGreen);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Birth Date: ${reportData.dob}`, pageWidth / 2, 198, { align: "center" });
+  doc.text("NUMEROLOGY", pageWidth / 2, 128, { align: "center" });
+  doc.text("REPORT", pageWidth / 2, 144, { align: "center" });
 
-  // Footer text on cover
-  doc.setFontSize(10);
-  doc.setTextColor(200, 200, 200);
+  // Thin divider
+  doc.setDrawColor(...goldAccent);
+  doc.setLineWidth(0.5);
+  doc.line(pageWidth / 2 - 25, 150, pageWidth / 2 + 25, 150);
+
+  // Client Details Box — white/cream
+  doc.setFillColor(...cardWhite);
+  doc.setDrawColor(...borderWarm);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(25, 162, pageWidth - 50, 52, 5, 5, "FD");
+  
+  // Gold top accent on box
+  doc.setFillColor(...goldAccent);
+  doc.roundedRect(25, 162, pageWidth - 50, 4, 2, 2, "F");
+
+  doc.setTextColor(...textLabel);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("PREPARED FOR", pageWidth / 2, 178, { align: "center", charSpace: 1.5 });
+  
+  doc.setFontSize(22);
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.text(reportData.name.toUpperCase(), pageWidth / 2, 192, { align: "center" });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(...textLabel);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${reportData.dob}`, pageWidth / 2, 206, { align: "center" });
+
+  // Tagline
+  doc.setFontSize(9);
+  doc.setTextColor(...textLabel);
   doc.text("Discover the power of your destiny through Vedic Numerology", pageWidth / 2, pageHeight - 30, { align: "center" });
 
   // PAGE 2: Core Analysis
   doc.addPage();
   drawBorder(doc);
-  
+
+  // Warm peach page background
+  doc.setFillColor(...peachBg);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  drawBorder(doc);
+
   let yPos = 25;
 
-  // Header
-  doc.setFillColor(...darkGreen);
-  doc.rect(10, yPos, pageWidth - 20, 12, "F");
+  // Section header bar — warm brown/gold
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("CORE NUMBERS ANALYSIS", pageWidth / 2, yPos + 8, { align: "center" });
+  doc.text("CORE NUMBERS ANALYSIS", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
 
   yPos += 25;
 
@@ -258,15 +296,17 @@ export const generatePDF = (reportData) => {
 
   // PAGE 3: Lo Shu Grid & Personality
   doc.addPage();
+  doc.setFillColor(...peachBg);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
   drawBorder(doc);
   yPos = 25;
 
-  doc.setFillColor(...darkGreen);
-  doc.rect(10, yPos, pageWidth - 20, 12, "F");
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("LO SHU GRID & PERSONALITY", pageWidth / 2, yPos + 8, { align: "center" });
+  doc.text("LO SHU GRID & PERSONALITY", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
 
   yPos += 25;
 
@@ -350,14 +390,16 @@ export const generatePDF = (reportData) => {
   const repeatedNums = reportData.repeatedNumbersAnalysis || [];
   if (repeatedNums.length > 0) {
     doc.addPage();
+    doc.setFillColor(...peachBg);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
     drawBorder(doc);
     yPos = 25;
-    doc.setFillColor(...darkGreen);
-    doc.rect(10, yPos, pageWidth - 20, 12, "F");
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text("INFLUENCE OF REPEATED NUMBERS", pageWidth / 2, yPos + 8, { align: "center" });
+    doc.text("INFLUENCE OF REPEATED NUMBERS", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
     yPos += 25;
     repeatedNums.forEach(item => {
       doc.setFillColor(...softBeige);
@@ -399,14 +441,16 @@ export const generatePDF = (reportData) => {
   // Future Predictions (3-Year Forecast)
   if (reportData.futurePredictions) {
     doc.addPage();
+    doc.setFillColor(...peachBg);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
     drawBorder(doc);
     yPos = 25;
-    doc.setFillColor(...darkGreen);
-    doc.rect(10, yPos, pageWidth - 20, 12, "F");
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text("3-YEAR PERSONAL FORECAST", pageWidth / 2, yPos + 8, { align: "center" });
+    doc.text("3-YEAR PERSONAL FORECAST", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
     yPos += 25;
     
     Object.keys(reportData.futurePredictions).forEach(key => {
@@ -432,15 +476,17 @@ export const generatePDF = (reportData) => {
   // Remedies Section
   if (reportData.missingNumbersRemedies?.length > 0) {
     doc.addPage();
+    doc.setFillColor(...peachBg);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
     drawBorder(doc);
     yPos = 25;
 
-    doc.setFillColor(...darkGreen);
-    doc.rect(10, yPos, pageWidth - 20, 12, "F");
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text("DIVINE REMEDIES & SOLUTIONS", pageWidth / 2, yPos + 8, { align: "center" });
+    doc.text("DIVINE REMEDIES & SOLUTIONS", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
 
     yPos += 25;
 
@@ -471,15 +517,17 @@ export const generatePDF = (reportData) => {
   [reportData.customPage1, reportData.customPage2].forEach(customPage => {
     if (customPage?.content) {
       doc.addPage();
+      doc.setFillColor(...peachBg);
+      doc.rect(0, 0, pageWidth, pageHeight, "F");
       drawBorder(doc);
       yPos = 25;
 
-      doc.setFillColor(...darkGreen);
-      doc.rect(10, yPos, pageWidth - 20, 12, "F");
+      doc.setFillColor(...goldPrimary);
+      doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
+      doc.setFontSize(13);
       doc.setFont("helvetica", "bold");
-      doc.text(customPage.title.toUpperCase(), pageWidth / 2, yPos + 8, { align: "center" });
+      doc.text(customPage.title.toUpperCase(), pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
 
       yPos += 25;
       doc.setTextColor(60, 60, 60);
@@ -492,15 +540,17 @@ export const generatePDF = (reportData) => {
 
   // FINAL PAGE: Affirmations
   doc.addPage();
+  doc.setFillColor(...peachBg);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
   drawBorder(doc);
   yPos = 25;
 
-  doc.setFillColor(...darkGreen);
-  doc.rect(10, yPos, pageWidth - 20, 12, "F");
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("DAILY DIVINE AFFIRMATIONS", pageWidth / 2, yPos + 8, { align: "center" });
+  doc.text("DAILY DIVINE AFFIRMATIONS", pageWidth / 2, yPos + 8, { align: "center", charSpace: 1 });
 
   yPos += 30;
   (reportData.affirmations || []).forEach((aff, idx) => {
@@ -521,10 +571,10 @@ export const generatePDF = (reportData) => {
   });
 
   // Final blessing
-  doc.setTextColor(...accentGold);
-  doc.setFontSize(14);
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("MAY THE NUMBERS GUIDE YOU TO SUCCESS", pageWidth / 2, pageHeight - 40, { align: "center" });
+  doc.text("MAY THE NUMBERS GUIDE YOU TO SUCCESS", pageWidth / 2, pageHeight - 40, { align: "center", charSpace: 0.5 });
 
   // Add footer to all pages
   const totalPages = doc.internal.getNumberOfPages();

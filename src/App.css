@@ -1,55 +1,34 @@
-:root {
-  /* Exact colors from the reference UI */
-  --primary-brown: #c86f2c;
-  --primary-orange: #d97634;
-  --bg-cream: #f5ede4;
-  --bg-light: #ffffff;
-  --text-dark: #2d4a3e;
-  --text-dark-green: #1a3a2e;
-  --text-gray: #6b7280;
-  --text-light-gray: #9ca3af;
-  --border-light: #e5d5c3;
-  --card-bg: #fefdfb;
-  --success-green: #4caf50;
-  --error-red: #f44336;
-  --accent-gold: #d4a574;
-}
+/* ────────────────────────────────────────────────────────
+   App-level Utilities — Warm Peach & Gold Theme
+   ──────────────────────────────────────────────────────── */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-cream);
-  color: var(--text-dark);
+  background: var(--bg-gradient);
+  color: var(--text-body);
 }
 
-.App {
-  min-height: 100vh;
-}
+.App { min-height: 100vh; }
 
-/* Utility Classes */
+/* ── Container ─────────────────────────────────────────── */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
+/* ── Buttons ───────────────────────────────────────────── */
 .btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -57,133 +36,103 @@ body {
 }
 
 .btn-primary {
-  background: var(--primary-brown);
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
   color: white;
-  box-shadow: 0 1px 3px rgba(200, 111, 44, 0.2);
+  box-shadow: 0 2px 8px rgba(181, 130, 10, 0.25);
 }
-
 .btn-primary:hover {
-  background: #b5642a;
-  box-shadow: 0 4px 12px rgba(200, 111, 44, 0.3);
+  background: linear-gradient(135deg, var(--gold-dark), #7a5606);
+  box-shadow: 0 6px 16px rgba(181, 130, 10, 0.35);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: var(--primary-orange);
-  color: white;
-  box-shadow: 0 1px 3px rgba(217, 118, 52, 0.2);
+  background: var(--card-white);
+  color: var(--text-heading);
+  border: 1.5px solid var(--border-warm);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
-
 .btn-secondary:hover {
-  background: #c76a2f;
-  box-shadow: 0 4px 12px rgba(217, 118, 52, 0.3);
+  border-color: var(--gold-primary);
+  color: var(--gold-primary);
+  background: rgba(181, 130, 10, 0.04);
   transform: translateY(-1px);
 }
 
 .btn-outline {
-  background: white;
-  border: 1.5px solid var(--border-light);
-  color: var(--text-dark);
+  background: transparent;
+  border: 1.5px solid var(--gold-primary);
+  color: var(--gold-primary);
 }
-
 .btn-outline:hover {
-  border-color: var(--primary-brown);
-  color: var(--primary-brown);
-  background: rgba(200, 111, 44, 0.05);
+  background: rgba(181, 130, 10, 0.07);
+  transform: translateY(-1px);
 }
 
+/* ── Cards ─────────────────────────────────────────────── */
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
+  background: var(--card-white);
+  border: 1px solid var(--border-warm);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(181, 130, 10, 0.08);
   transition: all 0.3s ease;
 }
-
 .card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 28px rgba(181, 130, 10, 0.14);
   transform: translateY(-2px);
 }
 
-/* Form Styles */
-.form-group {
-  margin-bottom: 20px;
-}
+/* ── Form Styles ───────────────────────────────────────── */
+.form-group { margin-bottom: 20px; }
 
 .form-label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: var(--text-dark);
+  color: var(--text-heading);
   font-size: 14px;
 }
 
-.form-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1.5px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 15px;
-  transition: all 0.2s ease;
-  background: white;
-  color: var(--text-dark);
-  font-family: 'Inter', sans-serif;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-brown);
-  box-shadow: 0 0 0 3px rgba(200, 111, 44, 0.1);
-}
-
+.form-input,
 .form-select {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid var(--border-light);
-  border-radius: 8px;
+  border: 1.5px solid var(--border-warm);
+  border-radius: 10px;
   font-size: 15px;
-  background: white;
-  cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-dark);
+  background: var(--card-white);
+  color: var(--text-body);
   font-family: 'Inter', sans-serif;
 }
-
+.form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: var(--primary-brown);
-  box-shadow: 0 0 0 3px rgba(200, 111, 44, 0.1);
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 3px rgba(181, 130, 10, 0.12);
 }
+.form-input::placeholder { color: var(--text-muted); }
+.form-select { cursor: pointer; }
 
-/* Loading Spinner */
+/* ── Spinner ───────────────────────────────────────────── */
 .spinner {
-  border: 3px solid rgba(200, 111, 44, 0.1);
-  border-top: 3px solid var(--primary-brown);
+  border: 3px solid rgba(181, 130, 10, 0.15);
+  border-top: 3px solid var(--gold-primary);
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
   margin: 20px auto;
 }
-
 @keyframes spin {
-  0% { transform: rotate(0deg); }
+  0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive */
+/* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 16px;
-  }
-  
-  .btn {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-  
-  .card {
-    padding: 16px;
-  }
+  .container { padding: 0 16px; }
+  .btn { padding: 10px 20px; font-size: 14px; }
+  .card { padding: 16px; }
 }
