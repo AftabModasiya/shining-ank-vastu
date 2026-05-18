@@ -328,8 +328,14 @@
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-three {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
 }
 
 .form-group {
@@ -387,6 +393,36 @@
   font-size: 14px;
 }
 
+.btn-primary {
+  background: var(--primary-brown);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--primary-purple);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--primary-brown);
+  color: var(--primary-brown);
+}
+
+.btn-logout {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.btn-logout:hover {
+  background: #fef2f2 !important;
+}
+
+.btn-large {
+  padding: 14px 32px;
+  font-size: 18px;
+}
+
 .form-actions {
   margin-top: 16px;
   display: flex;
@@ -399,12 +435,30 @@
 }
 
 .spinner-small {
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
+  border-top-color: white;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
   animation: spin 1s linear infinite;
+}
+
+/* Enhancements */
+.hero {
+  background: linear-gradient(135deg, #1a3a2e 0%, #0d1a15 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(200, 111, 44, 0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 @keyframes spin {
@@ -459,8 +513,9 @@
     padding: 32px 24px;
   }
 
-  .form-row {
+  .form-row, .form-row-three {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .btn-submit {

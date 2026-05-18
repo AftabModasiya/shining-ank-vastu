@@ -201,10 +201,19 @@ function Home() {
                 )}
               </div>
               <button 
-                className="btn btn-primary"
+                className="btn btn-secondary"
                 onClick={() => navigate('/history')}
               >
                 {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
+              </button>
+              <button 
+                className="btn btn-outline btn-logout"
+                onClick={() => {
+                  localStorage.removeItem('isAuthenticated');
+                  window.location.reload();
+                }}
+              >
+                {language === 'en' ? 'Logout' : 'लॉग आउट'}
               </button>
             </div>
           </div>
@@ -311,7 +320,7 @@ function Home() {
             )}
 
             <form onSubmit={handleSubmit} className="client-form">
-              <div className="form-row">
+              <div className="form-row-three">
                 <div className="form-group">
                   <label className="form-label">
                     {t.fullName} <span className="required">{t.required}</span>
@@ -322,38 +331,22 @@ function Home() {
                     value={formData.name}
                     onChange={handleChange}
                     className="form-input"
-                    placeholder={language === 'en' ? 'Enter full name' : 'पूरा नाम दर्ज करें'}
+                    placeholder="Enter full name"
                     required
                   />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">
-                    {t.phone}
+                    {t.dob} <span className="required">{t.required}</span>
                   </label>
                   <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
                     onChange={handleChange}
                     className="form-input"
-                    placeholder="+91 XXXXX XXXXX"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">
-                    {t.email}
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="email@example.com"
+                    required
                   />
                 </div>
 
@@ -375,25 +368,31 @@ function Home() {
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-row-three">
                 <div className="form-group">
-                  <label className="form-label">
-                    {t.dob} <span className="required">{t.required}</span>
-                  </label>
+                  <label className="form-label">{t.phone}</label>
                   <input
-                    type="date"
-                    name="dob"
-                    value={formData.dob}
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
                     onChange={handleChange}
                     className="form-input"
-                    required
+                    placeholder="+91 XXXXX XXXXX"
                   />
                 </div>
-
                 <div className="form-group">
-                  <label className="form-label">
-                    {t.birthTime}
-                  </label>
+                  <label className="form-label">{t.email}</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">{t.birthTime}</label>
                   <input
                     type="time"
                     name="birthTime"
@@ -404,35 +403,18 @@ function Home() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
-                  {t.birthPlace}
-                </label>
-                <input
-                  type="text"
-                  name="birthPlace"
-                  value={formData.birthPlace}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder={language === 'en' ? 'City name' : 'शहर का नाम'}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  {t.address}
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder={language === 'en' ? 'Street address' : 'सड़क का पता'}
-                />
-              </div>
-
-              <div className="form-row">
+              <div className="form-row-three">
+                <div className="form-group">
+                  <label className="form-label">{t.birthPlace}</label>
+                  <input
+                    type="text"
+                    name="birthPlace"
+                    value={formData.birthPlace}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="City name"
+                  />
+                </div>
                 <div className="form-group">
                   <label className="form-label">{t.city}</label>
                   <input
@@ -441,22 +423,9 @@ function Home() {
                     value={formData.city}
                     onChange={handleChange}
                     className="form-input"
-                    placeholder={language === 'en' ? 'City' : 'शहर'}
+                    placeholder="City"
                   />
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">{t.state}</label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder={language === 'en' ? 'State' : 'राज्य'}
-                  />
-                </div>
-
                 <div className="form-group">
                   <label className="form-label">{t.pincode}</label>
                   <input
@@ -470,18 +439,29 @@ function Home() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
-                  {t.spouseName}
-                </label>
-                <input
-                  type="text"
-                  name="spouseName"
-                  value={formData.spouseName}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder={language === 'en' ? 'Optional' : 'वैकल्पिक'}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">{t.address}</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="Street address"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">{t.spouseName}</label>
+                  <input
+                    type="text"
+                    name="spouseName"
+                    value={formData.spouseName}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="Optional"
+                  />
+                </div>
               </div>
 
               <div className="form-actions">

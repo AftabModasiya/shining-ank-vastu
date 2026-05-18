@@ -1,4 +1,4 @@
-const LETTER_MAP = {
+export const LETTER_MAP = {
   A: 1,
   B: 2,
   C: 3,
@@ -25,6 +25,58 @@ const LETTER_MAP = {
   X: 6,
   Y: 7,
   Z: 8,
+};
+
+// Helper function to calculate Lo Shu Grid from DOB
+export const calculateLoShuGrid = (dob) => {
+  if (!dob) return Array(9).fill(0);
+  const digits = dob.replace(/-/g, "").split("").map(Number);
+  const grid = Array(9).fill(0);
+
+  digits.forEach((digit) => {
+    if (digit > 0 && digit <= 9) {
+      grid[digit - 1]++;
+    }
+  });
+
+  return grid;
+};
+
+// Helper function to get missing numbers
+export const getMissingNumbers = (grid) => {
+  const missing = [];
+  for (let i = 0; i < 9; i++) {
+    if (grid[i] === 0) {
+      missing.push(i + 1);
+    }
+  }
+  return missing;
+};
+
+// Helper function to get present numbers
+export const getPresentNumbers = (grid) => {
+  const present = [];
+  for (let i = 0; i < 9; i++) {
+    if (grid[i] > 0) {
+      present.push({ num: i + 1, count: grid[i] });
+    }
+  }
+  return present;
+};
+
+// Calculate Kua number
+export const calculateKua = (dob, gender) => {
+  if (!dob) return 0;
+  const year = parseInt(dob.split("-")[0]);
+  const lastTwoDigits = year % 100;
+  const sum = Math.floor(lastTwoDigits / 10) + (lastTwoDigits % 10);
+  const reduced = sum > 9 ? Math.floor(sum / 10) + (sum % 10) : sum;
+
+  if (gender === "female") {
+    return reduced + 5 > 9 ? reduced + 5 - 9 : reduced + 5;
+  } else {
+    return 10 - reduced;
+  }
 };
 
 const VOWELS = ["A", "E", "I", "O", "U"];
@@ -267,6 +319,12 @@ export const generateReport = (name, dob, gender) => {
   const birthday = calcBirthday(dob);
   const personalYear = calcPersonalYear(dob);
 
+  const lifePathTraits = getTraits(lifePath);
+  const expressionTraits = getTraits(expression);
+  
+  const loShuGrid = calculateLoShuGrid(dob);
+  const presentNumbers = getPresentNumbers(loShuGrid);
+
   return {
     name,
     dob,
@@ -277,10 +335,94 @@ export const generateReport = (name, dob, gender) => {
     personality,
     birthday,
     personalYear,
-    lifePathTraits: getTraits(lifePath),
-    expressionTraits: getTraits(expression),
-    soulUrgeTraits: getTraits(soulUrge),
-    personalityTraits: getTraits(personality),
+    lifePathTraits: {
+      ...lifePathTraits,
+      keyTraits: [
+        "Leadership qualities, can easily dominate people",
+        "Problem solvers who tackle every situation easily",
+        "Very positive, strong, determined, good initiators",
+        "Ability to change dreams into reality",
+        "Occupy higher positions in society",
+      ],
+    },
+    expressionTraits: {
+      ...expressionTraits,
+      keyTraits: [
+        "Most feminine number, signifies human soul",
+        "Extremely sensitive and emotional",
+        "Imaginative, intuitive, deep thinkers",
+        "Ability to think out of the box",
+        "Good presenters and ability to convince",
+      ],
+    },
+    dateInfluencer: {
+      title: `Date Influencer - Born on ${parseInt(dob.split("-")[2])}`,
+      desc: `People born on ${parseInt(dob.split("-")[2])}, ${parseInt(dob.split("-")[2]) + 9}, ${parseInt(dob.split("-")[2]) + 18}, ${parseInt(dob.split("-")[2]) + 27} (any month)`,
+      content: "These people give importance to other's point of view as well but have a rational mind. Due to the presence of 2, Moon, they will have a pleasing personality.",
+    },
+    personalityAnalysis: {
+      title: `Life Path ${lifePath} + Destiny ${expression}`,
+      content: "You will fulfil all that you take up in life provided you have good name number. You will work far more efficiently for others than if you work independently. In case you work independently, you will remain confused between the choices to make. You are physically strong but mentally emotional or sensitive. You will get a lot of attention from the opposite sex.",
+    },
+    luckyElements: {
+      luckyDates: "1, 10, 19, 28",
+      unluckyDates: "8, 17, 26",
+      luckyColor: "Orange",
+      unluckyColor: "Black & Brown",
+      luckyDirection: "East",
+      element: "Fire",
+    },
+    repeatedNumbersAnalysis: presentNumbers.filter(n => n.count > 1).map(n => ({
+      num: n.num,
+      count: n.count,
+      influence: n.num === 1 ? "Strong willpower and determination. Can be authoritative." : 
+                 n.num === 2 ? "High sensitivity and intuition. Deeply emotional." : 
+                 "Enhanced qualities of the core number."
+    })),
+    suitableProfessions: [
+      "Leadership roles",
+      "Creative arts",
+      "Social services",
+      "Consulting"
+    ],
+    missingNumbersRemedies: [
+      {
+        num: 4,
+        planet: "Rahu",
+        effects: "Avoids physical work, needs constant motivation, highly unorganized, not hardworking, believes in shortcuts, misses opportunities",
+        crystal: "Rudraksh and Crystal Bracelet",
+        benefits: ["Brings stability and structure to life", "Helps overcome sudden obstacles and challenges", "Improves focus and organizational skills"]
+      },
+      {
+        num: 5,
+        planet: "Mercury",
+        effects: "Most confused personality, frequent changes, afraid of new things, less adventurous, highly insecure, difficulty adapting",
+        crystal: "Green Aventurine Bracelet",
+        benefits: ["Attracts luck, abundance, and prosperity", "Enhances communication and business skills", "Promotes emotional healing"]
+      }
+    ],
+    futurePredictions: {
+      year1: {
+        year: new Date().getFullYear(),
+        title: "THE YEAR OF HARD WORK, DISCIPLINE AND BUILDING FOUNDATIONS",
+        desc: "A serious year requiring hard work and discipline. Focus on building solid foundations in all areas of life. Health needs attention."
+      },
+      year2: {
+        year: new Date().getFullYear() + 1,
+        title: "THE YEAR OF CHANGE, FREEDOM AND NEW EXPERIENCES",
+        desc: "A dynamic year of change, travel, and new experiences. The unexpected happens. Embrace freedom and variety."
+      }
+    },
     affirmations: getAffirmations(lifePath),
+    customPage1: {
+      title: "Additional Notes",
+      content: "",
+    },
+    customPage2: {
+      title: "Special Recommendations",
+      content: "",
+    },
   };
 };
+
+

@@ -90,6 +90,22 @@
   font-size: 16px;
 }
 
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-logout-small {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+.btn-logout-small:hover {
+  background: #fef2f2 !important;
+}
+
 /* Sections */
 .report-section {
   background: white;
@@ -262,6 +278,19 @@
   color: var(--primary-purple);
 }
 
+.cell-count {
+  font-size: 10px;
+  color: #ff5722;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.grid-cell {
+  position: relative;
+}
+
+
 .grid-interpretation h4 {
   color: var(--text-dark-green);
   font-size: 18px;
@@ -384,22 +413,164 @@
   background: white;
 }
 
-.edit-name {
-  font-size: 24px;
-  font-weight: 700;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.edit-date {
-  display: inline-block;
+.edit-input-inline {
   width: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--primary-brown);
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-.edit-form {
-  display: flex;
-  flex-direction: column;
+.edit-input-small {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--primary-brown);
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.edit-input-bold {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--primary-brown);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.edit-input-inline-title {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--primary-brown);
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  width: 50%;
+}
+
+.edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 2px solid var(--primary-brown);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  margin: 12px 0;
+}
+
+.custom-page-textarea {
+  min-height: 200px;
+}
+
+/* Remedies Section */
+.remedies-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.remedy-card {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.remedy-header h4 {
+  color: #c53030;
+  margin-bottom: 12px;
+}
+
+.crystal-text {
+  color: var(--primary-brown);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.benefits-list {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.benefits-list ul {
+  padding-left: 20px;
+  margin-top: 5px;
+}
+
+/* Repeated Grid */
+.repeated-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
+}
+
+.repeated-card {
+  background: var(--light-cream);
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 4px solid var(--primary-brown);
+}
+
+.repeated-card h4 {
+  color: var(--primary-brown);
+  margin-bottom: 8px;
+}
+
+/* Professions */
+.professions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.profession-item {
+  background: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  color: var(--text-dark-green);
+  font-weight: 500;
+}
+
+/* Forecast */
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.forecast-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--primary-brown);
+}
+
+.forecast-card h4 {
+  color: var(--primary-brown);
+  margin-bottom: 10px;
+}
+
+.forecast-card h5 {
+  color: var(--text-dark-green);
+  margin-bottom: 8px;
+}
+
+
+.trait-item {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.custom-page-content {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  color: var(--text-dark);
 }
 
 /* Footer */
