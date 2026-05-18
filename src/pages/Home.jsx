@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Grid3x3, Compass, FileDown, ChevronDown } from 'lucide-react';
+import { FileText, Grid3x3, Compass, FileDown, ChevronDown, Menu, X } from 'lucide-react';
 import { generateReport } from '../utils/numerology';
 import { saveClient } from '../services/clientService';
 import './Home.css';
@@ -81,6 +81,7 @@ function Home() {
   const navigate = useNavigate();
   const [language, setLanguage] = useState('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     dob: '',
@@ -170,6 +171,8 @@ function Home() {
               </div>
               <span className="logo-text">{t.title}</span>
             </div>
+
+            {/* Desktop Navigation */}
             <div className="header-actions">
               <div className="language-selector">
                 <button 
@@ -216,9 +219,85 @@ function Home() {
                 {language === 'en' ? 'Logout' : 'लॉग आउट'}
               </button>
             </div>
+
+            {/* Mobile Hamburger Button */}
+            <button className="btn-menu" onClick={() => setShowSidebar(true)}>
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Sidebar Drawer Overlay */}
+      {showSidebar && (
+        <div className="sidebar-backdrop" onClick={() => setShowSidebar(false)}>
+          <div className="sidebar-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="sidebar-header">
+              <div className="logo">
+                <div className="logo-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="logo-text">{t.title}</span>
+              </div>
+              <button className="btn-close" onClick={() => setShowSidebar(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="sidebar-content">
+              {/* Language Selector Section */}
+              <div className="sidebar-section">
+                <span className="sidebar-section-label">
+                  {language === 'en' ? 'Select Language' : 'भाषा चुनें'}
+                </span>
+                <div className="sidebar-lang-selector">
+                  <button 
+                    className={`sidebar-lang-btn ${language === 'en' ? 'active' : ''}`}
+                    onClick={() => toggleLanguage('en')}
+                  >
+                    English
+                  </button>
+                  <button 
+                    className={`sidebar-lang-btn ${language === 'hi' ? 'active' : ''}`}
+                    onClick={() => toggleLanguage('hi')}
+                  >
+                    हिंदी (Hindi)
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons Section */}
+              <div className="sidebar-actions-group">
+                <button 
+                  className="sidebar-action-btn"
+                  onClick={() => {
+                    setShowSidebar(false);
+                    navigate('/history');
+                  }}
+                >
+                  {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
+                </button>
+                
+                <button 
+                  className="sidebar-action-btn logout"
+                  onClick={() => {
+                    setShowSidebar(false);
+                    localStorage.removeItem('isAuthenticated');
+                    window.location.reload();
+                  }}
+                >
+                  {language === 'en' ? 'Logout' : 'लॉग आउट'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Hero Section */}
       <section className="hero">
