@@ -1,4 +1,4 @@
 export const AUTH_CREDENTIALS = {
   username: "admin",
-  password: "Shiningank#2021"
+  password: "Shiningank@2021"
 };
