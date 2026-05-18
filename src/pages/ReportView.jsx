@@ -147,7 +147,7 @@ function ReportView() {
                   </button>
                   <button
                     className="btn btn-outline btn-logout-small"
-                    onClick={() => { localStorage.removeItem('isAuthenticated'); window.location.href = '/login'; }}
+                    onClick={() => { localStorage.removeItem('isAuthenticated'); navigate('/login'); }}
                   >
                     Logout
                   </button>
@@ -162,7 +162,7 @@ function ReportView() {
                   </button>
                   <button
                     className="btn btn-outline btn-logout-small"
-                    onClick={() => { localStorage.removeItem('isAuthenticated'); window.location.href = '/login'; }}
+                    onClick={() => { localStorage.removeItem('isAuthenticated'); navigate('/login'); }}
                   >
                     Logout
                   </button>
