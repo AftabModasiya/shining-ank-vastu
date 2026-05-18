@@ -47,9 +47,14 @@ function ReportView() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    const pdf = generatePDF(clientData.report);
-    pdf.save(`${clientData.name}_Numerology_Report.pdf`);
+  const handleDownloadPDF = async () => {
+    try {
+      const pdf = await generatePDF(clientData);
+      pdf.save(`${clientData.name}_Numerology_Report.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+      alert("An error occurred during PDF generation.");
+    }
   };
 
   const handleInputChange = (e) => {
