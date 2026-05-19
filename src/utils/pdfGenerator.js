@@ -130,8 +130,8 @@ export const generatePDF = async (clientData) => {
 
     // Light shed watermark: Shining Ank Vastu (using elegant visible gold/ivory tint)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(42);
-    doc.setTextColor(232, 224, 212); // Soft visible gold/ivory color (does not block text!)
+    doc.setFontSize(46);
+    doc.setTextColor(205, 195, 178); // More visible soft gold/ivory color
     doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2, {
       align: "center",
       angle: 45
