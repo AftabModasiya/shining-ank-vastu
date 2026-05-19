@@ -149,20 +149,20 @@ export const generatePDF = async (clientData) => {
     const pWidth = doc.internal.pageSize.getWidth();
     const pHeight = doc.internal.pageSize.getHeight();
 
+    // Draw horizontal line
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.25);
+    doc.line(10, pHeight - 18, pWidth - 10, pHeight - 18);
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(26, 58, 46); // Shining Ank Vastu brand dark green/teal
-    doc.text("Shining Ank Vastu", pWidth / 2, pHeight - 18, { align: "center" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...textDark);
-    doc.text(`M: 99139 61553`, pWidth / 2, pHeight - 14, { align: "center" });
+    doc.text("Shining Ank Vastu - M : 9913961553", pWidth / 2, pHeight - 13, { align: "center" });
 
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7.5);
     doc.setTextColor(...textMuted);
-    doc.text("Align Your Numbers, Transform Your Life", pWidth / 2, pHeight - 10, { align: "center" });
+    doc.text("Align Your Numbers, Transform Your Life", pWidth / 2, pHeight - 9, { align: "center" });
   };
 
   // ════════════════════════════════════════════════════════════════════════
