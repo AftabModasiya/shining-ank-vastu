@@ -217,6 +217,18 @@
   z-index: 1;
 }
 
+/* Calculation breakdown string (e.g. "1+7 = 8") */
+.core-num-breakdown {
+  font-size: 11px;
+  font-style: italic;
+  color: #a88b78;
+  display: block;
+  position: relative;
+  z-index: 1;
+  margin-top: -2px;
+  letter-spacing: 0.04em;
+}
+
 /* Compound label beside the number */
 .core-num-value-row {
   display: flex;

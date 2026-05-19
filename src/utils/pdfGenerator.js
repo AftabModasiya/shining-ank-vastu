@@ -4,7 +4,9 @@ import {
   calculateLoShuGrid, 
   getMissingNumbers, 
   getPresentNumbers, 
-  calculateKua 
+  calculateKua,
+  calcMulank,
+  calcBhagyank
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -33,6 +35,40 @@ export const generatePDF = async (clientData) => {
   const rawDob = clientData.dob || "";
   const phone = clientData.phone || "99139 61553";
   const gender = clientData.gender || "male";
+
+  // ── Dynamic core number calculations ──────────────────────────────────
+  // Mulank  : sum of DAY digits only        e.g. 17 → 1+7 = 8
+  // Bhagyank: sum of ALL DOB digits         e.g. 17-04-1972 → 31 → 4
+  // Kua     : year digit sum → 11-sum (male) / 4+sum (female), reduced
+  const mulank   = calcMulank(rawDob);
+  const bhagyank = calcBhagyank(rawDob);
+  const kuaNum   = calculateKua(rawDob, gender);
+
+  // Helper: build the display breakdown string for Mulank
+  const mulankBreakdown = (() => {
+    if (!rawDob) return "";
+    const day = rawDob.split("-")[2] || "";
+    return day.split("").join("+") + " = " + mulank;
+  })();
+
+  // Helper: build the display breakdown string for Bhagyank
+  const bhagyankBreakdown = (() => {
+    if (!rawDob) return "";
+    const digits = rawDob.replace(/-/g, "").split("");
+    return digits.join("+") + " = " + bhagyank;
+  })();
+
+  // Helper: build the display breakdown string for Kua
+  const kuaBreakdown = (() => {
+    if (!rawDob) return "";
+    const yearStr = rawDob.split("-")[0] || "";
+    const yearSum = yearStr.split("").reduce((a, d) => a + parseInt(d), 0);
+    if (gender === "female") {
+      return `4 + ${yearSum} = ${kuaNum}`;
+    } else {
+      return `11 - ${yearSum} = ${kuaNum}`;
+    }
+  })();
 
   // Format date of birth to DD-MM-YYYY dynamically
   let formattedDob = rawDob;
@@ -319,7 +355,11 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("3. MULANK – BHAGYANK ALIGNMENT & ITS MEANING", pageWidth / 2, 27, { align: "center" });
 
-  // Mulank Box (Left Column)
+  // ── Dynamic traits based on calculated mulank / bhagyank ──────────────
+  const mulankTraits = reportData.lifePathTraits || {};
+  const bhagyankTraits = reportData.expressionTraits || {};
+
+  // Mulank Box (Left Column) — date digits only
   doc.setFillColor(254, 249, 231); // Pastel yellow card
   doc.roundedRect(15, 38, 85, 68, 3, 3, "F");
   doc.setDrawColor(...goldPrimary);
@@ -330,57 +370,65 @@ export const generatePDF = async (clientData) => {
   doc.circle(57.5, 52, 11, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
-  doc.text(String(reportData.lifePath), 57.5, 55, { align: "center" });
+  doc.text(String(mulank), 57.5, 55, { align: "center" });
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Mulank", 57.5, 70, { align: "center" });
+  doc.text("Mulank", 57.5, 68, { align: "center" });
   doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
-  doc.text("(Mental & Inherent Traits)", 57.5, 74, { align: "center" });
-
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...goldPrimary);
-  doc.text(`Planet: ${reportData.lifePathTraits?.planet || "Sun"}`, 20, 83);
+  doc.text(`Planet: ${mulankTraits.planet || "Sun"}`, 20, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...textDark);
-  const mulLines = doc.splitTextToSize(reportData.lifePathTraits?.desc || "Represents leadership qualities, innovation, independent thought process, and primary life focus.", 76);
-  doc.text(mulLines, 20, 89);
+  const mulLines = doc.splitTextToSize(mulankTraits.desc || "Represents leadership qualities, innovation, independent thought process, and primary life focus.", 76);
+  doc.text(mulLines, 20, 84);
 
-  // Bhagyank Box (Right Column)
+  // Bhagyank Box (Right Column) — all DOB digits
   doc.setFillColor(254, 249, 231);
   doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
   doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "D");
 
   doc.setFillColor(...goldPrimary);
   doc.circle(pageWidth - 57.5, 52, 11, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
-  doc.text(String(reportData.expression), pageWidth - 57.5, 55, { align: "center" });
+  doc.text(String(bhagyank), pageWidth - 57.5, 55, { align: "center" });
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Bhagyank", pageWidth - 57.5, 70, { align: "center" });
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
-  doc.text("(Destiny & Life Goal Paths)", pageWidth - 57.5, 74, { align: "center" });
-
+  doc.text("Bhagyank", pageWidth - 57.5, 68, { align: "center" });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...goldPrimary);
-  doc.text(`Planet: ${reportData.expressionTraits?.planet || "Moon"}`, pageWidth - 95, 83);
+  doc.text(`Planet: ${bhagyankTraits.planet || "Moon"}`, pageWidth - 95, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...textDark);
-  const bhagLines = doc.splitTextToSize(reportData.expressionTraits?.desc || "Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", 76);
-  doc.text(bhagLines, pageWidth - 95, 89);
+  const bhagLines = doc.splitTextToSize(bhagyankTraits.desc || "Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", 76);
+  doc.text(bhagLines, pageWidth - 95, 84);
+
+  // ── Kua Number box (below the two main boxes, centered) ──────────────
+  const kuaBoxY = 112;
+  doc.setFillColor(234, 245, 255); // soft blue for kua
+  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "D");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(`KUA NUMBER: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
 
   // Section 4: Hidden Influences of Yogas
-  const yogY = 114;
+  const yogY = 136;
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, yogY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);

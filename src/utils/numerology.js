@@ -64,18 +64,45 @@ export const getPresentNumbers = (grid) => {
   return present;
 };
 
+// Helper: reduce a number to single digit by summing its digits
+const reduceToSingle = (num) => {
+  while (num > 9) {
+    num = String(num).split("").reduce((a, d) => a + parseInt(d), 0);
+  }
+  return num;
+};
+
+// Mulank: sum of date digits only (e.g. 17 → 1+7 = 8)
+export const calcMulank = (dob) => {
+  if (!dob) return 0;
+  // dob format: YYYY-MM-DD
+  const day = dob.split("-")[2] || "";
+  const digitSum = day.split("").reduce((a, d) => a + parseInt(d), 0);
+  return reduceToSingle(digitSum);
+};
+
+// Bhagyank: sum of ALL digits in the full DOB (e.g. 17-04-1972 → 1+7+0+4+1+9+7+2 = 31 → 4)
+export const calcBhagyank = (dob) => {
+  if (!dob) return 0;
+  const digits = dob.replace(/-/g, "").split("").map(Number);
+  const total = digits.reduce((a, d) => a + d, 0);
+  return reduceToSingle(total);
+};
+
 // Calculate Kua number
+// Kua year sum = sum of ALL 4 year digits (e.g. 1972 → 1+9+7+2 = 19 → 1+0 = 1)
+// Man:   kua = 11 - yearSum  (reduce if > 9)
+// Woman: kua = 4  + yearSum  (reduce if > 9)
 export const calculateKua = (dob, gender) => {
   if (!dob) return 0;
-  const year = parseInt(dob.split("-")[0]);
-  const lastTwoDigits = year % 100;
-  const sum = Math.floor(lastTwoDigits / 10) + (lastTwoDigits % 10);
-  const reduced = sum > 9 ? Math.floor(sum / 10) + (sum % 10) : sum;
+  const yearStr = dob.split("-")[0] || "";
+  const yearDigitSum = yearStr.split("").reduce((a, d) => a + parseInt(d), 0);
+  const reduced = reduceToSingle(yearDigitSum);
 
   if (gender === "female") {
-    return reduced + 5 > 9 ? reduced + 5 - 9 : reduced + 5;
+    return reduceToSingle(4 + reduced);
   } else {
-    return 10 - reduced;
+    return reduceToSingle(11 - reduced);
   }
 };
 
@@ -312,12 +339,14 @@ const AFFIRMATIONS = {
 export const getAffirmations = (num) => AFFIRMATIONS[num] || AFFIRMATIONS[1];
 
 export const generateReport = (name, dob, gender) => {
-  const lifePath = calcLifePath(dob);
+  const lifePath = calcLifePath(dob);        // full DOB digit sum (same as Bhagyank)
   const expression = calcExpression(name);
   const soulUrge = calcSoulUrge(name);
   const personality = calcPersonality(name);
   const birthday = calcBirthday(dob);
   const personalYear = calcPersonalYear(dob);
+  const mulank = calcMulank(dob);            // date digits only
+  const bhagyank = calcBhagyank(dob);        // all DOB digits
 
   const lifePathTraits = getTraits(lifePath);
   const expressionTraits = getTraits(expression);
@@ -329,6 +358,8 @@ export const generateReport = (name, dob, gender) => {
     name,
     dob,
     gender,
+    mulank,
+    bhagyank,
     lifePath,
     expression,
     soulUrge,

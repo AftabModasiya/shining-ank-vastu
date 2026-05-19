@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank } from '../utils/numerology';
 import './ReportView.css';
 
 
@@ -126,6 +126,24 @@ function ReportView() {
   const report = isEditing ? editedData.report : clientData.report;
   const displayData = isEditing ? editedData : clientData;
 
+  // ── Dynamic core calculations (always from raw DOB + gender) ────────
+  const mulank = calcMulank(displayData.dob);
+  const bhagyank = calcBhagyank(displayData.dob);
+  const kuaNum = calculateKua(displayData.dob, displayData.gender);
+
+  // Breakdown strings for display
+  const mulankBreakdown = displayData.dob
+    ? (displayData.dob.split('-')[2] || '').split('').join('+') + ' = ' + mulank
+    : '';
+  const bhagyankBreakdown = displayData.dob
+    ? displayData.dob.replace(/-/g, '').split('').join('+') + ' = ' + bhagyank
+    : '';
+  const yearStr = displayData.dob ? displayData.dob.split('-')[0] : '';
+  const yearSum = yearStr.split('').reduce((a, d) => a + parseInt(d), 0);
+  const kuaBreakdown = displayData.gender === 'female'
+    ? `4 + ${yearSum} = ${kuaNum}`
+    : `11 - ${yearSum} = ${kuaNum}`;
+
   return (
     <div className="report-page">
       {/* ── Header ───────────────────────────────────────── */}
@@ -213,12 +231,13 @@ function ReportView() {
 
           {/* ── 3. CORE NUMBER CARDS (2-col grid) ─────────── */}
           <div className="core-numbers-grid">
-            {/* Driver / Mulank */}
+            {/* Driver / Mulank — date digits only */}
             <div className="core-num-card core-yellow">
               <div className="title-deco-ring crd-ring-1"></div>
               <div className="title-deco-ring crd-ring-2"></div>
-              <span className="core-num-label">DRIVER / MULANK</span>
-              <span className="core-num-value">{report.lifePath}</span>
+              <span className="core-num-label">MULANK</span>
+              <span className="core-num-value">{mulank}</span>
+
               {isEditing && (
                 <div className="core-edit-block">
                   <input type="text" name="report.lifePathTraits.planet" value={report.lifePathTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
@@ -227,12 +246,13 @@ function ReportView() {
               )}
             </div>
 
-            {/* Conductor / Bhagyank */}
+            {/* Conductor / Bhagyank — full DOB digit sum */}
             <div className="core-num-card core-yellow">
               <div className="title-deco-ring crd-ring-1"></div>
               <div className="title-deco-ring crd-ring-2"></div>
-              <span className="core-num-label">CONDUCTOR / BHAGYANK</span>
-              <span className="core-num-value">{report.expression}</span>
+              <span className="core-num-label">BHAGYANK</span>
+              <span className="core-num-value">{bhagyank}</span>
+
               {isEditing && (
                 <div className="core-edit-block">
                   <input type="text" name="report.expressionTraits.planet" value={report.expressionTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
@@ -241,12 +261,13 @@ function ReportView() {
               )}
             </div>
 
-            {/* Kua Number */}
+            {/* Kua Number — gender-based formula */}
             <div className="core-num-card core-pink">
               <div className="title-deco-ring crd-ring-1"></div>
               <div className="title-deco-ring crd-ring-2"></div>
               <span className="core-num-label">KUA NUMBER</span>
-              <span className="core-num-value">{calculateKua(displayData.dob, displayData.gender)}</span>
+              <span className="core-num-value">{kuaNum}</span>
+
             </div>
 
             {/* Name Number */}
