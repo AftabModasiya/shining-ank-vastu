@@ -660,7 +660,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("5 - YEAR FUTURE PREDICTIONS (FORECAST)", 14, 97);
+  doc.text("YEAR FUTURE PREDICTIONS (FORECAST)", 14, 97);
 
   let yrY = 106;
   const startYear = today.getFullYear();
