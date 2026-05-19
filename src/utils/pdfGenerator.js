@@ -551,7 +551,7 @@ export const generatePDF = async (clientData) => {
       const effectsText = doc.splitTextToSize(`Effects: ${remInfo.effects || "Flipped planes, minor work delays."}`, pageWidth - 42);
       doc.text(effectsText, 20, remY + 11);
 
-      doc.setTextColor(0, 150, 100);
+      doc.setTextColor(0, 128, 0);
       doc.setFont("helvetica", "bold");
       doc.text(`Remedy Bracelet: ${remInfo.crystal || "Vedic Crystal"}`, 20, remY + 20);
 
@@ -863,7 +863,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`NOTES/SUGGESTIONS`, 14, 27);
+    doc.text(`NOTES / SUGGESTIONS`, 14, 27);
     
     // Beautiful clean white area for handmade notes
     doc.setFillColor(255, 254, 249);
