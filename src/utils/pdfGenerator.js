@@ -146,7 +146,7 @@ export const generatePDF = async (clientData) => {
     // Draw horizontal line
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.25);
-    doc.line(10, pHeight - 18, pWidth - 10, pHeight - 18);
+    doc.line(6, pHeight - 18, pWidth - 6, pHeight - 18);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
@@ -166,8 +166,8 @@ export const generatePDF = async (clientData) => {
 
   // 1. Lord Ganesha Image (Top Center)
   if (ganeshaImg) {
-    // 32mm wide, 40mm high, perfectly centered
-    doc.addImage(ganeshaImg, "PNG", (pageWidth - 32) / 2, 12, 32, 40);
+    // 35mm wide, 35mm high, perfectly centered square
+    doc.addImage(ganeshaImg, "PNG", (pageWidth - 35) / 2, 12, 35, 35);
   }
 
   // Brand Name above the wheel image
@@ -793,7 +793,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("YANTRA-BASED REMEDIES", 14, 27);
+  doc.text("REMEDIES", 14, 27);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "F");
@@ -874,20 +874,20 @@ export const generatePDF = async (clientData) => {
 
   // Add LastPage png asset
   if (lastPageGraphic) {
-    doc.addImage(lastPageGraphic, "PNG", (pageWidth - 95) / 2, 16, 95, 60);
+    doc.addImage(lastPageGraphic, "PNG", (pageWidth - 95) / 2, 35, 95, 60);
   }
 
   // "Thank You," text in dynamic green font
   doc.setTextColor(...greenText);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  doc.text("Thank You,", pageWidth / 2, 105, { align: "center" });
+  doc.text("Thank You,", pageWidth / 2, 115, { align: "center" });
 
   // Disclaimer Title
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text("DISCLAIMER", pageWidth / 2, 145, { align: "center" });
+  doc.text("DISCLAIMER", pageWidth / 2, 155, { align: "center" });
 
   // Disclaimer Body text
   doc.setFont("helvetica", "italic");
@@ -895,7 +895,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   const disclaimerText = "This report is for informational and entertainment purposes only. The findings provided are based on traditional numerological methods and should not be considered professional advice in any field, such as financial, medical, legal, or psychological. Results can be different, and any choices you make from this report are your own responsibility. Use this as a tool for self-reflection, and consult qualified professionals for significant life decisions.";
   const discLines = doc.splitTextToSize(disclaimerText, pageWidth - 36);
-  doc.text(discLines, pageWidth / 2, 153, { align: "center" });
+  doc.text(discLines, pageWidth / 2, 163, { align: "center" });
 
   // Add all footers sequentially
   const totalPages = doc.internal.getNumberOfPages();
