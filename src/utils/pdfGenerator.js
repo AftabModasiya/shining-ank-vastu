@@ -176,6 +176,12 @@ export const generatePDF = async (clientData) => {
     doc.addImage(ganeshaImg, "PNG", (pageWidth - 32) / 2, 12, 32, 40);
   }
 
+  // Brand Name above the wheel image
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Shining Ank Vastu", 54.5, 54, { align: "center" });
+
   // Circular Wheel Graphic on Left column
   if (wheelImg) {
     doc.addImage(wheelImg, "PNG", 12, 60, 85, 85);
@@ -188,7 +194,7 @@ export const generatePDF = async (clientData) => {
 
   // Right column dynamic metadata
   let textX = 110;
-  doc.setTextColor(0, 150, 100); // Dynamic green
+  doc.setTextColor(0, 128, 0); // Proper green
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("REPORT PREPARED FOR:", textX, 72);
@@ -205,19 +211,13 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFontSize(12);
   doc.text("Prepared by:", textX, 114);
-  doc.setTextColor(0, 150, 100);
+  doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(13);
   doc.text("Mr. Veren Misstry", textX, 120);
   doc.setFontSize(11);
   doc.text("Numerologist", textX, 125);
 
-  // Brand Name & Contact
-  doc.setTextColor(...goldPrimary);
-  doc.setFontSize(15);
-  doc.text("Shining Ank Vastu", textX, 138);
-  doc.setFontSize(11);
-  doc.setTextColor(26, 58, 46);
-  // doc.text("Mb: 9913961553", textX, 144);
+  // Brand Name & Contact removed from right column to avoid duplication
 
   // Wheel Title & Date (Bottom left column area)
   doc.setTextColor(...textDark);
@@ -225,7 +225,7 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(13.5);
   doc.text("Crown Lifepath Report", 54, 152, { align: "center" });
 
-  doc.setTextColor(0, 150, 100);
+  doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(11);
   doc.text(`Report Date: ${reportDate}`, 54, 160, { align: "center" });
 
