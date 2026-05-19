@@ -217,12 +217,12 @@ export const generatePDF = async (clientData) => {
   doc.text("Shining Ank Vastu", textX, 138);
   doc.setFontSize(11);
   doc.setTextColor(26, 58, 46);
-  doc.text("Mb: 9913961553", textX, 144);
+  // doc.text("Mb: 9913961553", textX, 144);
 
   // Wheel Title & Date (Bottom left column area)
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
+  doc.setFontSize(13.5);
   doc.text("Crown Lifepath Report", 54, 152, { align: "center" });
 
   doc.setTextColor(0, 150, 100);
@@ -822,34 +822,34 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.text("Yantra Direction placement: North / East living sector", 20, 80);
 
-  // Section 16: Bracelet & Energy Remedies
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 96, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("BRACELET & ENERGY REMEDIES", 14, 103);
+  // // Section 16: Bracelet & Energy Remedies
+  // doc.setFillColor(...goldPrimary);
+  // doc.roundedRect(10, 96, pageWidth - 20, 10, 2, 2, "F");
+  // doc.setTextColor(255, 255, 255);
+  // doc.setFont("helvetica", "bold");
+  // doc.setFontSize(12);
+  // doc.text("BRACELET & ENERGY REMEDIES", 14, 103);
 
-  doc.setFillColor(254, 249, 231);
-  doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "D");
+  // doc.setFillColor(254, 249, 231);
+  // doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "F");
+  // doc.setDrawColor(...goldPrimary);
+  // doc.setLineWidth(0.25);
+  // doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "D");
 
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("Crystal Recommendation for Life Balance:", 20, 120);
+  // doc.setTextColor(...textDark);
+  // doc.setFont("helvetica", "bold");
+  // doc.setFontSize(11);
+  // doc.text("Crystal Recommendation for Life Balance:", 20, 120);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  const crystalText = "Crystals acts as high-frequency energy conduits. Wearing a dynamic combination of Green Aventurine, Tiger Eye, and Clear Quartz bracelet aligns cosmic vibrations. Rudraksha beads (Five Mukhi) keep the heart chakra grounded and shield against modern electromagnetic pollutions.";
-  const crystalLines = doc.splitTextToSize(crystalText, pageWidth - 42);
-  doc.text(crystalLines, 20, 127);
+  // doc.setFont("helvetica", "normal");
+  // doc.setFontSize(9.5);
+  // const crystalText = "Crystals acts as high-frequency energy conduits. Wearing a dynamic combination of Green Aventurine, Tiger Eye, and Clear Quartz bracelet aligns cosmic vibrations. Rudraksha beads (Five Mukhi) keep the heart chakra grounded and shield against modern electromagnetic pollutions.";
+  // const crystalLines = doc.splitTextToSize(crystalText, pageWidth - 42);
+  // doc.text(crystalLines, 20, 127);
 
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 150, 100);
-  doc.text("Recommended: Multi-Gemstone Prosperity Bracelet (Wear on Left hand)", 20, 154);
+  // doc.setFont("helvetica", "bold");
+  // doc.setTextColor(0, 150, 100);
+  // doc.text("Recommended: Multi-Gemstone Prosperity Bracelet (Wear on Left hand)", 20, 154);
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGES 9, 10, 11: 3 BLANK PAGES FOR CONSULTANT NOTES (NO RULES)
