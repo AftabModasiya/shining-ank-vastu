@@ -128,20 +128,14 @@ export const generatePDF = async (clientData) => {
     doc.line(pageWidth - 6, pageHeight - 16, pageWidth - 6, pageHeight - 6);
     doc.line(pageWidth - 16, pageHeight - 6, pageWidth - 6, pageHeight - 6);
 
-    // Light shed watermark: Shining Ank Vastu (using very light faint gold tint for absolute readability)
-    if (!skipWatermark) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(36);
-      doc.setTextColor(244, 236, 226); // Very faint gold/ivory color (does not block text!)
-      doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2 - 20, {
-        align: "center",
-        angle: 45
-      });
-      doc.text("Precision & Clarity", pageWidth / 2, pageHeight / 2 + 20, {
-        align: "center",
-        angle: 45
-      });
-    }
+    // Light shed watermark: Shining Ank Vastu (using elegant visible gold/ivory tint)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(42);
+    doc.setTextColor(232, 224, 212); // Soft visible gold/ivory color (does not block text!)
+    doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2, {
+      align: "center",
+      angle: 45
+    });
   };
 
   // Helper: Universal Footer
@@ -168,7 +162,7 @@ export const generatePDF = async (clientData) => {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 1: COVER PAGE
   // ════════════════════════════════════════════════════════════════════════
-  drawPageShell(doc, true);
+  drawPageShell(doc);
 
   // 1. Lord Ganesha Image (Top Center)
   if (ganeshaImg) {
@@ -876,7 +870,7 @@ export const generatePDF = async (clientData) => {
   // PAGE 12: FINAL THANK YOU & DISCLAIMER PAGE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
-  drawPageShell(doc, true);
+  drawPageShell(doc);
 
   // Add LastPage png asset
   if (lastPageGraphic) {
