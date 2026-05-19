@@ -162,12 +162,7 @@ export const generatePDF = async (clientData) => {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7.5);
     doc.setTextColor(...textMuted);
-    doc.text("Precision in Numbers, Clarity in Life", pWidth / 2, pHeight - 10, { align: "center" });
-
-    // Page Number on the right
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`, pWidth - 12, pHeight - 10, { align: "right" });
+    doc.text("Align Your Numbers, Transform Your Life", pWidth / 2, pHeight - 10, { align: "center" });
   };
 
   // ════════════════════════════════════════════════════════════════════════
@@ -246,7 +241,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("1. BIRTH CHART OVERVIEW", pageWidth / 2, 27, { align: "center" });
+  doc.text("BIRTH CHART OVERVIEW", 14, 27);
 
   // Render Lo Shu Grid
   const loShuGrid = calculateLoShuGrid(rawDob);
@@ -323,7 +318,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("2. CORE PERSONALITY INSIGHTS", pageWidth / 2, coreY + 7, { align: "center" });
+  doc.text("CORE PERSONALITY INSIGHTS", 14, coreY + 7);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, coreY + 16, pageWidth - 30, 48, 3, 3, "F");
@@ -353,7 +348,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("3. MULANK – BHAGYANK ALIGNMENT & ITS MEANING", pageWidth / 2, 27, { align: "center" });
+  doc.text("MULANK – BHAGYANK ALIGNMENT & ITS MEANING", 14, 27);
 
   // ── Dynamic traits based on calculated mulank / bhagyank ──────────────
   const mulankTraits = reportData.lifePathTraits || {};
@@ -434,7 +429,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("4. HIDDEN INFLUENCES OF YOGAS IN YOUR DOB", pageWidth / 2, yogY + 7, { align: "center" });
+  doc.text("HIDDEN INFLUENCES OF YOGAS IN YOUR DOB", 14, yogY + 7);
 
   // List Yogas based on present numbers
   const planes = [
@@ -477,7 +472,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("5. POWER OF REPEATING NUMBERS IN YOUR DOB", pageWidth / 2, 27, { align: "center" });
+  doc.text("POWER OF REPEATING NUMBERS IN YOUR DOB", 14, 27);
 
   let repY = 36;
   const repeated = reportData.repeatedNumbersAnalysis || [];
@@ -516,7 +511,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("6. EFFECTS OF MISSING NUMBERS & 7. PERSONALIZED REMEDIES", pageWidth / 2, repY + 11, { align: "center" });
+  doc.text("EFFECTS OF MISSING NUMBERS & PERSONALIZED REMEDIES", 14, repY + 11);
 
   let remY = repY + 20;
   const missingArr = getMissingNumbers(loShuGrid);
@@ -576,7 +571,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("8. PROFESSIONAL & CAREER OUTLOOK", pageWidth / 2, 27, { align: "center" });
+  doc.text("PROFESSIONAL & CAREER OUTLOOK", 14, 27);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "F");
@@ -607,7 +602,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("9. NAME NUMBER COMPATIBILITY ANALYSIS", pageWidth / 2, 103, { align: "center" });
+  doc.text("NAME NUMBER COMPATIBILITY ANALYSIS", 14, 103);
 
   doc.setFillColor(234, 238, 252); // Pastel blue card
   doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "F");
@@ -642,7 +637,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("10. MOBILE NUMBER COMPATIBILITY INSIGHTS", pageWidth / 2, 27, { align: "center" });
+  doc.text("MOBILE NUMBER COMPATIBILITY INSIGHTS", 14, 27);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 36, pageWidth - 30, 46, 3, 3, "F");
@@ -671,7 +666,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("11. 5 - YEAR FUTURE PREDICTIONS (FORECAST)", pageWidth / 2, 97, { align: "center" });
+  doc.text("5 - YEAR FUTURE PREDICTIONS (FORECAST)", 14, 97);
 
   let yrY = 106;
   const startYear = today.getFullYear();
@@ -716,7 +711,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("12. LUCKY ELEMENTS & 13. FAVORABLE COLORS", pageWidth / 2, 27, { align: "center" });
+  doc.text("LUCKY ELEMENTS", 14, 27);
 
   const luckyElements = [
     { label: "Lucky Dates", value: reportData.luckyElements?.luckyDates || "1, 10, 19, 28", color: [0, 150, 100] },
@@ -763,7 +758,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("14. SIGNATURE STYLE FOR SUCCESS", pageWidth / 2, 91, { align: "center" });
+  doc.text("SIGNATURE STYLE FOR SUCCESS", 14, 91);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 100, pageWidth - 30, 68, 3, 3, "F");
@@ -804,7 +799,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("15. YANTRA-BASED REMEDIES", pageWidth / 2, 27, { align: "center" });
+  doc.text("YANTRA-BASED REMEDIES", 14, 27);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "F");
@@ -833,7 +828,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("16. BRACELET & ENERGY REMEDIES", pageWidth / 2, 103, { align: "center" });
+  doc.text("BRACELET & ENERGY REMEDIES", 14, 103);
 
   doc.setFillColor(254, 249, 231);
   doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "F");
@@ -868,7 +863,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`17. CONSULTANT NOTES (PAGE ${c} OF 3)`, pageWidth / 2, 27, { align: "center" });
+    doc.text(`CONSULTANT NOTES (PAGE ${c} OF 3)`, 14, 27);
     
     // Beautiful clean white area for handmade notes
     doc.setFillColor(255, 254, 249);
@@ -898,7 +893,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text("18. DISCLAIMER", pageWidth / 2, 102, { align: "center" });
+  doc.text("DISCLAIMER", pageWidth / 2, 102, { align: "center" });
 
   // Disclaimer Body text
   doc.setFont("helvetica", "italic");
