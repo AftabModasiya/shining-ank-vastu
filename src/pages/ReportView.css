@@ -13,8 +13,9 @@
 
 /* ── Sticky header ─────────────────────────────────────── */
 .report-header {
-  background: rgba(255, 254, 249, 0.88);
+  background: rgba(255, 254, 249, 0.98);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 14px 0;
   border-bottom: 1px solid rgba(232, 213, 191, 0.7);
   position: sticky;
@@ -665,14 +666,34 @@
 
 /* ── RESPONSIVE ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .report-header-content { flex-direction: column; gap: 12px; }
-  .header-actions { width: 100%; flex-direction: column; }
-  .header-actions .btn { width: 100%; justify-content: center; }
+  .report-header-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: auto;
+  }
+  .header-actions .btn {
+    width: auto;
+    justify-content: center;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
 
   .report-title-section { padding: 24px 22px 22px; }
   .report-client-name { font-size: 36px; }
 
+  /* 2-column grid normally, but 1-column in edit mode to fit textareas and inputs comfortably */
   .core-numbers-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .is-editing .core-numbers-grid { grid-template-columns: 1fr; }
+  
   .core-num-value { font-size: 56px; }
   .core-num-card { min-height: 120px; padding: 16px 16px 22px; }
 
@@ -685,6 +706,33 @@
   .grid-cell { font-size: 18px; }
   .personality-highlights { flex-direction: column; }
   .form-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 576px) {
+  .report-header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .report-header-content > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .btn-logout-small {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 420px) {

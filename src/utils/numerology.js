@@ -446,11 +446,15 @@ export const generateReport = (name, dob, gender) => {
     },
     affirmations: getAffirmations(lifePath),
     customPage1: {
-      title: "Additional Notes",
+      title: "Note Page 1",
       content: "",
     },
     customPage2: {
-      title: "Special Recommendations",
+      title: "Note Page 2",
+      content: "",
+    },
+    customPage3: {
+      title: "Note Page 3",
       content: "",
     },
   };

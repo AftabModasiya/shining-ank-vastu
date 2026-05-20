@@ -854,6 +854,10 @@ export const generatePDF = async (clientData) => {
     doc.addPage();
     drawPageShell(doc);
 
+    const pageData = reportData[`customPage${c}`] || {};
+    const titleText = (pageData.title || `NOTES / SUGGESTIONS`).toUpperCase();
+    const contentText = pageData.content || "";
+
     doc.setFillColor(...goldPrimary);
     doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
@@ -866,6 +870,14 @@ export const generatePDF = async (clientData) => {
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.2);
     doc.roundedRect(15, 38, pageWidth - 30, pageHeight - 74, 4, 4, "FD");
+
+    if (contentText) {
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10.5);
+      const lines = doc.splitTextToSize(contentText, pageWidth - 42);
+      doc.text(lines, 20, 48);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════

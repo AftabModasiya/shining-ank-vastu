@@ -11,14 +11,28 @@ function ReportView() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [clientData, setClientData] = useState(location.state?.clientData || null);
+  const getSafeClientData = (data) => {
+    if (!data) return null;
+    const safeData = { ...data };
+    if (safeData.report) {
+      safeData.report = {
+        ...safeData.report,
+        customPage1: safeData.report.customPage1 || { title: 'Note Page 1', content: '' },
+        customPage2: safeData.report.customPage2 || { title: 'Note Page 2', content: '' },
+        customPage3: safeData.report.customPage3 || { title: 'Note Page 3', content: '' }
+      };
+    }
+    return safeData;
+  };
+
+  const [clientData, setClientData] = useState(() => getSafeClientData(location.state?.clientData || null));
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (clientData) {
-      setEditedData({ ...clientData });
+      setEditedData(getSafeClientData(clientData));
     }
   }, [clientData]);
 
@@ -145,7 +159,7 @@ function ReportView() {
     : `11 - ${yearSum} = ${kuaNum}`;
 
   return (
-    <div className="report-page">
+    <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
       {/* ── Header ───────────────────────────────────────── */}
       <header className="report-header">
         <div className="container">
@@ -525,27 +539,33 @@ function ReportView() {
             </div>
           </section>
 
-          {/* ── 13. CUSTOM PAGE 1 ────────────────────────── */}
+          {/* ── 13. CUSTOM NOTE PAGE 1 ─────────────────── */}
           <section className="report-section custom-page-section">
-            <h3 className="section-title">📝 {isEditing ? (
-              <input name="report.customPage1.title" value={report.customPage1.title} onChange={handleInputChange} className="edit-input-inline-title" />
-            ) : report.customPage1.title}</h3>
+            <h3 className="section-title">📝 Notes / Suggestions (Page 1)</h3>
             {isEditing ? (
-              <textarea name="report.customPage1.content" value={report.customPage1.content} onChange={handleInputChange} placeholder="Write your custom notes here..." className="edit-textarea custom-page-textarea" />
+              <textarea name="report.customPage1.content" value={report.customPage1.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 1..." className="edit-textarea custom-page-textarea" />
             ) : (
-              <p className="custom-page-content">{report.customPage1.content || 'No additional notes.'}</p>
+              <p className="custom-page-content">{report.customPage1.content || 'No notes / suggestions.'}</p>
             )}
           </section>
 
-          {/* ── 14. CUSTOM PAGE 2 ────────────────────────── */}
+          {/* ── 14. CUSTOM NOTE PAGE 2 ─────────────────── */}
           <section className="report-section custom-page-section">
-            <h3 className="section-title">💎 {isEditing ? (
-              <input name="report.customPage2.title" value={report.customPage2.title} onChange={handleInputChange} className="edit-input-inline-title" />
-            ) : report.customPage2.title}</h3>
+            <h3 className="section-title">📝 Notes / Suggestions (Page 2)</h3>
             {isEditing ? (
-              <textarea name="report.customPage2.content" value={report.customPage2.content} onChange={handleInputChange} placeholder="Write your special recommendations here..." className="edit-textarea custom-page-textarea" />
+              <textarea name="report.customPage2.content" value={report.customPage2.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 2..." className="edit-textarea custom-page-textarea" />
             ) : (
-              <p className="custom-page-content">{report.customPage2.content || 'No special recommendations.'}</p>
+              <p className="custom-page-content">{report.customPage2.content || 'No notes / suggestions.'}</p>
+            )}
+          </section>
+
+          {/* ── 15. CUSTOM NOTE PAGE 3 ─────────────────── */}
+          <section className="report-section custom-page-section">
+            <h3 className="section-title">📝 Notes / Suggestions (Page 3)</h3>
+            {isEditing ? (
+              <textarea name="report.customPage3.content" value={report.customPage3.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 3..." className="edit-textarea custom-page-textarea" />
+            ) : (
+              <p className="custom-page-content">{report.customPage3.content || 'No notes / suggestions.'}</p>
             )}
           </section>
 

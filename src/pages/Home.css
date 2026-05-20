@@ -583,7 +583,7 @@
   }
   
   /* Hide standard desktop menu buttons on mobile */
-  .header-actions {
+  .home-page .header-actions {
     display: none !important;
   }
   
