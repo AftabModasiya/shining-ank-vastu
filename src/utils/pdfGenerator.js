@@ -129,13 +129,15 @@ export const generatePDF = async (clientData) => {
     doc.line(pageWidth - 16, pageHeight - 6, pageWidth - 6, pageHeight - 6);
 
     // Light shed watermark: Shining Ank Vastu (using elegant visible gold/ivory tint)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(46);
-    doc.setTextColor(205, 195, 178); // More visible soft gold/ivory color
-    doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2, {
-      align: "center",
-      angle: 45
-    });
+    if (!skipWatermark) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(46);
+      doc.setTextColor(205, 195, 178); // More visible soft gold/ivory color
+      doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2, {
+        align: "center",
+        angle: 45
+      });
+    }
   };
 
   // Helper: Universal Footer
@@ -162,66 +164,66 @@ export const generatePDF = async (clientData) => {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 1: COVER PAGE
   // ════════════════════════════════════════════════════════════════════════
-  drawPageShell(doc);
+  drawPageShell(doc, true);
 
   // 1. Lord Ganesha Image (Top Center)
   if (ganeshaImg) {
-    // 35mm wide, 35mm high, perfectly centered square
-    doc.addImage(ganeshaImg, "PNG", (pageWidth - 35) / 2, 12, 35, 35);
+    // 35mm wide, 35mm high, perfectly centered square (y shifted from 12 to 15)
+    doc.addImage(ganeshaImg, "PNG", (pageWidth - 35) / 2, 15, 35, 35);
   }
 
-  // Brand Name above the wheel image
+  // Brand Name above the wheel image (y shifted from 52 to 65)
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Shining Ank Vastu", 54.5, 54, { align: "center" });
+  doc.text("Shining Ank Vastu", 55.5, 65, { align: "center" });
 
-  // Circular Wheel Graphic on Left column
+  // Circular Wheel Graphic on Left column (centered at x = 55.5, size 80x80, y shifted from 58 to 75)
   if (wheelImg) {
-    doc.addImage(wheelImg, "PNG", 12, 60, 85, 85);
+    doc.addImage(wheelImg, "PNG", 15.5, 75, 80, 80);
   }
 
-  // Middle vertical line separator
+  // Middle vertical line separator (y shifted from 62-142 to 78-158)
   doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.6);
-  doc.line(105, 62, 105, 142);
+  doc.line(105, 78, 105, 158);
 
   // Right column dynamic metadata
   let textX = 110;
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("REPORT PREPARED FOR:", textX, 72);
+  doc.text("REPORT PREPARED FOR:", textX, 88);
 
   doc.setTextColor(...textDark);
   doc.setFontSize(16);
-  doc.text(clientData.name || "Client Name", textX, 82);
+  doc.text(clientData.name || "Client Name", textX, 98);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`DATE OF BIRTH: ${formattedDob}`, textX, 94);
+  doc.text(`DATE OF BIRTH: ${formattedDob}`, textX, 110);
 
   // Prepared by block
   doc.setTextColor(...goldPrimary);
   doc.setFontSize(12);
-  doc.text("Prepared by:", textX, 114);
+  doc.text("Prepared by:", textX, 130);
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(13);
-  doc.text("Mr. Veren Misstry", textX, 120);
+  doc.text("Mr. Veren Misstry", textX, 136);
   doc.setFontSize(11);
-  doc.text("Numerologist", textX, 125);
+  doc.text("Numerologist", textX, 141);
 
   // Brand Name & Contact removed from right column to avoid duplication
 
-  // Wheel Title & Date (Bottom left column area)
+  // Wheel Title & Date (Bottom left column area, centered at x = 55.5, y shifted down)
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13.5);
-  doc.text("Crown Lifepath Report", 54, 152, { align: "center" });
+  doc.text("Crown Lifepath Report", 55.5, 168, { align: "center" });
 
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(11);
-  doc.text(`Report Date: ${reportDate}`, 54, 160, { align: "center" });
+  doc.text(`Report Date: ${reportDate}`, 55.5, 174, { align: "center" });
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
@@ -870,7 +872,7 @@ export const generatePDF = async (clientData) => {
   // PAGE 12: FINAL THANK YOU & DISCLAIMER PAGE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
-  drawPageShell(doc);
+  drawPageShell(doc, true);
 
   // Add LastPage png asset
   if (lastPageGraphic) {
