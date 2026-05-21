@@ -6,7 +6,11 @@ import {
   getPresentNumbers, 
   calculateKua,
   calcMulank,
-  calcBhagyank
+  calcBhagyank,
+  getNumberCompatibilityAnalysis,
+  getHiddenInfluences,
+  getPersonalYearData,
+  calcPersonalYearForYear
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -85,6 +89,29 @@ export const generatePDF = async (clientData) => {
   // Current Date in DD-MM-YYYY
   const today = new Date();
   const reportDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+
+  // ── Pre-compute new analysis data ─────────────────────────────────────
+  const loShuGridEarly = calculateLoShuGrid(rawDob);
+
+  // 1. Chaldean Compatibility between Mulank & Bhagyank
+  const compatibilityAnalysis = getNumberCompatibilityAnalysis(mulank, bhagyank);
+
+  // 2. Hidden Influences based on Lo Shu planes (partial presence logic)
+  const hiddenInfluences = getHiddenInfluences(loShuGridEarly);
+
+  // 3. Personal Year data for current year
+  const personalYearNum = calcPersonalYearForYear(rawDob, today.getFullYear());
+  const personalYearInfo = getPersonalYearData(personalYearNum);
+
+  // 4. Five-Year Personal Year Predictions
+  const fiveYearPredictions = Array.from({ length: 5 }, (_, i) => {
+    const yr = today.getFullYear() + i;
+    const pyNum = calcPersonalYearForYear(rawDob, yr);
+    const pyInfo = getPersonalYearData(pyNum);
+    return { year: yr, personalYear: pyNum, title: pyInfo.title, theme: pyInfo.theme };
+  });
+
+
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -444,42 +471,43 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(10);
   doc.text(`KUA NUMBER: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
 
-  // Section 4: Hidden Influences of Yogas
+  // Section 4: Hidden Influences of Yogas (Dynamic — all 6 planes with partial logic)
   const yogY = 136;
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, yogY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("HIDDEN INFLUENCES OF YOGAS IN YOUR DOB", 14, yogY + 7);
+  doc.text("HIDDEN INFLUENCE OF LO SHU PLANES", 14, yogY + 7);
 
-  // List Yogas based on present numbers
-  const planes = [
-    { name: "Mental Plane (4-9-2)", present: [4, 9, 2].every(n => loShuGrid[n-1] > 0), desc: "Sharp memory, analytical power, thinking ahead, excellent plan creation capabilities." },
-    { name: "Emotional Plane (3-5-7)", present: [3, 5, 7].every(n => loShuGrid[n-1] > 0), desc: "Highly sensitive, spiritual inclination, deep intuition, strong compassion." },
-    { name: "Practical/Action Plane (8-1-6)", present: [8, 1, 6].every(n => loShuGrid[n-1] > 0), desc: "Material success, high execution skills, converting ideas into physical realities." },
-    { name: "Willpower Plane (9-5-1)", present: [9, 5, 1].every(n => loShuGrid[n-1] > 0), desc: "Unshakeable determination, willpower, strong confidence to overcome obstacles." }
-  ];
-
+  // Show first 4 planes on Page 3 (3 horizontal + first vertical)
+  const pagePlanes = hiddenInfluences.slice(0, 4);
   let planeY = yogY + 16;
-  planes.forEach(plane => {
-    doc.setFillColor(plane.present ? 234 : 255, plane.present ? 238 : 254, plane.present ? 252 : 249);
-    doc.roundedRect(15, planeY, pageWidth - 30, 14, 2, 2, "F");
+  pagePlanes.forEach(plane => {
+    const statusLabel = plane.isActive ? "FULLY ACTIVE" : plane.isInactive ? "ABSENT" : "PARTIAL";
+    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
+    const borderWidth = plane.isActive ? 0.4 : 0.15;
+
+    const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
+    const cardHeight = 8 + interpLines.length * 5;
+
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "F");
     doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(plane.present ? 0.35 : 0.15);
-    doc.roundedRect(15, planeY, pageWidth - 30, 14, 2, 2, "D");
+    doc.setLineWidth(borderWidth);
+    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "D");
 
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(`${plane.name} - ${plane.present ? "ACTIVE YOGA" : "INACTIVE"}`, 20, planeY + 5);
+    doc.setFontSize(9.5);
+    doc.text(`${plane.name} — ${statusLabel}`, 20, planeY + 5.5);
 
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(plane.desc, 20, planeY + 10);
+    doc.setFontSize(8);
+    doc.text(interpLines, 20, planeY + 11);
 
-    planeY += 16.5;
+    planeY += cardHeight + 3.5;
   });
 
   // ════════════════════════════════════════════════════════════════════════
@@ -682,50 +710,243 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.text("Recommended Mobile Total: 1, 5 or 6 (for business success)", 20, 72);
 
-  // Section 11: 5 - Year Future Predictions
+  // Section 11: 5-Year Future Predictions (Dynamic Personal Year per calendar year)
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, 90, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("YEAR FUTURE PREDICTIONS (FORECAST)", 14, 97);
+  doc.text("5-YEAR PERSONAL YEAR FORECAST", 14, 97);
 
   let yrY = 106;
-  const startYear = today.getFullYear();
-  const personalYearVal = reportData.personalYear || 1;
-
-  for (let i = 0; i < 5; i++) {
-    const yr = startYear + i;
-    const yrFreq = (personalYearVal + i > 9) ? (personalYearVal + i - 9) : (personalYearVal + i);
+  fiveYearPredictions.forEach(pred => {
+    const themeLines = doc.splitTextToSize(pred.theme, pageWidth - 58);
+    const cardH = 8 + themeLines.length * 4.5;
 
     doc.setFillColor(254, 249, 231);
-    doc.roundedRect(15, yrY, pageWidth - 30, 13, 2, 2, "F");
+    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "F");
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.2);
-    doc.roundedRect(15, yrY, pageWidth - 30, 13, 2, 2, "D");
+    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "D");
+
+    // Year badge
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(15, yrY, 26, cardH, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(`${pred.year}`, 28, yrY + cardH / 2 + 1, { align: "center" });
+    doc.setFontSize(7);
+    doc.text(`PY ${pred.personalYear}`, 28, yrY + cardH / 2 + 5.5, { align: "center" });
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(pred.title, 44, yrY + 5.5);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(themeLines, 44, yrY + 10.5);
+
+    yrY += cardH + 3;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 6b: CHALDEAN COMPATIBILITY + REMAINING LO SHU PLANES
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // ── Chaldean Number Compatibility ──────────────────────────────────────
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", 14, 27);
+
+  const ca = compatibilityAnalysis;
+  const compatBg = ca.overallStatus === "friend"  ? [234, 248, 240] :
+                   ca.overallStatus === "enemy"   ? [253, 234, 234] : [254, 249, 231];
+  const compatLabel = ca.overallStatus === "friend"  ? "HIGHLY COMPATIBLE ✓" :
+                      ca.overallStatus === "enemy"   ? "CHALLENGING — REMEDY RECOMMENDED" : "NEUTRAL";
+  const compatLabelColor = ca.overallStatus === "friend"  ? [0, 128, 0] :
+                           ca.overallStatus === "enemy"   ? [200, 50, 50] : [...goldPrimary];
+
+  // Two number boxes side by side
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(15, 36, 55, 36, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 36, 55, 36, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(42.5, 47, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(mulank), 42.5, 50, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFontSize(8.5);
+  doc.text(`Mulank`, 42.5, 60, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...textMuted);
+  doc.text(ca.mulankPlanet, 42.5, 65, { align: "center" });
+
+  // "vs" connector
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("vs", pageWidth / 2, 56, { align: "center" });
+
+  // Bhagyank box
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(pageWidth - 42.5, 47, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFontSize(8.5);
+  doc.text(`Bhagyank`, pageWidth - 42.5, 60, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...textMuted);
+  doc.text(ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
+
+  // Compatibility status badge
+  doc.setFillColor(...compatBg);
+  doc.roundedRect(15, 78, pageWidth - 30, 8, 2, 2, "F");
+  doc.setTextColor(...compatLabelColor);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text(compatLabel, pageWidth / 2, 83.5, { align: "center" });
+
+  // Description
+  doc.setFillColor(255, 254, 249);
+  const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
+  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "D");
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(caDescLines, 20, 96);
+
+  // ── Remaining Lo Shu Planes (Middle & Right columns) ───────────────────
+  const caDescCardH = caDescLines.length * 5.5 + 6;
+  let remPlaneY = 90 + caDescCardH + 10;
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, remPlaneY, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("HIDDEN INFLUENCE — VERTICAL PLANES", 14, remPlaneY + 7);
+  remPlaneY += 14;
+
+  hiddenInfluences.slice(4).forEach(plane => {
+    const statusLabel = plane.isActive ? "FULLY ACTIVE" : plane.isInactive ? "ABSENT" : "PARTIAL";
+    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
+    const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
+    const cardH = 8 + interpLines.length * 5;
+
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(plane.isActive ? 0.4 : 0.15);
+    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(`${plane.name} — ${statusLabel}`, 20, remPlaneY + 5.5);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(interpLines, 20, remPlaneY + 11);
+
+    remPlaneY += cardH + 3.5;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 6c: PERSONAL YEAR DETAILED ANALYSIS
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`PERSONAL YEAR ${personalYearNum} — DETAILED ANALYSIS`, 14, 27);
+
+  // Year badge
+  doc.setFillColor(234, 248, 240);
+  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(32, 46, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(personalYearNum), 32, 49, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(personalYearInfo.title, 46, 43);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const pyThemeLines = doc.splitTextToSize(personalYearInfo.theme, pageWidth - 65);
+  doc.text(pyThemeLines, 46, 49);
+
+  // 4 life area cards
+  const lifeAreas = [
+    { label: "HEALTH",       text: personalYearInfo.health,       bg: [253, 234, 234] },
+    { label: "FINANCE",      text: personalYearInfo.finance,      bg: [234, 248, 240] },
+    { label: "CAREER",       text: personalYearInfo.career,       bg: [234, 238, 252] },
+    { label: "RELATIONSHIP", text: personalYearInfo.relationship, bg: [254, 249, 231] }
+  ];
+
+  let lifeY = 62;
+  lifeAreas.forEach(area => {
+    const aLines = doc.splitTextToSize(area.text, pageWidth - 46);
+    const aH = 8 + aLines.length * 5.2;
+
+    doc.setFillColor(...area.bg);
+    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "D");
 
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(`Year ${yr} (Personal Year ${yrFreq})`, 20, yrY + 5);
+    doc.text(area.label, 20, lifeY + 6);
 
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
-    
-    let predText = "A period of great expansion, new business alignments, and strong material success.";
-    if (yrFreq === 4 || yrFreq === 8) predText = "A foundation building period. Demands discipline, focus, hard work, and strict health management.";
-    if (yrFreq === 5) predText = "Dynamic year of positive transitions, travel, and expanding network opportunities.";
+    doc.text(aLines, 20, lifeY + 12);
 
-    doc.text(predText, 20, yrY + 9);
-    yrY += 15;
-  }
+    lifeY += aH + 4;
+  });
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 7: LUCKY/UNLUCKY ELEMENTS, COLORS & SIGNATURE STYLE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
   drawPageShell(doc);
+
 
   // Section 12 & 13
   doc.setFillColor(...goldPrimary);
@@ -832,7 +1053,6 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Sacred Vedic Lo Shu Grid Yantra:", 20, 44);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);

@@ -172,6 +172,285 @@ export const calcPersonalYear = (dob) => {
   return reduce(total);
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. CHALDEAN LO SHU COMPATIBILITY CHART
+//    Based on traditional planetary friend/enemy/neutral relationships
+//    Planet mapping: 1=Sun, 2=Moon, 3=Jupiter, 4=Rahu(Uranus), 5=Mercury,
+//                    6=Venus, 7=Ketu(Neptune), 8=Saturn, 9=Mars
+// ─────────────────────────────────────────────────────────────────────────────
+const COMPATIBILITY_TABLE = {
+  1: { friends: [9, 2, 5, 3, 6, 1], nonFriends: [8], neutral: [4, 7] },
+  2: { friends: [1, 5, 3, 2, 7], nonFriends: [8, 4, 9], neutral: [6, 7] },
+  3: { friends: [1, 5, 3, 7], nonFriends: [6], neutral: [4, 8, 9, 2] },
+  4: { friends: [7, 1, 5, 6, 4, 8], nonFriends: [2, 9], neutral: [3] },
+  5: { friends: [1, 2, 3, 6, 5], nonFriends: [], neutral: [4, 7, 8, 9] },
+  6: { friends: [1, 7, 4, 6, 5], nonFriends: [3], neutral: [2, 8, 9] },
+  7: { friends: [4, 6, 1, 5, 3, 7], nonFriends: [], neutral: [2, 8, 9] },
+  8: { friends: [5, 3, 8, 4, 6, 7], nonFriends: [1, 2, 4], neutral: [9, 6, 7] },
+  9: { friends: [1, 5], nonFriends: [2, 4], neutral: [3, 7, 6, 8, 9] }
+};
+
+export const getCompatibility = (num1, num2) => {
+  if (!num1 || !num2) return { status: "unknown", label: "Unknown" };
+  const entry = COMPATIBILITY_TABLE[num1];
+  if (!entry) return { status: "unknown", label: "Unknown" };
+  if (entry.friends.includes(num2))    return { status: "friend",  label: "Friendly" };
+  if (entry.nonFriends.includes(num2)) return { status: "enemy",   label: "Non-Friendly" };
+  if (entry.neutral.includes(num2))    return { status: "neutral",  label: "Neutral" };
+  return { status: "neutral", label: "Neutral" };
+};
+
+// Returns a full compatibility analysis between mulank and bhagyank
+export const getNumberCompatibilityAnalysis = (mulank, bhagyank) => {
+  const compat = getCompatibility(mulank, bhagyank);
+  const reverseCompat = getCompatibility(bhagyank, mulank);
+
+  const planetNames = { 1:"Sun",2:"Moon",3:"Jupiter",4:"Rahu",5:"Mercury",6:"Venus",7:"Ketu",8:"Saturn",9:"Mars" };
+
+  const statusDescriptions = {
+    friend: "Your Mulank and Bhagyank planets are in a highly favorable relationship. You will experience strong support from your destiny number, smooth financial growth, and harmonious relationships. Career opportunities align naturally.",
+    enemy: "Your Mulank and Bhagyank planets are in a challenging relationship. This creates internal conflicts between your birth energy and destiny path. Special remedies and alignment through lucky dates are recommended for smoother results.",
+    neutral: "Your Mulank and Bhagyank planets share a neutral relationship. Neither strongly supporting nor opposing, the results depend on effort and environment. With proper remedies, you can amplify the positive outcomes significantly."
+  };
+
+  return {
+    mulankPlanet: planetNames[mulank] || "Unknown",
+    bhagyankPlanet: planetNames[bhagyank] || "Unknown",
+    mulankToBhagyank: compat,
+    bhagyankToMulank: reverseCompat,
+    overallStatus: compat.status,
+    description: statusDescriptions[compat.status] || statusDescriptions.neutral
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. HIDDEN INFLUENCE OF LO SHU PLANES
+//    The 3 horizontal + 3 vertical planes of the original Lo Shu grid:
+//      4-9-2 (Mental Plane),  3-5-7 (Emotional Plane),  8-1-6 (Practical Plane)
+//      4-3-8 (Left Column),   9-5-1 (Middle Column),    2-7-6 (Right Column)
+//    Logic: For each plane, analyse which numbers are present / absent and
+//           produce specific interpretations for every combination.
+// ─────────────────────────────────────────────────────────────────────────────
+const PLANE_INTERPRETATIONS = {
+  // ── Horizontal Planes ──────────────────────────────────────────────────
+  "mental": {
+    name: "Mental Plane (4-9-2)",
+    full: "Your mind is razor-sharp. You possess exceptional analytical ability, planning skills, and academic aptitude. All three energies (Rahu, Mars, Moon) work in unison for intellectual mastery.",
+    partial: {
+      "4,2":   "Strong material thinking and emotional sensitivity, but Number 9 (Mars) missing weakens strategic aggression. You plan well but may avoid conflicts.",
+      "9,2":   "Sharp intuition and emotional intelligence, but Number 4 (Rahu) missing weakens practical execution and stability.",
+      "4,9":   "Excellent strategist with strong drive, but Number 2 (Moon) missing reduces emotional sensitivity and people-reading ability.",
+      "4":     "Only material-practical mindset active. You think in terms of structure and systems but lack emotional and intuitive depth.",
+      "9":     "Only Mars energy of the mental plane is active. Strong drive and ambition but struggles with planning and emotional awareness.",
+      "2":     "Only Moon energy active. Emotionally intelligent but lacks the intellectual aggression and planning abilities needed for big goals."
+    },
+    absent: "The Mental Plane (4-9-2) is entirely absent. You may experience difficulty with concentration, memory, academic performance, and strategic thinking. Focus on education remedies and meditation."
+  },
+  "emotional": {
+    name: "Emotional Plane (3-5-7)",
+    full: "You possess a highly developed emotional and spiritual nature. Strong compassion, deep intuition, spiritual inclination, and excellent communication with a balanced inner world.",
+    partial: {
+      "3,7":   "Spiritual and communicative balance is present, but Number 5 (Mercury) missing creates confusion in decision-making and adaptability.",
+      "5,7":   "Mercury and Ketu are active — adaptable and spiritual, but Number 3 (Jupiter) missing reduces wisdom, teaching ability, and financial luck.",
+      "3,5":   "Expressive and dynamic communication (Jupiter + Mercury), but Number 7 (Ketu) missing weakens spiritual depth and introspection.",
+      "3":     "Only Jupiter energy active. You are expressive and philosophical but lack adaptability and the spiritual detachment of Ketu.",
+      "5":     "Only Mercury energy active. Quick-witted but emotionally unstable without Jupiter's wisdom and Ketu's calm introspection.",
+      "7":     "Only Ketu energy active. You are deeply spiritual but struggle to communicate or adapt this inner wisdom to the outer world."
+    },
+    absent: "The Emotional Plane (3-5-7) is entirely absent. This indicates difficulty in expressing emotions, suppressed feelings, spiritual disconnect, and challenges in creative communication. Wear Green Aventurine for remedy."
+  },
+  "practical": {
+    name: "Practical Plane (8-1-6)",
+    full: "You are a natural achiever in the material world. Saturn's discipline (8), Sun's leadership (1), and Venus's harmony (6) combine for outstanding real-world success, wealth building, and personal magnetism.",
+    partial: {
+      "1,6":   "Strong leadership and personal charm, but Number 8 (Saturn) missing weakens patience, discipline, and long-term persistence.",
+      "8,6":   "Disciplined and artistic, but Number 1 (Sun) missing weakens confidence, authority, and self-assertion.",
+      "8,1":   "Powerful discipline and leadership, but Number 6 (Venus) missing weakens relationships, luxury, and aesthetic sensibilities.",
+      "8":     "Only Saturn energy active. You work hard but lack the leadership confidence (1) and relational harmony (6) for full material success.",
+      "1":     "Only Sun energy active. Natural leader but lacks Saturn's perseverance and Venus's charm and relational skills.",
+      "6":     "Only Venus energy active. Creative and relationship-oriented but lacks the drive (1) and discipline (8) for material achievement."
+    },
+    absent: "The Practical Plane (8-1-6) is entirely absent. Material world achievements may require double the effort. Financial discipline and career growth need active remedies. Wear Blue Sapphire or Hessonite."
+  },
+  // ── Vertical Planes ────────────────────────────────────────────────────
+  "left": {
+    name: "Left Column / Thought Plane (4-3-8)",
+    full: "Your thought-to-action pipeline is fully energized. Ideas (3-Jupiter) are grounded by structure (4-Rahu) and executed with persistence (8-Saturn). You are a highly effective thinker and doer.",
+    partial: {
+      "4,8":   "Structured and persistent, but Number 3 (Jupiter) missing weakens optimism, wisdom, and creative ideation.",
+      "3,8":   "Creative and persistent, but Number 4 (Rahu) missing weakens organizational ability and stability.",
+      "3,4":   "Idealistic and structured, but Number 8 (Saturn) missing weakens endurance and material manifestation.",
+      "4":     "Rahu's organizational energy alone — structured but neither creative nor persistent enough for full results.",
+      "3":     "Jupiter's creativity alone — full of ideas but lacks the structure and discipline to bring them to fruition.",
+      "8":     "Saturn's persistence alone — hardworking but without creative ideas or structural plans, effort is misdirected."
+    },
+    absent: "The Left Column (4-3-8) is absent. Thinking and planning abilities need development. You may struggle to turn thoughts into productive actions. Meditation and study disciplines are recommended."
+  },
+  "middle": {
+    name: "Middle Column / Willpower Plane (9-5-1)",
+    full: "You possess exceptional willpower and determination. Mars's drive (9), Mercury's adaptability (5), and Sun's confidence (1) create an unstoppable force of purposeful action and success.",
+    partial: {
+      "9,1":   "Strong drive and leadership, but Number 5 (Mercury) missing creates rigidity and lack of adaptability in changing situations.",
+      "5,1":   "Adaptable and confident, but Number 9 (Mars) missing weakens competitive drive and assertiveness.",
+      "9,5":   "Dynamic and adaptable, but Number 1 (Sun) missing weakens self-confidence and authority.",
+      "9":     "Mars alone active — highly driven but struggles with adaptability and self-direction without Mercury and Sun.",
+      "5":     "Mercury alone active — highly adaptable and communicative, but lacks the drive and confidence for bold leadership.",
+      "1":     "Sun alone active — confident in identity but lacks the drive and adaptability for flexible success."
+    },
+    absent: "The Middle Column (9-5-1) is absent. Willpower and confidence building are the key areas of focus. Challenges with self-belief and persistence may arise. Wear Ruby for Sun energy activation."
+  },
+  "right": {
+    name: "Right Column / Sensitivity Plane (2-7-6)",
+    full: "Your emotional and spiritual sensitivity is fully awakened. Moon's intuition (2), Ketu's spirituality (7), and Venus's love (6) create a deeply empathetic, artistically gifted, and spiritually connected personality.",
+    partial: {
+      "2,6":   "Emotionally caring and harmonious, but Number 7 (Ketu) missing weakens spiritual depth and introspective wisdom.",
+      "7,6":   "Spiritual and artistic, but Number 2 (Moon) missing weakens emotional attunement and intuitive people skills.",
+      "2,7":   "Intuitive and spiritual, but Number 6 (Venus) missing weakens love life, artistic expression, and domestic harmony.",
+      "2":     "Moon alone active — emotionally sensitive and intuitive, but lacks spiritual depth and artistic expression.",
+      "7":     "Ketu alone active — spiritually inclined but disconnected from emotional warmth and relational harmony.",
+      "6":     "Venus alone active — loving and artistic, but lacks the intuition (2) and spiritual depth (7) for well-rounded sensitivity."
+    },
+    absent: "The Right Column (2-7-6) is absent. Emotional disconnection and lack of artistic expression may occur. Relationships may feel shallow. Wear Pearl and Cat's Eye as remedies."
+  }
+};
+
+export const getHiddenInfluences = (grid) => {
+  const planes = [
+    { key: "mental",   numbers: [4, 9, 2] },
+    { key: "emotional", numbers: [3, 5, 7] },
+    { key: "practical", numbers: [8, 1, 6] },
+    { key: "left",     numbers: [4, 3, 8] },
+    { key: "middle",   numbers: [9, 5, 1] },
+    { key: "right",    numbers: [2, 7, 6] }
+  ];
+
+  return planes.map(plane => {
+    const info = PLANE_INTERPRETATIONS[plane.key];
+    const present = plane.numbers.filter(n => grid[n - 1] > 0);
+    const absent  = plane.numbers.filter(n => grid[n - 1] === 0);
+    const allPresent  = absent.length === 0;
+    const allAbsent   = present.length === 0;
+
+    let interpretation;
+    if (allPresent) {
+      interpretation = info.full;
+    } else if (allAbsent) {
+      interpretation = info.absent;
+    } else {
+      // partial: build key from sorted present numbers
+      const partialKey = present.slice().sort((a, b) => a - b).join(",");
+      interpretation = info.partial[partialKey] ||
+        `Numbers ${present.join(", ")} are active, ${absent.join(", ")} are absent. Partial energy of this plane is engaged.`;
+    }
+
+    return {
+      key: plane.key,
+      name: info.name,
+      numbers: plane.numbers,
+      present,
+      absent,
+      isActive: allPresent,
+      isPartial: !allPresent && !allAbsent,
+      isInactive: allAbsent,
+      interpretation
+    };
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. PERSONAL YEAR EFFECTS (1 through 9)
+//    Formula: reduce(birth_month_digits + birth_day_digits + current_year_digits)
+//    Gives effects across Health, Finance, Career, Relationship
+// ─────────────────────────────────────────────────────────────────────────────
+const PERSONAL_YEAR_DATA = {
+  1: {
+    title: "Year of New Beginnings & Leadership",
+    theme: "A powerful year to start fresh. Plant seeds of new ventures, take initiative, and step into leadership roles.",
+    health:       "Vitality is high. Avoid overexertion from excessive ambition. Headaches and stress are possible. Exercise regularly. Lucky stone: Ruby.",
+    finance:      "Strong year to start new financial ventures or investments. Avoid impulsive spending in first quarter. Business initiatives started now will flourish.",
+    career:       "Ideal year for job changes, promotions, or launching independent ventures. Your leadership energy is at its peak — make bold moves.",
+    relationship: "New relationships may form, or existing ones enter a fresh cycle. Be careful not to be too self-focused. Partnerships started this year are long-lasting."
+  },
+  2: {
+    title: "Year of Partnership & Emotional Depth",
+    theme: "A year to cooperate, build partnerships, and pay attention to emotions. Patience is key — results come through collaboration.",
+    health:       "Emotional health is sensitive. Guard against anxiety and mood swings. Digestive system needs attention. Hydration and rest are crucial.",
+    finance:      "Avoid major solo financial risks. Partnership deals and collaborations bring better financial outcomes. Savings grow steadily.",
+    career:       "Team projects thrive. Avoid confrontational decisions. Best suited for diplomatic roles, partnerships, and nurturing existing projects.",
+    relationship: "A very favorable year for relationships and marriage. Deep emotional bonds form. Existing relationships deepen significantly."
+  },
+  3: {
+    title: "Year of Creativity & Expression",
+    theme: "A joyful, expansive year of creative output, social connections, and self-expression. Avoid scattering energy.",
+    health:       "Generally healthy and energetic. Guard against overindulgence in food and social activities. Throat and skin need attention.",
+    finance:      "Multiple income opportunities arise through creative work, social connections, and communication. Avoid impulsive luxury spending.",
+    career:       "Excellent for artists, writers, teachers, and communicators. Creative projects launched this year receive recognition.",
+    relationship: "Social life is vibrant. New meaningful friendships form. Romance flourishes. Guard against superficial connections."
+  },
+  4: {
+    title: "Year of Hard Work & Foundation Building",
+    theme: "A serious, disciplined year requiring consistent effort. Foundations laid now determine long-term success.",
+    health:       "Physical health needs monitoring. Avoid overwork leading to fatigue. Bone and spine health deserve attention. Regular exercise is essential.",
+    finance:      "Slow but steady financial growth. Avoid risky investments. This is the year to budget, save, and build financial foundations.",
+    career:       "Hard work is rewarded. Stability and systematic effort win over shortcuts. Best for long-term career planning and skill development.",
+    relationship: "Relationships require practical commitment and effort. Stability and reliability are valued more than romance this year."
+  },
+  5: {
+    title: "Year of Change & Freedom",
+    theme: "A dynamic, unpredictable year of exciting changes, travel, and new experiences. Embrace flexibility.",
+    health:       "Health fluctuates with your lifestyle changes. Guard against overindulgence and irregular sleep patterns. Nervous system needs attention.",
+    finance:      "Unexpected financial opportunities and expenses. Invest in flexible assets. Travel or communication-related businesses flourish.",
+    career:       "Major career changes may occur. New roles, industries, or locations beckon. Ideal for entrepreneurs and those seeking freedom.",
+    relationship: "Relationships enter exciting new phases or face unexpected changes. Freedom and space are important in partnerships this year."
+  },
+  6: {
+    title: "Year of Responsibility & Harmony",
+    theme: "A nurturing year focused on home, family, and taking responsibility. Beauty and harmony are your keywords.",
+    health:       "Focus on holistic wellness — diet, beauty, and emotional health. Heart and hormonal health need attention. Yoga and meditation are beneficial.",
+    finance:      "Stable financial year tied to home, property, or family matters. Good year for real estate investments and domestic business ventures.",
+    career:       "Career success through service, healing, counseling, or creative arts. Recognition comes for your responsible and caring approach.",
+    relationship: "A beautiful year for love, marriage, and family bonds. Existing relationships are strengthened. New romantic connections are deep and meaningful."
+  },
+  7: {
+    title: "Year of Inner Wisdom & Spiritual Growth",
+    theme: "A contemplative, introspective year for inner development, research, and spiritual understanding.",
+    health:       "Mental and nervous system health require attention. Avoid isolation-induced depression. Meditation, sleep, and spiritual practices are protective.",
+    finance:      "Not the best year for financial risks. Investments in knowledge, research, and spiritual development pay off long-term.",
+    career:       "Ideal for research, analysis, spiritual teaching, healing, and writing. Avoid major career risks — study and introspect instead.",
+    relationship: "Relationships may feel introspective or distant. Deep spiritual connections are made. Avoid misunderstandings due to withdrawal behavior."
+  },
+  8: {
+    title: "Year of Power, Material Success & Karma",
+    theme: "A karmic, powerful year of material rewards and consequences. What you have worked for arrives. Balance power with wisdom.",
+    health:       "Health challenges may arise if lifestyle has been imbalanced. Heart, blood pressure, and stress require monitoring. Balance work and rest.",
+    finance:      "Major financial gains or losses depending on past actions. Business deals reach fruition. Real estate, stocks, and authority-based roles pay well.",
+    career:       "Best year for career advancement, authority roles, and major financial decisions. Leadership recognition and power positions are attainable.",
+    relationship: "Power dynamics in relationships require balance. Strong commitments are made. Guard against domination or control tendencies."
+  },
+  9: {
+    title: "Year of Completion, Release & Transformation",
+    theme: "A year of endings and completion. Release what no longer serves you. Prepare for a brand new 9-year cycle.",
+    health:       "Emotional and physical detoxification is needed. Let go of old health habits. Nervous system and immunity need strengthening.",
+    finance:      "Complete old financial obligations. Avoid starting major new financial ventures. Clearing debts creates space for next cycle abundance.",
+    career:       "Career completions and endings occur. Charitable, humanitarian, and service-oriented work brings satisfaction and recognition.",
+    relationship: "Some relationships end or transform. Forgiveness and letting go are themes. Those that remain are purified and more authentic."
+  }
+};
+
+export const getPersonalYearData = (personalYear) => {
+  return PERSONAL_YEAR_DATA[personalYear] || PERSONAL_YEAR_DATA[1];
+};
+
+// Calculate personal year for any given calendar year
+export const calcPersonalYearForYear = (dob, year) => {
+  const parts = dob.split("-");
+  const mmdd = parts[1] + parts[2];
+  const total =
+    mmdd.split("").reduce((a, d) => a + parseInt(d), 0) +
+    String(year).split("").reduce((a, d) => a + parseInt(d), 0);
+  return reduce(total);
+};
+
 const TRAITS = {
   1: {
     title: "The Leader",
