@@ -255,6 +255,137 @@ export const getLuckyElements = (bhagyank, mulank, kuaNum) => {
   };
 };
 
+export const getMobileAnalysis = (phone, bhagyank) => {
+  if (!phone || phone === "-" || phone.trim() === "") {
+    return {
+      isValid: false,
+      rawPhone: phone || "",
+      digits: "",
+      totalSum: 0,
+      singleDigit: 0,
+      vibrationMeaning: "No phone number provided.",
+      compatibility: "Neutral",
+      isCompatible: false,
+      compatibilityDescription: "Please provide a mobile number to see compatibility analysis.",
+      zeroCount: 0,
+      endsInZero: false,
+      zeroAnalysis: "No phone number analyzed.",
+      lastFourDigits: "",
+      lastFourSum: 0,
+      lastFourSingleDigit: 0,
+      lastFourMeaning: ""
+    };
+  }
+
+  // Clean country codes like +91, 91, or leading 0s
+  let digits = phone.replace(/\D/g, "");
+  // Keep last 10 digits if longer
+  if (digits.length > 10) {
+    digits = digits.slice(-10);
+  }
+
+  if (digits.length === 0) {
+    return {
+      isValid: false,
+      rawPhone: phone,
+      digits: "",
+      totalSum: 0,
+      singleDigit: 0,
+      vibrationMeaning: "Invalid phone number.",
+      compatibility: "Neutral",
+      isCompatible: false,
+      compatibilityDescription: "Please enter a valid phone number.",
+      zeroCount: 0,
+      endsInZero: false,
+      zeroAnalysis: "Invalid phone number.",
+      lastFourDigits: "",
+      lastFourSum: 0,
+      lastFourSingleDigit: 0,
+      lastFourMeaning: ""
+    };
+  }
+
+  const totalSum = digits.split("").reduce((sum, d) => sum + parseInt(d, 10), 0);
+  const singleDigit = reduce(totalSum);
+
+  const vibrationMeanings = {
+    1: "Fosters leadership, independence, and new beginnings. Ideal for entrepreneurs and ambitious professionals seeking authority.",
+    2: "Promotes teamwork, harmony, and diplomacy. Great for building relationships, counseling, and customer service.",
+    3: "Encourages creativity, communication, and optimism. Excellent for artists, teachers, and social/marketing professionals.",
+    4: "Represents hard work, discipline, and stability. Good for people in management, finance, or technical operations.",
+    5: "Symbolizes freedom, flexibility, and travel/trade. Perfect for sales professionals, freelancers, and marketers.",
+    6: "Focuses on family, love, responsibility, and luxury. Ideal for family businesses and creative/health sectors.",
+    7: "Promotes spirituality, deep introspection, and research. Great for scientists, analysts, and spiritual healers.",
+    8: "Attracts authority, wealth, and prosperity. Excellent for corporate executives, investors, and business owners.",
+    9: "Relates to humanitarianism, completion, and compassion. Best for NGOs, teachers, and social workers."
+  };
+
+  const compat = getCompatibility(singleDigit, bhagyank);
+  let compatibilityLabel = "Neutral";
+  let isCompatible = false;
+  let compatibilityDescription = "";
+
+  if (compat.status === "friend") {
+    compatibilityLabel = "Friendly / Highly Compatible";
+    isCompatible = true;
+    compatibilityDescription = `Your mobile total of ${singleDigit} is highly compatible with your Life Path Number ${bhagyank}. This vibration supports career progression, financial success, and smooth social/professional interactions.`;
+  } else if (compat.status === "enemy") {
+    compatibilityLabel = "Non-Friendly / Challenging";
+    isCompatible = false;
+    compatibilityDescription = `Your mobile total of ${singleDigit} is challenging/non-friendly to your Life Path Number ${bhagyank}. This can bring sudden obstacles, delays, or misunderstandings in business dealings. It is recommended to choose a number with a friendly total like 1, 5, or 6.`;
+  } else {
+    compatibilityLabel = "Neutral";
+    isCompatible = false;
+    compatibilityDescription = `Your mobile total of ${singleDigit} has a neutral connection with your Life Path Number ${bhagyank}. To maximize positive results and business success, aligning your total to 1, 5, or 6 is advised.`;
+  }
+
+  const zeroCount = (digits.match(/0/g) || []).length;
+  const endsInZero = digits.endsWith("0");
+  let zeroAnalysis = "";
+
+  if (endsInZero) {
+    zeroAnalysis = "Your mobile number ends with '0'. In Vastu and numerology, this represents a void/leakage of energies at the end of efforts, which can cause projects to stagnate or not yield financial returns.";
+  } else if (zeroCount > 1) {
+    zeroAnalysis = `Your mobile number contains ${zeroCount} zeros. A high frequency of zeros can create emptiness, draining energies, or lack of momentum in communication.`;
+  } else {
+    zeroAnalysis = "Your mobile number has no critical zeros (or is zero-free), ensuring a progressive and stable energy flow without empty voids.";
+  }
+
+  const lastFourDigits = digits.slice(-4);
+  const lastFourSum = lastFourDigits.split("").reduce((sum, d) => sum + parseInt(d, 10), 0);
+  const lastFourSingleDigit = reduce(lastFourSum);
+
+  const lastFourMeanings = {
+    1: "Brings focus on self-reliance, leadership, and independence in relationships.",
+    2: "Nurtures partnerships, emotional bonding, and peace in daily life.",
+    3: "Attracts social opportunities, creative solutions, and joyful conversations.",
+    4: "Provides structure, systematic planning, and physical security.",
+    5: "Invites travel, quick changes, and adaptability in finance and connections.",
+    6: "Enhances domestic peace, luxury, caring for family, and material comfort.",
+    7: "Inclines towards deep research, seeking truth, and private/isolated periods.",
+    8: "Creates heavy focus on business, authority, and financial returns (Karma).",
+    9: "Promotes broad-minded discussions, selfless sharing, and completing old issues."
+  };
+
+  return {
+    isValid: true,
+    digits,
+    totalSum,
+    singleDigit,
+    vibrationMeaning: vibrationMeanings[singleDigit] || "",
+    compatibility: compatibilityLabel,
+    isCompatible,
+    compatibilityDescription,
+    zeroCount,
+    endsInZero,
+    zeroAnalysis,
+    lastFourDigits,
+    lastFourSum,
+    lastFourSingleDigit,
+    lastFourMeaning: lastFourMeanings[lastFourSingleDigit] || "",
+  };
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CHALDEAN LO SHU COMPATIBILITY CHART
 //    Based on traditional planetary friend/enemy/neutral relationships

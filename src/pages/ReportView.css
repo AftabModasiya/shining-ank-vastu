@@ -331,6 +331,104 @@
   color: #b5820a;
 }
 
+/* ── 5b. MOBILE COMPATIBILITY INSIGHTS ─────────────────── */
+.mobile-insights-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.mobile-header-card {
+  background: rgba(255, 254, 249, 0.88);
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-header-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  color: #3d2c1e;
+  margin: 0;
+}
+
+.mobile-header-card h4 .highlight-text {
+  color: #b5820a;
+  font-weight: 600;
+}
+
+.mobile-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mobile-badge-row .badge {
+  background: #fdf2cc;
+  color: #b5820a;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid rgba(181, 130, 10, 0.15);
+}
+
+.mobile-badge-row .badge-compat {
+  background: #fdf6ec;
+  color: #c27803;
+  border-color: rgba(194, 120, 3, 0.15);
+}
+
+.mobile-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.mobile-detail-card {
+  background: rgba(255, 254, 249, 0.88);
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.mobile-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(181, 130, 10, 0.08);
+}
+
+.mobile-detail-card .detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #8c6f58;
+}
+
+.mobile-detail-card .detail-value {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #5a4230;
+  margin: 0;
+}
+
+.empty-state-box {
+  background: rgba(255, 254, 249, 0.5);
+  border: 1px dashed rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  color: #8c6f58;
+  font-size: 14px;
+}
+
 /* ── 6. LO SHU GRID ────────────────────────────────────── */
 .loshu-container {
   display: grid;

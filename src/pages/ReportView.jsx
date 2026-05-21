@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis } from '../utils/numerology';
 import './ReportView.css';
 
 
@@ -163,6 +163,9 @@ function ReportView() {
 
   // Current personal year
   const personalYearNum = calcPersonalYearForYear(displayData.dob || '', new Date().getFullYear());
+
+  // Dynamic mobile number compatibility insights
+  const mobileData = getMobileAnalysis(displayData.phone || '', bhagyank);
 
   return (
     <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
@@ -359,6 +362,47 @@ function ReportView() {
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* ── 5b. MOBILE COMPATIBILITY INSIGHTS ─────────── */}
+          <section className="report-section">
+            <h3 className="section-title">Mobile Number Compatibility Insights</h3>
+            {mobileData.isValid ? (
+              <div className="mobile-insights-container">
+                <div className="mobile-header-card">
+                  <h4>Mobile Number: <span className="highlight-text">{displayData.phone}</span></h4>
+                  <div className="mobile-badge-row">
+                    <span className="badge">Total Sum: <strong>{mobileData.totalSum}</strong></span>
+                    <span className="badge">Single Digit Root: <strong>{mobileData.singleDigit}</strong></span>
+                    <span className="badge badge-compat">Compatibility: <strong>{mobileData.compatibility}</strong></span>
+                  </div>
+                </div>
+                <div className="mobile-details-grid">
+                  <div className="mobile-detail-card">
+                    <span className="detail-label">Root Vibration Meaning</span>
+                    <p className="detail-value">{mobileData.vibrationMeaning}</p>
+                  </div>
+                  <div className="mobile-detail-card">
+                    <span className="detail-label">Destiny Compatibility</span>
+                    <p className="detail-value">{mobileData.compatibilityDescription}</p>
+                  </div>
+                  <div className="mobile-detail-card">
+                    <span className="detail-label">Vastu Energy Flow (Zeros)</span>
+                    <p className="detail-value">{mobileData.zeroAnalysis}</p>
+                  </div>
+                  <div className="mobile-detail-card">
+                    <span className="detail-label">Last 4 Digits Impact</span>
+                    <p className="detail-value">
+                      Digits [<strong>{mobileData.lastFourDigits}</strong>] sum to <strong>{mobileData.lastFourSingleDigit}</strong>: {mobileData.lastFourMeaning}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-state-box">
+                <p>No phone number registered for this client profile. Please click "Edit Report" and add a phone number in the contact details at the bottom of the page to generate mobile compatibility insights.</p>
+              </div>
+            )}
           </section>
 
           {/* ── 6. LO SHU GRID ──────────────────────────── */}

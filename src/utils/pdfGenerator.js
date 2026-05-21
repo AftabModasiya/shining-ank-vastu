@@ -11,7 +11,8 @@ import {
   getHiddenInfluences,
   getPersonalYearData,
   calcPersonalYearForYear,
-  getLuckyElements
+  getLuckyElements,
+  getMobileAnalysis
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -41,7 +42,7 @@ export const generatePDF = async (clientData) => {
   
   const reportData = clientData.report || clientData;
   const rawDob = clientData.dob || "";
-  const phone = clientData.phone || "99139 61553";
+  const phone = clientData.phone || "-";
   const gender = clientData.gender || "male";
 
   // ── Dynamic core number calculations ──────────────────────────────────
@@ -54,6 +55,9 @@ export const generatePDF = async (clientData) => {
 
   // Dynamic lucky elements (fully calculated from bhagyank, mulank, kuaNum)
   const luckyData = getLuckyElements(bhagyank, mulank, kuaNum);
+
+  // Dynamic mobile number compatibility insights
+  const mobileData = getMobileAnalysis(phone, bhagyank);
 
   // Helper: build the display breakdown string for Mulank
   const mulankBreakdown = (() => {
@@ -693,36 +697,95 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("MOBILE NUMBER COMPATIBILITY INSIGHTS", 14, 27);
 
+  // 1. Pre-calculate line wraps and heights to compute container height
+  const descWidth = pageWidth - 66; // 144mm width
+  const vibLines = mobileData.isValid ? doc.splitTextToSize(mobileData.vibrationMeaning, descWidth) : [];
+  const compLines = mobileData.isValid ? doc.splitTextToSize(mobileData.compatibilityDescription, descWidth) : [];
+  const zeroLines = mobileData.isValid ? doc.splitTextToSize(mobileData.zeroAnalysis, descWidth) : [];
+  const lastFourText = mobileData.isValid ? `[${mobileData.lastFourDigits}] sum to ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}` : "";
+  const lastFourLines = mobileData.isValid ? doc.splitTextToSize(lastFourText, descWidth) : [];
+
+  let cardH = 30; // default height if invalid
+  if (mobileData.isValid) {
+    const h1 = Math.max(4.5, vibLines.length * 4);
+    const h2 = Math.max(4.5, compLines.length * 4);
+    const h3 = Math.max(4.5, zeroLines.length * 4);
+    const h4 = Math.max(4.5, lastFourLines.length * 4);
+    cardH = 14 + h1 + h2 + h3 + h4 + 4; // 14mm header offset + total line heights + padding
+  }
+
+  // Draw background box for Section 10
   doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, 36, pageWidth - 30, 46, 3, 3, "F");
+  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "F");
   doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.25);
-  doc.roundedRect(15, 36, pageWidth - 30, 46, 3, 3, "D");
+  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "D");
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(`Analyzing Phone/Mobile Number: ${phone}`, 20, 44);
+  doc.setFontSize(10.5);
+  doc.text(`Mobile Number: ${phone} (Sum: ${mobileData.totalSum} | Root: ${mobileData.singleDigit})`, 20, 42);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  const phoneText = "Mobile numbers are modern energetic channels. The sum total of your mobile number digits represents your secondary business and relationship vibration. A sum of 1, 5, or 6 is highly friendly with your birth chart. Avoid combinations ending in highly challenging digits to maintain progressive business communications.";
-  const phoneLines = doc.splitTextToSize(phoneText, pageWidth - 42);
-  doc.text(phoneLines, 20, 51);
+  // Draw a horizontal divider line below title
+  doc.setDrawColor(232, 213, 191);
+  doc.setLineWidth(0.15);
+  doc.line(18, 45, pageWidth - 18, 45);
 
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...goldPrimary);
-  doc.text("Recommended Mobile Total: 1, 5 or 6 (for business success)", 20, 72);
+  doc.setFontSize(8.5);
+  let contentY = 50;
+
+  if (mobileData.isValid) {
+    // 1. Vibration
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text("VIBRATION:", 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(vibLines, 48, contentY);
+    contentY += Math.max(4.5, vibLines.length * 4);
+
+    // 2. Compatibility
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text("COMPATIBILITY:", 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(compLines, 48, contentY);
+    contentY += Math.max(4.5, compLines.length * 4);
+
+    // 3. Vastu Flow
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text("VASTU FLOW:", 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(zeroLines, 48, contentY);
+    contentY += Math.max(4.5, zeroLines.length * 4);
+
+    // 4. Last 4 Digits
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text("LAST 4 DIGITS:", 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(lastFourLines, 48, contentY);
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textMuted);
+    doc.text("No mobile number has been provided for this client profile.", 20, 52);
+  }
 
   // Section 11: 5-Year Future Predictions (Dynamic Personal Year per calendar year)
+  // Dynamically position Section 11 relative to the end of Section 10 card
+  const sec11StartY = 35 + cardH + 6;
   doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 90, pageWidth - 20, 10, 2, 2, "F");
+  doc.roundedRect(10, sec11StartY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("5-YEAR PERSONAL YEAR FORECAST", 14, 97);
+  doc.text("5-YEAR PERSONAL YEAR FORECAST", 14, sec11StartY + 7);
 
-  let yrY = 106;
+  let yrY = sec11StartY + 16;
   fiveYearPredictions.forEach(pred => {
     const themeLines = doc.splitTextToSize(pred.theme, pageWidth - 58);
     const cardH = 8 + themeLines.length * 4.5;
