@@ -10,7 +10,8 @@ import {
   getNumberCompatibilityAnalysis,
   getHiddenInfluences,
   getPersonalYearData,
-  calcPersonalYearForYear
+  calcPersonalYearForYear,
+  getLuckyElements
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -50,6 +51,9 @@ export const generatePDF = async (clientData) => {
   const mulank   = calcMulank(rawDob);
   const bhagyank = calcBhagyank(rawDob);
   const kuaNum   = calculateKua(rawDob, gender);
+
+  // Dynamic lucky elements (fully calculated from bhagyank, mulank, kuaNum)
+  const luckyData = getLuckyElements(bhagyank, mulank, kuaNum);
 
   // Helper: build the display breakdown string for Mulank
   const mulankBreakdown = (() => {
@@ -957,12 +961,13 @@ export const generatePDF = async (clientData) => {
   doc.text("LUCKY ELEMENTS", 14, 27);
 
   const luckyElements = [
-    { label: "Lucky Dates", value: reportData.luckyElements?.luckyDates || "1, 10, 19, 28", color: [0, 150, 100] },
-    { label: "Challenging Dates", value: reportData.luckyElements?.unluckyDates || "8, 17, 26", color: [229, 62, 62] },
-    { label: "Lucky Color", value: reportData.luckyElements?.luckyColor || "Orange & White", color: [181, 130, 10] },
-    { label: "Challenging Color", value: reportData.luckyElements?.unluckyColor || "Black & Dark Brown", color: [61, 44, 30] },
-    { label: "Lucky Direction", value: reportData.luckyElements?.luckyDirection || "East", color: [0, 150, 100] },
-    { label: "Core Element", value: reportData.luckyElements?.element || "Fire", color: [181, 130, 10] },
+    { label: "Lucky Number",       value: `${luckyData.luckyNumber} (Life Path)`,   color: [181, 130, 10] },
+    { label: "Lucky Dates",        value: luckyData.luckyDates,                      color: [0, 150, 100] },
+    { label: "Challenging Dates",  value: luckyData.unluckyDates,                    color: [229, 62, 62] },
+    { label: "Lucky Color",        value: luckyData.luckyColor,                      color: [181, 130, 10] },
+    { label: "Challenging Color",  value: luckyData.unluckyColor,                    color: [61, 44, 30] },
+    { label: "Lucky Direction",    value: luckyData.luckyDirection,                  color: [0, 150, 100] },
+    { label: "Core Element",       value: luckyData.element,                         color: [105, 80, 180] },
   ];
 
   const colWidth = (pageWidth - 40) / 3;
@@ -972,22 +977,24 @@ export const generatePDF = async (clientData) => {
   luckyElements.forEach((elem) => {
     const curX = 15 + xIdx * colWidth;
     const curY = 38 + yIdx * 20;
-    
+
     doc.setFillColor(255, 254, 249);
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.2);
-    doc.roundedRect(curX, curY, colWidth - 5, 16, 2, 2, "FD");
-    
-    doc.setFontSize(7.5);
+    doc.roundedRect(curX, curY, colWidth - 5, 18, 2, 2, "FD");
+
+    doc.setFontSize(7);
     doc.setTextColor(...textMuted);
     doc.setFont("helvetica", "normal");
-    doc.text(elem.label, curX + 4, curY + 6);
-    
-    doc.setFontSize(9.5);
+    doc.text(elem.label, curX + 4, curY + 5.5);
+
+    doc.setFontSize(8.5);
     doc.setTextColor(...(elem.color || textDark));
     doc.setFont("helvetica", "bold");
-    doc.text(String(elem.value || "-"), curX + 4, curY + 12);
-    
+    // Wrap long values to fit within card width
+    const valLines = doc.splitTextToSize(String(elem.value || "-"), colWidth - 12);
+    doc.text(valLines[0], curX + 4, curY + 12); // show first line only
+
     xIdx++;
     if (xIdx > 2) {
       xIdx = 0;
@@ -996,23 +1003,28 @@ export const generatePDF = async (clientData) => {
   });
 
   // Section 14: Signature Style for Success
+  // Use tracked yIdx to accurately position after the last row
+  const actualRows = yIdx + (xIdx > 0 ? 1 : 0); // rows actually used (yIdx doesn't increment after last row if incomplete)
+  const luckyGridEndY = 38 + actualRows * 20 + 8;  // 8mm gap after the grid
+
   doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 84, pageWidth - 20, 10, 2, 2, "F");
+  doc.roundedRect(10, luckyGridEndY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("SIGNATURE STYLE FOR SUCCESS", 14, 91);
+  doc.text("SIGNATURE STYLE FOR SUCCESS", 14, luckyGridEndY + 7);
 
+  const sigBoxY = luckyGridEndY + 14;  // 4mm below header bottom (header is 10mm)
   doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, 100, pageWidth - 30, 68, 3, 3, "F");
+  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "F");
   doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.25);
-  doc.roundedRect(15, 100, pageWidth - 30, 68, 3, 3, "D");
+  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "D");
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Prosperity Signature Rules:", 20, 108);
+  doc.text("Prosperity Signature Rules:", 20, sigBoxY + 8);
 
   const sigRules = [
     "• Sign at a continuous rising angle of approximately 45 degrees.",
@@ -1024,7 +1036,7 @@ export const generatePDF = async (clientData) => {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  let sigY = 115;
+  let sigY = sigBoxY + 16;
   sigRules.forEach(rule => {
     doc.text(rule, 20, sigY);
     sigY += 9;

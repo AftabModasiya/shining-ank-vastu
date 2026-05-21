@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear } from '../utils/numerology';
 import './ReportView.css';
 
 
@@ -157,6 +157,12 @@ function ReportView() {
   const kuaBreakdown = displayData.gender === 'female'
     ? `4 + ${yearSum} = ${kuaNum}`
     : `11 - ${yearSum} = ${kuaNum}`;
+
+  // Dynamic lucky elements — calculated from bhagyank + kuaNum (same logic as PDF)
+  const luckyData = getLuckyElements(bhagyank, mulank, kuaNum);
+
+  // Current personal year
+  const personalYearNum = calcPersonalYearForYear(displayData.dob || '', new Date().getFullYear());
 
   return (
     <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
@@ -335,23 +341,21 @@ function ReportView() {
 
           {/* ── 5. LUCKY ELEMENTS ────────────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">🍀 Lucky Elements</h3>
+            <h3 className="section-title">Lucky Elements</h3>
             <div className="lucky-grid">
               {[
-                { label: 'Lucky Dates', name: 'report.luckyElements.luckyDates', value: report.luckyElements.luckyDates },
-                { label: 'Unlucky Dates', name: 'report.luckyElements.unluckyDates', value: report.luckyElements.unluckyDates },
-                { label: 'Lucky Color', name: 'report.luckyElements.luckyColor', value: report.luckyElements.luckyColor },
-                { label: 'Unlucky Color', name: 'report.luckyElements.unluckyColor', value: report.luckyElements.unluckyColor },
-                { label: 'Lucky Direction', name: 'report.luckyElements.luckyDirection', value: report.luckyElements.luckyDirection },
-                { label: 'Element', name: 'report.luckyElements.element', value: report.luckyElements.element },
+                { label: 'Lucky Number',      value: `${luckyData.luckyNumber} (Life Path)` },
+                { label: 'Lucky Dates',       value: luckyData.luckyDates },
+                { label: 'Challenging Dates', value: luckyData.unluckyDates },
+                { label: 'Lucky Color',       value: luckyData.luckyColor },
+                { label: 'Challenging Color', value: luckyData.unluckyColor },
+                { label: 'Lucky Direction',   value: luckyData.luckyDirection },
+                { label: 'Core Element',      value: luckyData.element },
+                { label: 'Personal Year',     value: `${personalYearNum} (${new Date().getFullYear()})` },
               ].map((item, idx) => (
                 <div key={idx} className="lucky-item">
                   <span className="lucky-label">{item.label}</span>
-                  {isEditing ? (
-                    <input name={item.name} value={item.value} onChange={handleInputChange} className="edit-input-small" />
-                  ) : (
-                    <span className="lucky-value">{item.value}</span>
-                  )}
+                  <span className="lucky-value">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -518,8 +522,9 @@ function ReportView() {
                 </>
               )}
               <div className="personality-highlights">
-                <div className="highlight-item"><strong>Lucky Numbers:</strong> 2, 3, 9</div>
-                <div className="highlight-item"><strong>Lucky Colors:</strong> White</div>
+                <div className="highlight-item"><strong>Lucky Number:</strong> {luckyData.luckyNumber}</div>
+                <div className="highlight-item"><strong>Lucky Color:</strong> {luckyData.luckyColor}</div>
+                <div className="highlight-item"><strong>Lucky Direction:</strong> {luckyData.luckyDirection}</div>
               </div>
             </div>
           </section>

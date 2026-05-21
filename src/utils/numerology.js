@@ -173,6 +173,89 @@ export const calcPersonalYear = (dob) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LUCKY ELEMENTS — fully dynamic per numerology rules
+//
+// 1. Lucky Number  = bhagyank (Life Path — sum of all DOB digits reduced)
+// 2. Lucky Dates   = bhagyank itself + multiples that reduce back to bhagyank
+//                    e.g. bhagyank 3 → 3, 12, 21, 30
+// 3. Lucky Colors  = planetary color for bhagyank
+// 4. Challenging Colors = planetary color for the non-friend planet of bhagyank
+// 5. Lucky Direction = Kua number based direction (vastu)
+// 6. Core Element  = element mapped to bhagyank planet
+// ─────────────────────────────────────────────────────────────────────────────
+const PLANET_COLORS = {
+  1: { lucky: "Yellow, Orange, Gold",     challenging: "Dark Blue, Black" },
+  2: { lucky: "White, Silver, Light Green", challenging: "Red, Crimson" },
+  3: { lucky: "Yellow, Purple, Pink",     challenging: "Dark Green, Black" },
+  4: { lucky: "Blue, Grey, Electric Blue", challenging: "White, Pink" },
+  5: { lucky: "Green, Light Shades",      challenging: "Dark Red, Black" },
+  6: { lucky: "White, Cream, Pastel",     challenging: "Dark Green, Black" },
+  7: { lucky: "Smoke Grey, Light Blue",   challenging: "Dark Red, Brown" },
+  8: { lucky: "Dark Blue, Black, Dark Brown", challenging: "Red, Orange" },
+  9: { lucky: "Red, Crimson, Maroon",     challenging: "Green, Light Blue" },
+};
+
+const PLANET_ELEMENTS = {
+  1: "Fire (Sun energy)",
+  2: "Water (Moon energy)",
+  3: "Space / Ether (Jupiter energy)",
+  4: "Air / Wood (Rahu energy)",
+  5: "Earth (Mercury energy)",
+  6: "Space / Metal (Venus energy)",
+  7: "Space / Metal (Ketu energy)",
+  8: "Earth (Saturn energy)",
+  9: "Fire (Mars energy)",
+};
+
+const KUA_DIRECTION = {
+  1: "North",
+  2: "Southwest",
+  3: "East",
+  4: "Southeast",
+  5: "Northeast",  // Male 5 → NE, Female 5 → SW (use Northeast as generic)
+  6: "Northwest",
+  7: "West",
+  8: "Northeast",
+  9: "South",
+};
+
+export const getLuckyElements = (bhagyank, mulank, kuaNum) => {
+  // Lucky Dates: bhagyank itself + calendar dates whose digits sum to bhagyank
+  const luckyDates = [];
+  for (let d = 1; d <= 31; d++) {
+    const s = String(d).split("").reduce((a, c) => a + parseInt(c), 0);
+    if (s === bhagyank) luckyDates.push(d);
+  }
+
+  // Challenging Dates: based on mulank's non-friend planet (first non-friend)
+  // Use COMPATIBILITY_TABLE data — we list dates that sum to non-friend numbers
+  const NONFRIEND_MAP = {
+    1: [8], 2: [8, 4, 9], 3: [6], 4: [2, 9], 5: [],
+    6: [3], 7: [], 8: [1, 2], 9: [2, 4]
+  };
+  const nfNums = NONFRIEND_MAP[bhagyank] || [];
+  const challengingDates = [];
+  for (let d = 1; d <= 31; d++) {
+    const s = String(d).split("").reduce((a, c) => a + parseInt(c), 0);
+    if (nfNums.includes(s)) challengingDates.push(d);
+  }
+
+  const colors = PLANET_COLORS[bhagyank] || PLANET_COLORS[1];
+  const element = PLANET_ELEMENTS[bhagyank] || "Fire";
+  const direction = KUA_DIRECTION[kuaNum] || "East";
+
+  return {
+    luckyNumber:     bhagyank,
+    luckyDates:      luckyDates.join(", ") || String(bhagyank),
+    unluckyDates:    challengingDates.length ? challengingDates.join(", ") : "None significant",
+    luckyColor:      colors.lucky,
+    unluckyColor:    colors.challenging,
+    luckyDirection:  direction,
+    element,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 1. CHALDEAN LO SHU COMPATIBILITY CHART
 //    Based on traditional planetary friend/enemy/neutral relationships
 //    Planet mapping: 1=Sun, 2=Moon, 3=Jupiter, 4=Rahu(Uranus), 5=Mercury,
