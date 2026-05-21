@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook } from '../utils/numerology';
 import './ReportView.css';
 
 
@@ -167,6 +167,12 @@ function ReportView() {
   // Dynamic mobile number compatibility insights
   const mobileData = getMobileAnalysis(displayData.phone || '', bhagyank);
 
+  // Dynamic name compatibility insights
+  const nameCompatData = getNameCompatibilityAnalysis(displayData.name || '', mulank, bhagyank);
+
+  // Dynamic career outlook insights
+  const careerData = getCareerOutlook(mulank, bhagyank);
+
   return (
     <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
       {/* ── Header ───────────────────────────────────────── */}
@@ -299,10 +305,8 @@ function ReportView() {
               <div className="title-deco-ring crd-ring-2"></div>
               <span className="core-num-label">NAME NUMBER</span>
               <div className="core-num-value-row">
-                <span className="core-num-value">{report.nameNumber ?? report.soulUrge}</span>
-                {report.nameCompound && (
-                  <span className="core-num-compound">(Compound {report.nameCompound})</span>
-                )}
+                <span className="core-num-value">{nameCompatData.nameNumber}</span>
+                <span className="core-num-compound">(Chaldean)</span>
               </div>
             </div>
 
@@ -403,6 +407,45 @@ function ReportView() {
                 <p>No phone number registered for this client profile. Please click "Edit Report" and add a phone number in the contact details at the bottom of the page to generate mobile compatibility insights.</p>
               </div>
             )}
+          </section>
+
+          {/* ── 5c. NAME NUMBER COMPATIBILITY INSIGHTS ─────── */}
+          <section className="report-section">
+            <h3 className="section-title">Name Number Compatibility Analysis</h3>
+            <div className="name-compatibility-container">
+              <div className="name-header-card">
+                <h4>Analyzed Name: <span className="highlight-text">{displayData.name || 'Native'}</span></h4>
+                <div className="name-badge-row">
+                  <span className="badge">Chaldean Root: <strong>{nameCompatData.nameNumber}</strong></span>
+                  <span className="badge badge-compat">Compatibility Status: <strong>{nameCompatData.status}</strong></span>
+                </div>
+              </div>
+              <div className="name-detail-card">
+                <span className="detail-label">Planetary & Core Compatibility</span>
+                <p className="detail-value">{nameCompatData.description}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 5d. PROFESSIONAL & CAREER OUTLOOK ─────────── */}
+          <section className="report-section">
+            <h3 className="section-title">💼 Professional & Career Outlook</h3>
+            <div className="career-outlook-container">
+              <div className="career-intro-card">
+                <span className="detail-label">Dynamic Career Guidance & Best Paths</span>
+                <p className="detail-value">{careerData.careerIntroText}</p>
+              </div>
+              <div className="career-professions-card">
+                <span className="detail-label">Top Recommended Professions</span>
+                <div className="professions-badge-row">
+                  {careerData.professionsList.map((prof, idx) => (
+                    <span key={idx} className="profession-badge">
+                      <strong>{prof}</strong>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* ── 6. LO SHU GRID ──────────────────────────── */}

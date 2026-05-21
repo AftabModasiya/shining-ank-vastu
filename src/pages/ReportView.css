@@ -429,6 +429,180 @@
   font-size: 14px;
 }
 
+/* ── 5c. NAME COMPATIBILITY INSIGHTS ──────────────────── */
+.name-compatibility-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.name-header-card {
+  background: rgba(234, 238, 252, 0.5); /* Matching the pastel blue theme from PDF */
+  border: 1px solid rgba(200, 210, 240, 0.8);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.name-header-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  color: #3d2c1e;
+  margin: 0;
+}
+
+.name-header-card h4 .highlight-text {
+  color: #b5820a;
+  font-weight: 600;
+}
+
+.name-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.name-badge-row .badge {
+  background: #fdf2cc;
+  color: #b5820a;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid rgba(181, 130, 10, 0.15);
+}
+
+.name-badge-row .badge-compat {
+  background: #edf1fe;
+  color: #3d5afe;
+  border-color: rgba(61, 90, 254, 0.15);
+}
+
+.name-detail-card {
+  background: rgba(255, 254, 249, 0.88);
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.name-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(181, 130, 10, 0.08);
+}
+
+.name-detail-card .detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #8c6f58;
+}
+
+.name-detail-card .detail-value {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #5a4230;
+  margin: 0;
+}
+
+/* ── 5d. PROFESSIONAL & CAREER OUTLOOK ────────────────── */
+.career-outlook-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.career-intro-card {
+  background: rgba(255, 254, 249, 0.88);
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.career-intro-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(181, 130, 10, 0.08);
+}
+
+.career-intro-card .detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8c6f58;
+  border-bottom: 1px solid rgba(232, 213, 191, 0.4);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.career-intro-card .detail-value {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #5a4230;
+  margin: 0;
+}
+
+.career-professions-card {
+  background: rgba(255, 254, 249, 0.88);
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.career-professions-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(181, 130, 10, 0.08);
+}
+
+.career-professions-card .detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8c6f58;
+  border-bottom: 1px solid rgba(232, 213, 191, 0.4);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.professions-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.professions-badge-row .profession-badge {
+  background: #fcf8f2;
+  color: #8c6f58;
+  border: 1px solid rgba(232, 213, 191, 0.7);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 12.5px;
+  transition: all 0.2s ease;
+}
+
+.professions-badge-row .profession-badge:hover {
+  background: #b5820a;
+  color: #ffffff;
+  border-color: #b5820a;
+  transform: scale(1.03);
+}
+
 /* ── 6. LO SHU GRID ────────────────────────────────────── */
 .loshu-container {
   display: grid;

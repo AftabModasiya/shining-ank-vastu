@@ -386,6 +386,131 @@ export const getMobileAnalysis = (phone, bhagyank) => {
   };
 };
 
+export const calcChaldeanName = (name) => {
+  if (!name) return 0;
+  const CHALDEAN_MAP = {
+    A: 1, I: 1, J: 1, Q: 1, Y: 1,
+    B: 2, K: 2, R: 2,
+    C: 3, G: 3, L: 3, S: 3,
+    D: 4, M: 4, T: 4,
+    E: 5, H: 5, N: 5, X: 5,
+    U: 6, V: 6, W: 6,
+    O: 7, Z: 7,
+    F: 8, P: 8
+  };
+  const letters = name.toUpperCase().replace(/[^A-Z]/g, "").split("");
+  const total = letters.reduce((sum, char) => sum + (CHALDEAN_MAP[char] || 0), 0);
+  return reduce(total);
+};
+
+export const getNameCompatibilityAnalysis = (name, mulank, bhagyank) => {
+  if (!name || name.trim() === "") {
+    return {
+      nameNumber: 0,
+      status: "Neutral",
+      description: "Please provide a name to analyze name number compatibility."
+    };
+  }
+
+  const nameNumber = calcChaldeanName(name);
+  const mulankCompat = getCompatibility(nameNumber, mulank);
+  const bhagyankCompat = getCompatibility(nameNumber, bhagyank);
+
+  let status = "Neutral";
+  let description = "";
+
+  const PLANET_NAMES = {
+    1: "Sun",
+    2: "Moon",
+    3: "Jupiter",
+    4: "Rahu",
+    5: "Mercury",
+    6: "Venus",
+    7: "Ketu",
+    8: "Saturn",
+    9: "Mars",
+  };
+
+  const namePlanet = PLANET_NAMES[nameNumber] || "Unknown Planet";
+  const mulankPlanet = PLANET_NAMES[mulank] || "Unknown Planet";
+  const bhagyankPlanet = PLANET_NAMES[bhagyank] || "Unknown Planet";
+
+  if (mulankCompat.status === "friend" && bhagyankCompat.status === "friend") {
+    status = "HIGHLY FAVORABLE";
+    description = `Your Chaldean Name Number is ${nameNumber} (${namePlanet}). It shares a highly friendly relationship with both your Psychic Number ${mulank} (${mulankPlanet}) and Destiny Number ${bhagyank} (${bhagyankPlanet}). This alignment creates a cosmic harmony that acts as a catalyst, dissolving career blockages and naturally attracting wealth, health, and positive relationships.`;
+  } else if (mulankCompat.status === "friend" || bhagyankCompat.status === "friend") {
+    if (mulankCompat.status === "enemy" || bhagyankCompat.status === "enemy") {
+      status = "NEUTRAL (MIXED VIBRATION)";
+      description = `Your Chaldean Name Number is ${nameNumber} (${namePlanet}). It is friendly to one of your core numbers but challenging to the other. For example, it is ${mulankCompat.label} to your Psychic Number ${mulank} and ${bhagyankCompat.label} to your Destiny Number ${bhagyank}. This mixed vibration can cause inconsistent results, where career benefits are offset by personal friction. A slight spelling correction is advised to align it perfectly.`;
+    } else {
+      status = "FAVORABLE";
+      description = `Your Chaldean Name Number is ${nameNumber} (${namePlanet}). It is friendly with your Psychic Number ${mulank} (${mulankPlanet}) and neutral to your Destiny Number ${bhagyank} (${bhagyankPlanet}). This is a supportive vibration that strengthens your personal drive and communication effectiveness.`;
+    }
+  } else if (mulankCompat.status === "enemy" || bhagyankCompat.status === "enemy") {
+    status = "CHALLENGING / NON-FRIENDLY";
+    description = `Your Chaldean Name Number is ${nameNumber} (${namePlanet}) shares a challenging/hostile relationship with your core energies (Psychic Number ${mulank} and/or Destiny Number ${bhagyank}). This planetary clash can introduce sudden delays, unnecessary struggles, or recurring obstacles in professional growth and business negotiations. A name spelling correction to align with a friendly number (like 1, 5, or 6) is highly recommended.`;
+  } else {
+    status = "NEUTRAL";
+    description = `Your Chaldean Name Number is ${nameNumber} (${namePlanet}) shares a neutral relationship with your Psychic Number ${mulank} and Destiny Number ${bhagyank}. It does not cause severe obstruction, but it also does not actively propel you. Aligning your name spelling to a friendly number can significantly boost your overall luck.`;
+  }
+
+  return {
+    nameNumber,
+    status,
+    description
+  };
+};
+
+export const getCareerOutlook = (mulank, bhagyank) => {
+  const psychicPlanets = {
+    1: { name: "Sun", qualities: "leadership, authority, and creative vision", industries: "management, public administration, or independent ventures" },
+    2: { name: "Moon", qualities: "empathy, creative imagination, and strong intuition", industries: "creative arts, psychology, public relations, or consulting" },
+    3: { name: "Jupiter", qualities: "wisdom, teaching capabilities, and strategic counseling", industries: "education, advisory, financial planning, or legal services" },
+    4: { name: "Rahu", qualities: "analytical thinking, technical ingenuity, and unconventional ideas", industries: "information technology, research, real estate, or system organization" },
+    5: { name: "Mercury", qualities: "quick communication, business acumen, and versatility", industries: "sales, trading, media, marketing, or travel operations" },
+    6: { name: "Venus", qualities: "aesthetic sensibilities, hospitality, and luxurious tastes", industries: "fashion, luxury retail, hospitality, interior design, or media" },
+    7: { name: "Ketu", qualities: "deep research capability, spiritual inclination, and analytical depth", industries: "scientific research, occult sciences, writing, or analysis" },
+    8: { name: "Saturn", qualities: "discipline, administrative endurance, and long-term planning", industries: "heavy industries, metals, law, judicial administration, or real estate" },
+    9: { name: "Mars", qualities: "courage, physical dynamism, and organizational drive", industries: "defense, sports management, engineering, surgery, or social welfare" }
+  };
+
+  const psychicInfo = psychicPlanets[mulank] || psychicPlanets[1];
+  const destinyInfo = psychicPlanets[bhagyank] || psychicPlanets[1];
+
+  const careerIntroText = `Driven by your Psychic Number ${mulank} (ruled by ${psychicInfo.name}) and Destiny Number ${bhagyank} (ruled by ${destinyInfo.name}), your professional path is governed by ${psychicInfo.qualities}. You thrive best in environments where you can leverage your destiny traits in ${destinyInfo.industries}. Working in roles that call for independent decision-making and planning will yield rapid career advancement. Focus on launching new business ventures on your favorable dates to align with planetary support.`;
+
+  const professionsMap = {
+    1: ["Government Administration", "Corporate Management", "Entrepreneurship / CEO", "Jewelry & Gold Trading"],
+    2: ["Creative Writing & Arts", "Psychology & Counseling", "Import-Export & Liquids", "Human Resource Management"],
+    3: ["Educational Administration", "Financial Advisory / Auditing", "Legal & Judicial Practice", "Consulting & Speaking"],
+    4: ["Software & IT Engineering", "Real Estate Development", "Astrology & Occult Sciences", "Investigative Research"],
+    5: ["Marketing & Public Relations", "Stock Trading & Brokerage", "Journalism & Media Production", "Travel & Tourism Planning"],
+    6: ["Fashion & Interior Designing", "Luxury Goods & Hospitality", "Media, Cinema & Music", "Health & Beauty Services"],
+    7: ["Scientific & Data Research", "Spiritual Healing / Occultism", "Philosophy & Writing", "Financial Audit & Analysis"],
+    8: ["Real Estate & Construction", "Legal Practice & Judiciary", "Heavy Metals & Machinery", "Corporate Restructuring"],
+    9: ["Defense & Police Services", "Sports & Fitness Training", "Surgical Medicine", "NGO & Humanitarian Projects"]
+  };
+
+  const set = new Set([
+    ...(professionsMap[mulank] || professionsMap[1]).slice(0, 2),
+    ...(professionsMap[bhagyank] || professionsMap[1]).slice(0, 2)
+  ]);
+
+  let professionsList = Array.from(set);
+  if (professionsList.length < 4) {
+    const fallback = professionsMap[mulank] || professionsMap[1];
+    fallback.forEach(p => {
+      if (!professionsList.includes(p)) professionsList.push(p);
+    });
+  }
+
+  return {
+    careerIntroText,
+    professionsList: professionsList.slice(0, 4)
+  };
+};
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CHALDEAN LO SHU COMPATIBILITY CHART
 //    Based on traditional planetary friend/enemy/neutral relationships

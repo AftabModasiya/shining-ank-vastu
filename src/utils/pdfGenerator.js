@@ -12,7 +12,9 @@ import {
   getPersonalYearData,
   calcPersonalYearForYear,
   getLuckyElements,
-  getMobileAnalysis
+  getMobileAnalysis,
+  getNameCompatibilityAnalysis,
+  getCareerOutlook
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -58,6 +60,12 @@ export const generatePDF = async (clientData) => {
 
   // Dynamic mobile number compatibility insights
   const mobileData = getMobileAnalysis(phone, bhagyank);
+
+  // Dynamic name number compatibility insights
+  const nameCompatData = getNameCompatibilityAnalysis(clientData.name || '', mulank, bhagyank);
+
+  // Dynamic professional & career outlook insights
+  const careerData = getCareerOutlook(mulank, bhagyank);
 
   // Helper: build the display breakdown string for Mulank
   const mulankBreakdown = (() => {
@@ -631,57 +639,81 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("PROFESSIONAL & CAREER OUTLOOK", 14, 27);
 
+  const careerIntroLines = doc.splitTextToSize(careerData.careerIntroText, pageWidth - 42);
+  const careerCardH = 43 + careerIntroLines.length * 4.5; // dynamic offset + extra row of professions + bottom padding
+
   doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "F");
+  doc.roundedRect(15, 36, pageWidth - 30, careerCardH, 3, 3, "F");
   doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.25);
-  doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "D");
+  doc.roundedRect(15, 36, pageWidth - 30, careerCardH, 3, 3, "D");
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text("Dynamic Career Guidance & Best Paths:", 20, 44);
 
+  // Horizontal divider inside career card
+  doc.setDrawColor(232, 213, 191);
+  doc.setLineWidth(0.15);
+  doc.line(18, 47, pageWidth - 18, 47);
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  const careerIntroText = "According to your Mulank and Bhagyank alignments, you thrive best in leadership, administrative, or strategic planning roles. Working in consulting, business management, or creative operations yields fast growth and social standing. Focus on starting major ventures on your lucky dates to guarantee prosperity.";
-  const careerIntroLines = doc.splitTextToSize(careerIntroText, pageWidth - 42);
-  doc.text(careerIntroLines, 20, 51);
+  doc.text(careerIntroLines, 20, 52);
 
+  const professionsTitleY = 52 + careerIntroLines.length * 4.5 + 4;
   doc.setFont("helvetica", "bold");
-  doc.text("Top Recommended Professions:", 20, 71);
-  const professionsList = reportData.suitableProfessions || ["Leadership Roles", "Creative Arts", "Real Estate & Architecture", "Advisory Consulting"];
+  doc.text("Top Recommended Professions:", 20, professionsTitleY);
+
   doc.setFont("helvetica", "normal");
-  doc.text(professionsList.map(p => `• ${p}`).join("   "), 20, 79);
+  const col1X = 20;
+  const col2X = 105;
+  const line1Y = professionsTitleY + 7;
+  const line2Y = professionsTitleY + 12;
+
+  if (careerData.professionsList[0]) doc.text(`• ${careerData.professionsList[0]}`, col1X, line1Y);
+  if (careerData.professionsList[1]) doc.text(`• ${careerData.professionsList[1]}`, col2X, line1Y);
+  if (careerData.professionsList[2]) doc.text(`• ${careerData.professionsList[2]}`, col1X, line2Y);
+  if (careerData.professionsList[3]) doc.text(`• ${careerData.professionsList[3]}`, col2X, line2Y);
 
   // Section 9: Name Number Compatibility Analysis
+  const sec9StartY = 36 + careerCardH + 6;
   doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 96, pageWidth - 20, 10, 2, 2, "F");
+  doc.roundedRect(10, sec9StartY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("NAME NUMBER COMPATIBILITY ANALYSIS", 14, 103);
+  doc.text("NAME NUMBER COMPATIBILITY ANALYSIS", 14, sec9StartY + 7);
+
+  const nameCompLines = doc.splitTextToSize(nameCompatData.description, pageWidth - 42);
+  const cardHeight = 22 + nameCompLines.length * 4.5 + 8; // title + divider + spacing + status
+  const sec9CardStartY = sec9StartY + 16;
 
   doc.setFillColor(234, 238, 252); // Pastel blue card
-  doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "F");
+  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "F");
   doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.25);
-  doc.roundedRect(15, 112, pageWidth - 30, 52, 3, 3, "D");
+  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "D");
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(`Current Name Vibrations: ${clientData.name || "Native"}`, 20, 120);
+  doc.setFontSize(10.5);
+  doc.text(`Current Name Vibrations: ${clientData.name || "Native"} (Chaldean Root: ${nameCompatData.nameNumber})`, 20, sec9CardStartY + 7);
+
+  // Divider line inside name card
+  doc.setDrawColor(200, 210, 240);
+  doc.setLineWidth(0.15);
+  doc.line(18, sec9CardStartY + 10, pageWidth - 18, sec9CardStartY + 10);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  const nameCompText = `Your calculated Name Number is ${reportData.soulUrge || 1}. This represents a powerful compound energetic frequency. A name compatible with your Mulank and Bhagyank numbers acts as a cosmic catalyst, resolving blockages and attracting abundance effortlessly. If it is neutral or hostile, simple spell corrections can align it perfectly.`;
-  const nameCompLines = doc.splitTextToSize(nameCompText, pageWidth - 42);
-  doc.text(nameCompLines, 20, 127);
+  doc.setFontSize(9.2);
+  doc.text(nameCompLines, 20, sec9CardStartY + 16);
 
+  const statusY = sec9CardStartY + 16 + nameCompLines.length * 4.5 + 4;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...goldPrimary);
-  doc.text(`Name Number Compatibility Status: HIGHLY FAVORABLE`, 20, 150);
+  doc.text(`Name Number Compatibility Status: ${nameCompatData.status}`, 20, statusY);
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 6: MOBILE COMPATIBILITY & 5-YEAR FUTURE PREDICTIONS
