@@ -13,6 +13,7 @@ import {
 import firstp1Img from "../assets/Firstp1.png"; // This is actually the Wheel image
 import firstp2Img from "../assets/firstp2.png"; // This is actually the Lord Ganesha image
 import lastPageImg from "../assets/LastPage.png";
+import ganeshaMantraImg from "../assets/ganeshaMantra.png";
 
 // Helper to asynchronously load images for PDF generation
 const loadImage = (src) => {
@@ -30,6 +31,8 @@ export const generatePDF = async (clientData) => {
     unit: 'mm',
     format: 'a4'
   });
+
+
   
   const reportData = clientData.report || clientData;
   const rawDob = clientData.dob || "";
@@ -87,10 +90,11 @@ export const generatePDF = async (clientData) => {
   const pageHeight = doc.internal.pageSize.getHeight();
 
   // Load assets asynchronously (swap so firstp2Img is Ganesha, firstp1Img is Wheel)
-  const [ganeshaImg, wheelImg, lastPageGraphic] = await Promise.all([
+  const [ganeshaImg, wheelImg, lastPageGraphic, ganeshaMantra] = await Promise.all([
     loadImage(firstp2Img), // Ganesha (firstp2)
     loadImage(firstp1Img), // Wheel (Firstp1)
-    loadImage(lastPageImg)
+    loadImage(lastPageImg),
+    loadImage(ganeshaMantraImg)
   ]);
 
   // Color theme variables (gradient ivory/pastel aesthetic)
@@ -131,12 +135,27 @@ export const generatePDF = async (clientData) => {
     // Light shed watermark: Shining Ank Vastu (using elegant visible gold/ivory tint)
     if (!skipWatermark) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(46);
+      const wmFontSize = 46;
+      doc.setFontSize(wmFontSize);
       doc.setTextColor(205, 195, 178); // More visible soft gold/ivory color
-      doc.text("Shining Ank Vastu", pageWidth / 2, pageHeight / 2, {
-        align: "center",
-        angle: 45
-      });
+
+      const wmText = "Shining Ank Vastu";
+      const scale = doc.internal.scaleFactor;
+      const w = (doc.getStringUnitWidth(wmText) * wmFontSize) / scale;
+      const h = wmFontSize / scale;
+
+      const cx = pageWidth / 2;
+      const cy = pageHeight / 2;
+
+      // Centering calculations for rotated text (45 degrees)
+      const angleRad = Math.PI / 4;
+      const cosAngle = Math.cos(angleRad);
+      const sinAngle = Math.sin(angleRad);
+
+      const x = cx - ((w - h) / 2) * cosAngle;
+      const y = cy + ((w + h) / 2) * sinAngle;
+
+      doc.text(wmText, x, y, { angle: 45 });
     }
   };
 
@@ -172,6 +191,12 @@ export const generatePDF = async (clientData) => {
     doc.addImage(ganeshaImg, "PNG", (pageWidth - 35) / 2, 15, 35, 35);
   }
 
+  // Ganesha Mantra in Hindi centered below Ganesha image
+  if (ganeshaMantra) {
+    // 35mm wide, 8.5mm high, perfectly centered horizontally
+    doc.addImage(ganeshaMantra, "PNG", (pageWidth - 35) / 2, 51.5, 35, 8.5);
+  }
+
   // Brand Name above the wheel image (y shifted from 52 to 65)
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
@@ -190,15 +215,16 @@ export const generatePDF = async (clientData) => {
 
   // Right column dynamic metadata
   let textX = 110;
-  doc.setTextColor(0, 128, 0); // Proper green
+  doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("REPORT PREPARED FOR:", textX, 88);
 
-  doc.setTextColor(...textDark);
+  doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(16);
   doc.text(clientData.name || "Client Name", textX, 98);
 
+  doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text(`DATE OF BIRTH: ${formattedDob}`, textX, 110);
