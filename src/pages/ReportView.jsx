@@ -370,7 +370,7 @@ function ReportView() {
                 { label: 'Lucky Color', value: luckyData.luckyColor },
                 { label: 'Challenging Color', value: luckyData.unluckyColor },
                 { label: 'Lucky Direction', value: luckyData.luckyDirection },
-                { label: 'Core Element', value: luckyData.element },
+                { label: 'Core Element', value: `${luckyData.element} (${luckyData.planetEnergy})` },
                 { label: 'Personal Year', value: `${personalYearNum} (${new Date().getFullYear()})` },
               ].map((item, idx) => (
                 <div key={idx} className="lucky-item">

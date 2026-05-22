@@ -1093,7 +1093,7 @@ export const generatePDF = async (clientData) => {
     { label: "Lucky Color",        value: luckyData.luckyColor,                      color: [181, 130, 10] },
     { label: "Challenging Color",  value: luckyData.unluckyColor,                    color: [61, 44, 30] },
     { label: "Lucky Direction",    value: luckyData.luckyDirection,                  color: [0, 150, 100] },
-    { label: "Core Element",       value: luckyData.element,                         color: [105, 80, 180] },
+    { label: "Core Element",       value: `${luckyData.element} (${luckyData.planetEnergy})`, color: [105, 80, 180] },
   ];
 
   const colWidth = (pageWidth - 40) / 3;

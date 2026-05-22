@@ -265,38 +265,120 @@ const KUA_DIRECTION = {
 };
 
 export const getLuckyElements = (bhagyank, mulank, kuaNum) => {
-  // Lucky Dates: bhagyank itself + calendar dates whose digits sum to bhagyank
-  const luckyDates = [];
-  for (let d = 1; d <= 31; d++) {
-    const s = String(d).split("").reduce((a, c) => a + parseInt(c), 0);
-    if (s === bhagyank) luckyDates.push(d);
-  }
+  // bhagyank is the Life Path Number (reduced from full DOB)
+  const lp = bhagyank || 1;
 
-  // Challenging Dates: based on mulank's non-friend planet (first non-friend)
-  // Use COMPATIBILITY_TABLE data — we list dates that sum to non-friend numbers
-  const NONFRIEND_MAP = {
-    1: [8], 2: [8, 4, 9], 3: [6], 4: [2, 9], 5: [],
-    6: [3], 7: [], 8: [1, 2], 9: [2, 4]
+  // Ruling Planet
+  const PLANET_MAP = {
+    1: "Sun",
+    2: "Moon",
+    3: "Jupiter",
+    4: "Rahu",
+    5: "Mercury",
+    6: "Venus",
+    7: "Ketu",
+    8: "Saturn",
+    9: "Mars"
   };
-  const nfNums = NONFRIEND_MAP[bhagyank] || [];
-  const challengingDates = [];
-  for (let d = 1; d <= 31; d++) {
-    const s = String(d).split("").reduce((a, c) => a + parseInt(c), 0);
-    if (nfNums.includes(s)) challengingDates.push(d);
+  const planet = PLANET_MAP[lp] || "Sun";
+
+  // Lucky Dates (lp, lp + 9, lp + 18, lp + 27 <= 31)
+  const luckyDates = [];
+  for (let d = lp; d <= 31; d += 9) {
+    luckyDates.push(d);
   }
 
-  const colors = PLANET_COLORS[bhagyank] || PLANET_COLORS[1];
-  const element = PLANET_ELEMENTS[bhagyank] || "Fire";
-  const direction = KUA_DIRECTION[kuaNum] || "East";
+  // Challenging Dates
+  const ENEMY_MAP = {
+    1: [6, 8],
+    2: [8, 9],
+    3: [5, 6],
+    4: [1, 8],
+    5: [2],
+    6: [1, 8],
+    7: [8],
+    8: [1, 2, 9],
+    9: [2, 5, 6]
+  };
+  const enemies = ENEMY_MAP[lp] || [];
+  const challengingDates = [];
+  enemies.forEach(e => {
+    for (let d = e; d <= 31; d += 9) {
+      challengingDates.push(d);
+    }
+  });
+  challengingDates.sort((a, b) => a - b);
+  // Ensure unique dates
+  const uniqueChallengingDates = [...new Set(challengingDates)];
+
+  // Colors mapping
+  const LUCKY_COLORS = {
+    1: ["Gold", "Orange", "Yellow"],
+    2: ["White", "Cream", "Light Blue"],
+    3: ["Yellow", "Purple"],
+    4: ["Electric Blue", "Grey"],
+    5: ["Green"],
+    6: ["Pink", "White", "Sky Blue"],
+    7: ["Sea Green", "Light Grey"],
+    8: ["Dark Blue", "Black", "Dark Brown"],
+    9: ["Red", "Maroon"]
+  };
+  const CHALLENGING_COLORS = {
+    1: ["Black", "Dark Blue", "Pink"],
+    2: ["Black", "Dark Blue", "Red", "Maroon"],
+    3: ["Green", "Pink", "White"],
+    4: ["Gold", "Orange", "Black", "Dark Blue"],
+    5: ["White", "Cream"],
+    6: ["Gold", "Orange", "Black", "Dark Blue"],
+    7: ["Black", "Dark Blue", "Dark Brown"],
+    8: ["Red", "Orange", "White"],
+    9: ["Green", "White", "Pink"]
+  };
+
+  const luckyColors = LUCKY_COLORS[lp] || ["Gold"];
+  const challengingColors = CHALLENGING_COLORS[lp] || ["Black"];
+
+  // Direction Mapping
+  const DIRECTION_MAP = {
+    1: "East",
+    2: "North-West",
+    3: "North-East",
+    4: "South",
+    5: "North",
+    6: "South-East",
+    7: "West",
+    8: "North",
+    9: "South"
+  };
+  const direction = DIRECTION_MAP[lp] || "East";
+
+  // Element Mapping
+  const ELEMENT_MAP = {
+    1: "Fire",
+    2: "Water",
+    3: "Ether / Sky",
+    4: "Air",
+    5: "Earth",
+    6: "Water",
+    7: "Air",
+    8: "Earth",
+    9: "Fire"
+  };
+  const element = ELEMENT_MAP[lp] || "Fire";
+
+  // Planet Energy
+  const planetEnergy = `${planet} Energy`;
 
   return {
-    luckyNumber:     bhagyank,
-    luckyDates:      luckyDates.join(", ") || String(bhagyank),
-    unluckyDates:    challengingDates.length ? challengingDates.join(", ") : "None significant",
-    luckyColor:      colors.lucky,
-    unluckyColor:    colors.challenging,
-    luckyDirection:  direction,
+    luckyNumber: lp,
+    luckyDates: luckyDates.join(", "),
+    unluckyDates: uniqueChallengingDates.join(", ") || "None",
+    luckyColor: luckyColors.join(", "),
+    unluckyColor: challengingColors.join(", "),
+    luckyDirection: direction,
     element,
+    planetEnergy,
+    rulingPlanet: planet
   };
 };
 
@@ -1016,6 +1098,8 @@ export const generateReport = (name, dob, gender) => {
   
   const loShuGrid = calculateLoShuGrid(dob);
   const presentNumbers = getPresentNumbers(loShuGrid);
+  const kuaNum = calculateKua(dob, gender);
+  const elements = getLuckyElements(bhagyank, mulank, kuaNum);
 
   return {
     name,
@@ -1059,12 +1143,13 @@ export const generateReport = (name, dob, gender) => {
       content: "You will fulfil all that you take up in life provided you have good name number. You will work far more efficiently for others than if you work independently. In case you work independently, you will remain confused between the choices to make. You are physically strong but mentally emotional or sensitive. You will get a lot of attention from the opposite sex.",
     },
     luckyElements: {
-      luckyDates: "1, 10, 19, 28",
-      unluckyDates: "8, 17, 26",
-      luckyColor: "Orange",
-      unluckyColor: "Black & Brown",
-      luckyDirection: "East",
-      element: "Fire",
+      luckyDates: elements.luckyDates,
+      unluckyDates: elements.unluckyDates,
+      luckyColor: elements.luckyColor,
+      unluckyColor: elements.unluckyColor,
+      luckyDirection: elements.luckyDirection,
+      element: elements.element,
+      planetEnergy: elements.planetEnergy,
     },
     repeatedNumbersAnalysis: presentNumbers.filter(n => n.count > 1).map(n => ({
       num: n.num,
