@@ -38,7 +38,8 @@ const translations = {
       report: { title: 'REPORT', subtitle: 'Editable PDF', desc: 'Refine every interpretation, then export a branded, print-ready PDF.' }
     },
     divider: 'Quick Divine Calculation',
-    footer: '© 2026 Shining Ank Vastu. All Rights Reserved.',
+    footer: 'Shining Ank Vastu - M : 9913961553',
+    footerSubtitle: 'Vedic Numerology Report',
     errorRequired: 'Please fill in all required fields'
   },
   hi: {
@@ -72,7 +73,8 @@ const translations = {
       report: { title: 'रिपोर्ट', subtitle: 'संपादन योग्य पीडीएफ', desc: 'प्रत्येक व्याख्या को परिष्कृत करें, फिर एक ब्रांडेड, प्रिंट-रेडी पीडीएफ निर्यात करें।' }
     },
     divider: 'त्वरित दिव्य गणना',
-    footer: '© 2026 शाइनिंग अंक वास्तु। सर्वाधिकार सुरक्षित।',
+    footer: 'शाइनिंग अंक वास्तु - मो : 9913961553',
+    footerSubtitle: 'वेदिक अंक ज्योतिष रिपोर्ट',
     errorRequired: 'कृपया सभी आवश्यक फ़ील्ड भरें'
   }
 };
@@ -121,7 +123,7 @@ function Home() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.name || !formData.dob) {
       setError(t.errorRequired);
       return;
@@ -132,15 +134,15 @@ function Home() {
     try {
       // Generate numerology report
       const report = generateReport(formData.name, formData.dob, formData.gender);
-      
+
       // Save to Firebase
       const clientData = {
         ...formData,
         report
       };
-      
+
       const result = await saveClient(clientData);
-      
+
       if (result.success) {
         // Navigate to report view
         navigate(`/report/${result.id}`, { state: { clientData } });
@@ -164,9 +166,9 @@ function Home() {
             <div className="logo">
               <div className="logo-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <span className="logo-text">{t.title}</span>
@@ -175,26 +177,26 @@ function Home() {
             {/* Desktop Navigation */}
             <div className="header-actions">
               <div className="language-selector">
-                <button 
+                <button
                   className="btn-language"
                   onClick={() => setShowLangMenu(!showLangMenu)}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2" />
                   </svg>
                   {language === 'en' ? 'EN' : 'हिं'}
                   <ChevronDown size={16} />
                 </button>
                 {showLangMenu && (
                   <div className="language-menu">
-                    <button 
+                    <button
                       className={`lang-option ${language === 'en' ? 'active' : ''}`}
                       onClick={() => toggleLanguage('en')}
                     >
                       English
                     </button>
-                    <button 
+                    <button
                       className={`lang-option ${language === 'hi' ? 'active' : ''}`}
                       onClick={() => toggleLanguage('hi')}
                     >
@@ -203,13 +205,13 @@ function Home() {
                   </div>
                 )}
               </div>
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => navigate('/history')}
               >
                 {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
               </button>
-              <button 
+              <button
                 className="btn btn-outline btn-logout"
                 onClick={() => {
                   localStorage.removeItem('isAuthenticated');
@@ -236,9 +238,9 @@ function Home() {
               <div className="logo">
                 <div className="logo-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <span className="logo-text">{t.title}</span>
@@ -247,7 +249,7 @@ function Home() {
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="sidebar-content">
               {/* Language Selector Section */}
               <div className="sidebar-section">
@@ -255,13 +257,13 @@ function Home() {
                   {language === 'en' ? 'Select Language' : 'भाषा चुनें'}
                 </span>
                 <div className="sidebar-lang-selector">
-                  <button 
+                  <button
                     className={`sidebar-lang-btn ${language === 'en' ? 'active' : ''}`}
                     onClick={() => toggleLanguage('en')}
                   >
                     English
                   </button>
-                  <button 
+                  <button
                     className={`sidebar-lang-btn ${language === 'hi' ? 'active' : ''}`}
                     onClick={() => toggleLanguage('hi')}
                   >
@@ -272,7 +274,7 @@ function Home() {
 
               {/* Action Buttons Section */}
               <div className="sidebar-actions-group">
-                <button 
+                <button
                   className="sidebar-action-btn"
                   onClick={() => {
                     setShowSidebar(false);
@@ -281,8 +283,8 @@ function Home() {
                 >
                   {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
                 </button>
-                
-                <button 
+
+                <button
                   className="sidebar-action-btn logout"
                   onClick={() => {
                     setShowSidebar(false);
@@ -308,7 +310,7 @@ function Home() {
               {t.subtitle}
             </p>
             <div className="hero-actions">
-              <button 
+              <button
                 className="btn btn-primary btn-large"
                 onClick={handleQuickCalculation}
               >
@@ -544,8 +546,8 @@ function Home() {
               </div>
 
               <div className="form-actions">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary btn-large btn-submit"
                   disabled={loading}
                 >
@@ -570,6 +572,7 @@ function Home() {
       <footer className="footer">
         <div className="container">
           <p>{t.footer}</p>
+          <p>{t.footerSubtitle}</p>
         </div>
       </footer>
     </div>

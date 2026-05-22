@@ -688,7 +688,7 @@ function ReportView() {
 
       {/* ── Footer ───────────────────────────────────────── */}
       <footer className="report-footer">
-        <p>Shining Ank Vastu</p>
+        <p>Shining Ank Vastu - M : 9913961553</p>
         <p>Vedic Numerology Report</p>
         <p>Report generated on: {new Date().toLocaleDateString()}</p>
       </footer>

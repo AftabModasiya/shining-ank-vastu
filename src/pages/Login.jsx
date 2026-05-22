@@ -27,9 +27,9 @@ function Login({ setAuth }) {
           <div className="login-header">
             <div className="login-logo">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <h1>Shining Ank Vastu</h1>
@@ -57,17 +57,17 @@ function Login({ setAuth }) {
                 required
               />
             </div>
-            
+
             {error && <div className="login-error">{error}</div>}
 
             <button type="submit" className="btn-login">
               Sign In to Dashboard
             </button>
           </form>
-          
+
           <div className="login-footer">
-            <p>© 2026 Shining Ank Vastu. All Rights Reserved.</p>
-          </div>
+            <p>Shining Ank Vastu - M : 9913961553</p>
+            <p>Vedic Numerology Report</p>          </div>
         </div>
       </div>
     </div>

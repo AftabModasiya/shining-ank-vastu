@@ -237,7 +237,8 @@ function ClientHistory() {
 
       {/* Footer */}
       <footer className="history-footer">
-        <p>© 2026 Occult King by Pinnacle Vastu. All Rights Reserved.</p>
+        <p>Shining Ank Vastu - M : 9913961553</p>
+        <p>Vedic Numerology Report</p>
       </footer>
     </div>
   );
