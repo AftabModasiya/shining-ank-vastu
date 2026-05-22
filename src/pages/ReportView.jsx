@@ -311,20 +311,20 @@ function ReportView() {
             </div>
 
             {/* Soul Urge */}
-            <div className="core-num-card core-blue">
+            {/* <div className="core-num-card core-blue">
               <div className="title-deco-ring crd-ring-1"></div>
               <div className="title-deco-ring crd-ring-2"></div>
               <span className="core-num-label">SOUL URGE</span>
               <span className="core-num-value">{report.soulUrge}</span>
-            </div>
+            </div> */}
 
             {/* Personality */}
-            <div className="core-num-card core-blue">
+            {/* <div className="core-num-card core-blue">
               <div className="title-deco-ring crd-ring-1"></div>
               <div className="title-deco-ring crd-ring-2"></div>
               <span className="core-num-label">PERSONALITY</span>
               <span className="core-num-value">{report.personality}</span>
-            </div>
+            </div> */}
           </div>
 
           {/* ── 4. DATE INFLUENCER ───────────────────────── */}
@@ -351,14 +351,14 @@ function ReportView() {
             <h3 className="section-title">Lucky Elements</h3>
             <div className="lucky-grid">
               {[
-                { label: 'Lucky Number',      value: `${luckyData.luckyNumber} (Life Path)` },
-                { label: 'Lucky Dates',       value: luckyData.luckyDates },
+                { label: 'Lucky Number', value: `${luckyData.luckyNumber} (Life Path)` },
+                { label: 'Lucky Dates', value: luckyData.luckyDates },
                 { label: 'Challenging Dates', value: luckyData.unluckyDates },
-                { label: 'Lucky Color',       value: luckyData.luckyColor },
+                { label: 'Lucky Color', value: luckyData.luckyColor },
                 { label: 'Challenging Color', value: luckyData.unluckyColor },
-                { label: 'Lucky Direction',   value: luckyData.luckyDirection },
-                { label: 'Core Element',      value: luckyData.element },
-                { label: 'Personal Year',     value: `${personalYearNum} (${new Date().getFullYear()})` },
+                { label: 'Lucky Direction', value: luckyData.luckyDirection },
+                { label: 'Core Element', value: luckyData.element },
+                { label: 'Personal Year', value: `${personalYearNum} (${new Date().getFullYear()})` },
               ].map((item, idx) => (
                 <div key={idx} className="lucky-item">
                   <span className="lucky-label">{item.label}</span>

@@ -1006,7 +1006,7 @@ export const generateReport = (name, dob, gender) => {
     },
     dateInfluencer: {
       title: `Date Influencer - Born on ${parseInt(dob.split("-")[2])}`,
-      desc: `People born on ${parseInt(dob.split("-")[2])}, ${parseInt(dob.split("-")[2]) + 9}, ${parseInt(dob.split("-")[2]) + 18}, ${parseInt(dob.split("-")[2]) + 27} (any month)`,
+      desc: `People born on ${parseInt(dob.split("-")[2])}, ${parseInt(dob.split("-")[2]) + 9}, ${parseInt(dob.split("-")[2]) + 18} (any month)`,
       content: "These people give importance to other's point of view as well but have a rational mind. Due to the presence of 2, Moon, they will have a pleasing personality.",
     },
     personalityAnalysis: {

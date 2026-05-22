@@ -494,7 +494,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("HIDDEN INFLUENCE OF LO SHU PLANES", 14, yogY + 7);
+  doc.text("SECRET POWER OF LO SHU PLANES", 14, yogY + 7);
 
   // Show first 4 planes on Page 3 (3 horizontal + first vertical)
   const pagePlanes = hiddenInfluences.slice(0, 4);
@@ -538,7 +538,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("POWER OF REPEATING NUMBERS IN YOUR DOB", 14, 27);
+  doc.text("EFFECT OF REPEATING NUMBERS", 14, 27);
 
   let repY = 36;
   const repeated = reportData.repeatedNumbersAnalysis || [];
