@@ -14,7 +14,9 @@ import {
   getLuckyElements,
   getMobileAnalysis,
   getNameCompatibilityAnalysis,
-  getCareerOutlook
+  getCareerOutlook,
+  getArrows,
+  getRepeatedNumbers
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -308,7 +310,7 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("BIRTH CHART OVERVIEW", 14, 27);
 
-  // Render Lo Shu Grid
+  // Render Lo Shu Grid (Raw DOB frequencies only, no Kua numbers inside the grid)
   const loShuGrid = calculateLoShuGrid(rawDob);
   const gridSize = 22;
   const gridStartX = 25;
@@ -325,21 +327,26 @@ export const generatePDF = async (clientData) => {
       const x = gridStartX + j * gridSize;
       const y = gridStartY + i * gridSize;
 
-      if (count > 0) {
-        doc.setFillColor(254, 249, 231); // Pastel yellow for filled number
-        doc.rect(x, y, gridSize, gridSize, "F");
-      }
+      // Draw blank square border
       doc.rect(x, y, gridSize, gridSize, "D");
       
-      doc.setFontSize(15);
-      doc.setTextColor(count > 0 ? goldPrimary[0] : 190, count > 0 ? goldPrimary[1] : 190, count > 0 ? goldPrimary[2] : 190);
-      doc.setFont("helvetica", count > 0 ? "bold" : "normal");
-      doc.text(String(num), x + gridSize / 2, y + gridSize / 2 + 3.5, { align: "center" });
-      
-      if (count > 1) {
-        doc.setFontSize(7.5);
+      // If present in DOB, draw pastel yellow background and show repeated digits
+      if (count > 0) {
+        doc.setFillColor(254, 249, 231); 
+        doc.rect(x, y, gridSize, gridSize, "F");
+        doc.rect(x, y, gridSize, gridSize, "D"); // Redraw border over fill
+        
+        const cellValue = String(num).repeat(count);
+        // Adjust font size dynamically to fit repeated digits inside the cell
+        let fontSize = 15;
+        if (count === 2) fontSize = 13.5;
+        else if (count === 3) fontSize = 11.5;
+        else if (count >= 4) fontSize = 9.5;
+        
+        doc.setFontSize(fontSize);
         doc.setTextColor(...goldPrimary);
-        doc.text(`x${count}`, x + gridSize - 5, y + 5);
+        doc.setFont("helvetica", "bold");
+        doc.text(cellValue, x + gridSize / 2, y + gridSize / 2 + (fontSize * 0.25), { align: "center" });
       }
     }
   }
@@ -357,24 +364,48 @@ export const generatePDF = async (clientData) => {
   doc.setFont("helvetica", "bold");
   doc.text("GRID HIGHLIGHTS", sideX + 6, gridStartY + 8);
   
-  doc.setFontSize(8.5);
+  const presentNums = getPresentNumbers(loShuGrid).map(n => n.num).join(", ");
+  const missingNums = getMissingNumbers(loShuGrid).join(", ");
+  
+  const repeats = getRepeatedNumbers(loShuGrid);
+  const repeatsStr = repeats.length > 0 
+    ? repeats.map(r => `${r.num} (${r.strength})`).join(", ") 
+    : "None";
+
+  const arrows = getArrows(loShuGrid);
+  const posArrowsStr = arrows.positive.length > 0 
+    ? arrows.positive.map(a => a.split(" (")[0]).join(", ") 
+    : "None";
+  const negArrowsStr = arrows.negative.length > 0 
+    ? arrows.negative.map(a => a.split(" (")[0]).join(", ") 
+    : "None";
+
+  let currY = gridStartY + 14;
+  const drawLine = (label, val, labelOffset) => {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.setFontSize(8.2);
+    doc.text(label, sideX + 6, currY);
+    
+    doc.setFont("helvetica", "bold");
+    const lines = doc.splitTextToSize(val, pageWidth - (sideX + 6 + labelOffset) - 18);
+    doc.text(lines, sideX + 6 + labelOffset, currY);
+    currY += (lines.length * 4.5) + 3.5;
+  };
+
+  drawLine("Present Numbers: ", presentNums || "None", 26);
+  drawLine("Missing Numbers: ", missingNums || "None", 26);
+  drawLine("Repeated Numbers: ", repeatsStr, 28);
+  drawLine("Positive Arrows: ", posArrowsStr, 25);
+  drawLine("Negative Arrows: ", negArrowsStr, 26);
+  
+  // Kua Details line
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...textDark);
-  doc.text("Present Numbers:", sideX + 6, gridStartY + 18);
-  const presentNums = getPresentNumbers(loShuGrid).map(n => n.num).join(", ");
+  doc.setFontSize(8.2);
+  doc.text("Kua Details: ", sideX + 6, currY);
   doc.setFont("helvetica", "bold");
-  doc.text(presentNums || "None", sideX + 6, gridStartY + 24);
-  
-  doc.setFont("helvetica", "normal");
-  doc.text("Missing Numbers:", sideX + 6, gridStartY + 36);
-  const missingNums = getMissingNumbers(loShuGrid).join(", ");
-  doc.setFont("helvetica", "bold");
-  doc.text(missingNums || "None", sideX + 6, gridStartY + 42);
-
-  doc.setFont("helvetica", "normal");
-  doc.text("Kua Direction:", sideX + 6, gridStartY + 54);
-  doc.setFont("helvetica", "bold");
-  doc.text(reportData.luckyElements?.luckyDirection || "East", sideX + 6, gridStartY + 60);
+  doc.text(`${kuaNum} (Direction: ${reportData.luckyElements?.luckyDirection || "East"})`, sideX + 24, currY);
 
   // Section 2: Core Personality Insights
   const coreY = gridStartY + (gridSize * 3) + 15;

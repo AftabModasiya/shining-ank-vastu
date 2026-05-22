@@ -56,12 +56,57 @@ export const getMissingNumbers = (grid) => {
 // Helper function to get present numbers
 export const getPresentNumbers = (grid) => {
   const present = [];
+  const PLANET_NAMES = { 1:"Sun", 2:"Moon", 3:"Jupiter", 4:"Rahu", 5:"Mercury", 6:"Venus", 7:"Ketu", 8:"Saturn", 9:"Mars" };
   for (let i = 0; i < 9; i++) {
     if (grid[i] > 0) {
-      present.push({ num: i + 1, count: grid[i] });
+      present.push({ num: i + 1, count: grid[i], planet: PLANET_NAMES[i + 1] || "Unknown" });
     }
   }
   return present;
+};
+
+// Helper function to detect positive and negative arrows in the grid
+export const getArrows = (grid) => {
+  const arrowDefs = [
+    { numbers: [1, 5, 9], name: "Willpower", posDesc: "Arrow of Willpower (1-5-9)", negDesc: "Arrow of Frustration (Missing 1-5-9)" },
+    { numbers: [3, 5, 7], name: "Emotion / Memory", posDesc: "Arrow of Emotion (3-5-7)", negDesc: "Arrow of Weak Memory (Missing 3-5-7)" },
+    { numbers: [4, 5, 6], name: "Prosperity / Success", posDesc: "Arrow of Prosperity (4-5-6)", negDesc: "Arrow of Adversity (Missing 4-5-6)" },
+    { numbers: [2, 5, 8], name: "Determination", posDesc: "Arrow of Determination (2-5-8)", negDesc: "Arrow of Indecision (Missing 2-5-8)" },
+    { numbers: [1, 2, 3], name: "Peace & Art", posDesc: "Arrow of Peace & Art (1-2-3)", negDesc: "Arrow of Instability (Missing 1-2-3)" },
+    { numbers: [4, 8, 9], name: "Strategy & Planning", posDesc: "Arrow of Strategy & Planning (4-8-9)", negDesc: "Arrow of Disorganization (Missing 4-8-9)" },
+    { numbers: [7, 8, 9], name: "Practical Action", posDesc: "Arrow of Practical Action (7-8-9)", negDesc: "Arrow of Hesitation (Missing 7-8-9)" },
+    { numbers: [1, 4, 7], name: "Intellect & Health", posDesc: "Arrow of Intellect & Health (1-4-7)", negDesc: "Arrow of Weak Vitality (Missing 1-4-7)" }
+  ];
+
+  const positive = [];
+  const negative = [];
+
+  arrowDefs.forEach(arrow => {
+    const presentCount = arrow.numbers.filter(n => grid[n - 1] > 0).length;
+    if (presentCount === 3) {
+      positive.push(arrow.posDesc);
+    } else if (presentCount === 0) {
+      negative.push(arrow.negDesc);
+    }
+  });
+
+  return { positive, negative };
+};
+
+// Helper function to get repeated numbers and their strengths
+export const getRepeatedNumbers = (grid) => {
+  const repeated = [];
+  for (let i = 0; i < 9; i++) {
+    const count = grid[i];
+    if (count > 1) {
+      let strength = "Normal";
+      if (count === 2) strength = "Strong";
+      else if (count === 3) strength = "Very Strong";
+      else if (count >= 4) strength = "Dominating / Excessive";
+      repeated.push({ num: i + 1, count, strength });
+    }
+  }
+  return repeated;
 };
 
 // Helper: reduce a number to single digit by summing its digits
