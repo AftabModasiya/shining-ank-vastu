@@ -6,6 +6,19 @@ import { updateClient } from '../services/clientService';
 import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook } from '../utils/numerology';
 import './ReportView.css';
 
+const formatDateToDDMMYYYY = (dateStr) => {
+  if (!dateStr) return '';
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+  }
+  return dateStr;
+};
+
 
 function ReportView() {
   const { id } = useParams();
@@ -241,7 +254,7 @@ function ReportView() {
             <p className="report-meta">
               {isEditing ? (
                 <input type="date" name="dob" value={editedData.dob} onChange={handleInputChange} className="edit-input edit-date" />
-              ) : displayData.dob}
+              ) : formatDateToDDMMYYYY(displayData.dob)}
               {' · '}
               <span style={{ textTransform: 'capitalize' }}>{displayData.gender}</span>
             </p>
@@ -690,7 +703,10 @@ function ReportView() {
       <footer className="report-footer">
         <p>Shining Ank Vastu - M : 9913961553</p>
         <p>Vedic Numerology Report</p>
-        <p>Report generated on: {new Date().toLocaleDateString()}</p>
+        <p>Report generated on: {(() => {
+          const today = new Date();
+          return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+        })()}</p>
       </footer>
     </div>
   );

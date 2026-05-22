@@ -130,6 +130,9 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 .client-card:hover {
   transform: translateY(-5px);
@@ -159,12 +162,20 @@
   box-shadow: 0 4px 12px rgba(181, 130, 10, 0.28);
 }
 
+.client-info {
+  min-width: 0; /* allows overflow truncation/wrapping */
+  flex: 1;
+}
+
 .client-info h3 {
   font-family: 'Playfair Display', serif;
   color: #3d2c1e;
   font-size: 18px;
   margin: 0 0 3px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .client-dob {
   color: #8c6f58;
@@ -188,24 +199,41 @@
 .detail-value { color: #5a4230; font-size: 13px; text-align: right; }
 
 /* Number badges — mini pastel cards (consistent with report cards) */
-.client-numbers { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.client-numbers {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: nowrap; /* keep them on a single line */
+  margin-top: auto; /* push them and buttons to the bottom of the card */
+}
 
 .number-badge-small {
   background: linear-gradient(145deg, #fef9e7, #fdf2cc);
   border: 1px solid rgba(181, 130, 10, 0.18);
   border-radius: 12px;
-  padding: 8px 12px;
-  display: flex; flex-direction: column; align-items: center;
-  flex: 1; min-width: 72px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0; /* allow flex shrink */
 }
 .badge-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.10em; text-transform: uppercase;
-  color: #8c6f58; margin-bottom: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8c6f58;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  width: 100%;
 }
 .badge-number {
   font-family: 'Playfair Display', serif;
-  font-size: 22px; font-weight: 500;
+  font-size: 20px; font-weight: 500;
   color: #b5820a; line-height: 1;
 }
 

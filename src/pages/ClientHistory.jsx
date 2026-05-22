@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, Trash2, Search, Calendar, User } from 'lucide-react';
 import { getAllClients, deleteClient } from '../services/clientService';
+import { calcMulank, calcBhagyank, getNameCompatibilityAnalysis } from '../utils/numerology';
 import './ClientHistory.css';
 
 function ClientHistory() {
@@ -63,14 +64,27 @@ function ClientHistory() {
     }
   };
 
+  const formatDateToDDMMYYYY = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+    }
+    return dateStr;
+  };
+
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   return (
@@ -144,7 +158,7 @@ function ClientHistory() {
                       <h3>{client.name}</h3>
                       <p className="client-dob">
                         <Calendar size={14} />
-                        {client.dob}
+                        {formatDateToDDMMYYYY(client.dob)}
                       </p>
                     </div>
                   </div>
@@ -174,22 +188,27 @@ function ClientHistory() {
                     )}
                   </div>
 
-                  {client.report && (
-                    <div className="client-numbers">
-                      <div className="number-badge-small">
-                        <span className="badge-label">Life Path</span>
-                        <span className="badge-number">{client.report.lifePath}</span>
+                  {(() => {
+                    const mVal = calcMulank(client.dob || '');
+                    const bVal = calcBhagyank(client.dob || '');
+                    const nVal = getNameCompatibilityAnalysis(client.name || '', mVal, bVal).nameNumber;
+                    return (
+                      <div className="client-numbers">
+                        <div className="number-badge-small">
+                          <span className="badge-label">Mulank</span>
+                          <span className="badge-number">{mVal}</span>
+                        </div>
+                        <div className="number-badge-small">
+                          <span className="badge-label">Bhagyank</span>
+                          <span className="badge-number">{bVal}</span>
+                        </div>
+                        <div className="number-badge-small">
+                          <span className="badge-label">Name No.</span>
+                          <span className="badge-number">{nVal}</span>
+                        </div>
                       </div>
-                      <div className="number-badge-small">
-                        <span className="badge-label">Expression</span>
-                        <span className="badge-number">{client.report.expression}</span>
-                      </div>
-                      <div className="number-badge-small">
-                        <span className="badge-label">Soul Urge</span>
-                        <span className="badge-number">{client.report.soulUrge}</span>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <div className="client-actions">
                     <button
