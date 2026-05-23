@@ -354,19 +354,7 @@ export const generatePDF = async (clientData) => {
     }
   }
 
-  // Side summary box (ivory background card)
   const sideX = 104;
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(sideX, gridStartY, pageWidth - sideX - 15, gridSize * 3, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(sideX, gridStartY, pageWidth - sideX - 15, gridSize * 3, 3, 3, "D");
-
-  doc.setTextColor(...goldPrimary);
-  doc.setFontSize(10.5);
-  doc.setFont("helvetica", "bold");
-  doc.text("GRID HIGHLIGHTS", sideX + 6, gridStartY + 8);
-  
   const presentNums = getPresentNumbers(loShuGrid).map(n => n.num).join(", ");
   const missingNums = getMissingNumbers(loShuGrid).join(", ");
   
@@ -382,6 +370,34 @@ export const generatePDF = async (clientData) => {
   const negArrowsStr = arrows.negative.length > 0 
     ? arrows.negative.map(a => a.split(" (")[0]).join(", ") 
     : "None";
+
+  // Calculate wrapped lines and height dynamically to prevent overflow
+  const getLineHeight = (val, labelOffset) => {
+    const lines = doc.splitTextToSize(val, pageWidth - (sideX + 6 + labelOffset) - 18);
+    return (lines.length * 4.5) + 3.5;
+  };
+
+  let totalTextHeight = 14; // start offset + title padding
+  totalTextHeight += getLineHeight(presentNums || "None", 26);
+  totalTextHeight += getLineHeight(missingNums || "None", 26);
+  totalTextHeight += getLineHeight(repeatsStr, 28);
+  totalTextHeight += getLineHeight(posArrowsStr, 25);
+  totalTextHeight += getLineHeight(negArrowsStr, 26);
+  totalTextHeight += 8; // Kua details height + padding + safety margin
+
+  const sideCardHeight = Math.max(gridSize * 3, totalTextHeight);
+
+  // Side summary box (ivory background card)
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(sideX, gridStartY, pageWidth - sideX - 15, sideCardHeight, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(sideX, gridStartY, pageWidth - sideX - 15, sideCardHeight, 3, 3, "D");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(10.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("GRID HIGHLIGHTS", sideX + 6, gridStartY + 8);
 
   let currY = gridStartY + 14;
   const drawLine = (label, val, labelOffset) => {
@@ -412,7 +428,7 @@ export const generatePDF = async (clientData) => {
   doc.text(`${kuaNum} (Direction: ${kuaVastuInfo.direction})`, sideX + 24, currY);
 
   // Section 2: Core Personality Insights
-  const coreY = gridStartY + (gridSize * 3) + 15;
+  const coreY = gridStartY + sideCardHeight + 15;
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, coreY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
@@ -539,6 +555,8 @@ export const generatePDF = async (clientData) => {
     const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
     const borderWidth = plane.isActive ? 0.4 : 0.15;
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
     const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
     const cardHeight = 8 + interpLines.length * 5;
 
@@ -678,46 +696,143 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("PROFESSIONAL & CAREER OUTLOOK", 14, 27);
 
-  const careerIntroLines = doc.splitTextToSize(careerData.careerIntroText, pageWidth - 42);
-  const careerCardH = 43 + careerIntroLines.length * 4.5; // dynamic offset + extra row of professions + bottom padding
-
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, 36, pageWidth - 30, careerCardH, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(15, 36, pageWidth - 30, careerCardH, 3, 3, "D");
+  // 1. Compatibility Matrix
+  let careerY = 36;
+  doc.setFillColor(243, 246, 252);
+  doc.roundedRect(15, careerY, pageWidth - 30, 22, 2, 2, "F");
+  doc.setDrawColor(173, 193, 230);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, careerY, pageWidth - 30, 22, 2, 2, "D");
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("Dynamic Career Guidance & Best Paths:", 20, 44);
+  doc.setFontSize(10);
+  doc.text(`Combination ${mulank}-${bhagyank} Connection: ${careerData.compatibilityStatus}`, 20, careerY + 6);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const esotericLines = doc.splitTextToSize(`Esoteric Insight: ${careerData.esotericReason}`, pageWidth - 42);
+  doc.text(esotericLines, 20, careerY + 11);
+  
+  careerY += 26;
 
-  // Horizontal divider inside career card
-  doc.setDrawColor(232, 213, 191);
+  // 2. Workstyle
+  const workstyleLines = doc.splitTextToSize(careerData.workstyle, pageWidth - 42);
+  const workstyleH = 10 + workstyleLines.length * 4.5;
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, careerY, pageWidth - 30, workstyleH, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
   doc.setLineWidth(0.15);
-  doc.line(18, 47, pageWidth - 18, 47);
+  doc.roundedRect(15, careerY, pageWidth - 30, workstyleH, 2, 2, "D");
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.text(careerIntroLines, 20, 52);
-
-  const professionsTitleY = 52 + careerIntroLines.length * 4.5 + 4;
+  doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
-  doc.text("Top Recommended Professions:", 20, professionsTitleY);
+  doc.setFontSize(9.5);
+  doc.text("Impact on Workstyle", 20, careerY + 5.5);
 
+  doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
-  const col1X = 20;
-  const col2X = 105;
-  const line1Y = professionsTitleY + 7;
-  const line2Y = professionsTitleY + 12;
+  doc.setFontSize(8.5);
+  doc.text(workstyleLines, 20, careerY + 11);
 
-  if (careerData.professionsList[0]) doc.text(`• ${careerData.professionsList[0]}`, col1X, line1Y);
-  if (careerData.professionsList[1]) doc.text(`• ${careerData.professionsList[1]}`, col2X, line1Y);
-  if (careerData.professionsList[2]) doc.text(`• ${careerData.professionsList[2]}`, col1X, line2Y);
-  if (careerData.professionsList[3]) doc.text(`• ${careerData.professionsList[3]}`, col2X, line2Y);
+  careerY += workstyleH + 4;
+
+  // 3. Suitable Careers
+  let careersH = 8;
+  const suitableWrapped = careerData.topCareers.map((c, idx) => {
+    const lines = doc.splitTextToSize(`Field ${idx + 1}: ${c.field} - ${c.explanation}`, pageWidth - 46);
+    careersH += lines.length * 4.5 + 2;
+    return lines;
+  });
+
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, careerY, pageWidth - 30, careersH, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.15);
+  doc.roundedRect(15, careerY, pageWidth - 30, careersH, 2, 2, "D");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Top 3 Recommended Career Fields", 20, careerY + 5.5);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  let innerY = careerY + 11;
+  suitableWrapped.forEach(lines => {
+    doc.text(lines, 20, innerY);
+    innerY += lines.length * 4.5 + 2;
+  });
+
+  careerY += careersH + 4;
+
+  // 4. Careers to Avoid
+  let avoidH = 8;
+  const avoidWrapped = careerData.careersToAvoid.map(item => {
+    const lines = doc.splitTextToSize(`• ${item}`, pageWidth - 42);
+    avoidH += lines.length * 4.5 + 1;
+    return lines;
+  });
+
+  doc.setFillColor(255, 240, 240);
+  doc.roundedRect(15, careerY, pageWidth - 30, avoidH, 2, 2, "F");
+  doc.setDrawColor(249, 213, 213);
+  doc.setLineWidth(0.15);
+  doc.roundedRect(15, careerY, pageWidth - 30, avoidH, 2, 2, "D");
+
+  doc.setTextColor(197, 34, 31);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Careers to Avoid (Strict Warning)", 20, careerY + 5.5);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  let innerAvoidY = careerY + 11;
+  avoidWrapped.forEach(lines => {
+    doc.text(lines, 20, innerAvoidY);
+    innerAvoidY += lines.length * 4.5 + 1;
+  });
+
+  careerY += avoidH + 4;
+
+  // 5. Golden Remedy
+  const remedyLines = doc.splitTextToSize(careerData.goldenRemedy, pageWidth - 42);
+  const remedyH = 10 + remedyLines.length * 4.5;
+
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(15, careerY, pageWidth - 30, remedyH, 2, 2, "F");
+  doc.setDrawColor(249, 231, 159);
+  doc.setLineWidth(0.15);
+  doc.roundedRect(15, careerY, pageWidth - 30, remedyH, 2, 2, "D");
+
+  doc.setTextColor(176, 96, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Golden Professional Remedy", 20, careerY + 5.5);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.text(remedyLines, 20, careerY + 11);
+
+  const careerCardH = careerY + remedyH - 36;
 
   // Section 9: Name Number Compatibility Analysis
-  const sec9StartY = 36 + careerCardH + 6;
+  let sec9StartY = 36 + careerCardH + 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.2);
+  const nameCompLines = doc.splitTextToSize(nameCompatData.description, pageWidth - 46);
+  const cardHeight = 16 + (nameCompLines.length * 4.5) + 12; // dynamic height including headers, description height, status line, and padding
+  
+  if (sec9StartY + cardHeight + 20 > pageHeight - 25) {
+    doc.addPage();
+    drawPageShell(doc);
+    drawFooter(doc);
+    sec9StartY = 20;
+  }
+
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, sec9StartY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
@@ -725,8 +840,6 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("NAME NUMBER COMPATIBILITY ANALYSIS", 14, sec9StartY + 7);
 
-  const nameCompLines = doc.splitTextToSize(nameCompatData.description, pageWidth - 42);
-  const cardHeight = 22 + nameCompLines.length * 4.5 + 8; // title + divider + spacing + status
   const sec9CardStartY = sec9StartY + 16;
 
   doc.setFillColor(234, 238, 252); // Pastel blue card
@@ -747,9 +860,13 @@ export const generatePDF = async (clientData) => {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.2);
-  doc.text(nameCompLines, 20, sec9CardStartY + 16);
+  let currentTextY = sec9CardStartY + 16;
+  nameCompLines.forEach(line => {
+    doc.text(line, 20, currentTextY);
+    currentTextY += 4.5;
+  });
 
-  const statusY = sec9CardStartY + 16 + nameCompLines.length * 4.5 + 4;
+  const statusY = currentTextY + 5;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...goldPrimary);
   doc.text(`Name Number Compatibility Status: ${nameCompatData.status}`, 20, statusY);
@@ -966,6 +1083,8 @@ export const generatePDF = async (clientData) => {
 
   // Description
   doc.setFillColor(255, 254, 249);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
   const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
   doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
   doc.setDrawColor(...goldPrimary);
@@ -999,6 +1118,8 @@ export const generatePDF = async (clientData) => {
   hiddenInfluences.slice(4).forEach(plane => {
     const statusLabel = plane.isActive ? "FULLY ACTIVE" : plane.isInactive ? "ABSENT" : "PARTIAL";
     const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
     const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
     const cardH = 8 + interpLines.length * 5;
 

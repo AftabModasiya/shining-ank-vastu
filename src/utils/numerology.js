@@ -604,51 +604,192 @@ export const getNameCompatibilityAnalysis = (name, mulank, bhagyank) => {
 };
 
 export const getCareerOutlook = (mulank, bhagyank) => {
-  const psychicPlanets = {
-    1: { name: "Sun", qualities: "leadership, authority, and creative vision", industries: "management, public administration, or independent ventures" },
-    2: { name: "Moon", qualities: "empathy, creative imagination, and strong intuition", industries: "creative arts, psychology, public relations, or consulting" },
-    3: { name: "Jupiter", qualities: "wisdom, teaching capabilities, and strategic counseling", industries: "education, advisory, financial planning, or legal services" },
-    4: { name: "Rahu", qualities: "analytical thinking, technical ingenuity, and unconventional ideas", industries: "information technology, research, real estate, or system organization" },
-    5: { name: "Mercury", qualities: "quick communication, business acumen, and versatility", industries: "sales, trading, media, marketing, or travel operations" },
-    6: { name: "Venus", qualities: "aesthetic sensibilities, hospitality, and luxurious tastes", industries: "fashion, luxury retail, hospitality, interior design, or media" },
-    7: { name: "Ketu", qualities: "deep research capability, spiritual inclination, and analytical depth", industries: "scientific research, occult sciences, writing, or analysis" },
-    8: { name: "Saturn", qualities: "discipline, administrative endurance, and long-term planning", industries: "heavy industries, metals, law, judicial administration, or real estate" },
-    9: { name: "Mars", qualities: "courage, physical dynamism, and organizational drive", industries: "defense, sports management, engineering, surgery, or social welfare" }
+  const compat = getCompatibility(mulank, bhagyank);
+  const status = compat.status === "friend" ? "Highly Compatible" :
+                 compat.status === "enemy" ? "Anti" : "Neutral";
+
+  const planetNames = {
+    1: "Sun (Surya)",
+    2: "Moon (Chandra)",
+    3: "Jupiter (Guru)",
+    4: "Uranus (Rahu)",
+    5: "Mercury (Budh)",
+    6: "Venus (Shukar)",
+    7: "Neptune (Ketu)",
+    8: "Saturn (Shani)",
+    9: "Mars (Mangal)"
   };
 
-  const psychicInfo = psychicPlanets[mulank] || psychicPlanets[1];
-  const destinyInfo = psychicPlanets[bhagyank] || psychicPlanets[1];
+  const p1 = planetNames[mulank] || "Unknown";
+  const p2 = planetNames[bhagyank] || "Unknown";
 
-  const careerIntroText = `Driven by your Psychic Number ${mulank} (ruled by ${psychicInfo.name}) and Destiny Number ${bhagyank} (ruled by ${destinyInfo.name}), your professional path is governed by ${psychicInfo.qualities}. You thrive best in environments where you can leverage your destiny traits in ${destinyInfo.industries}. Working in roles that call for independent decision-making and planning will yield rapid career advancement. Focus on launching new business ventures on your favorable dates to align with planetary support.`;
+  let esotericReason = "";
+  let workstyle = "";
+  let topCareers = [];
+  let careersToAvoid = [];
+  let goldenRemedy = "";
 
-  const professionsMap = {
-    1: ["Government Administration", "Corporate Management", "Entrepreneurship / CEO", "Jewelry & Gold Trading"],
-    2: ["Creative Writing & Arts", "Psychology & Counseling", "Import-Export & Liquids", "Human Resource Management"],
-    3: ["Educational Administration", "Financial Advisory / Auditing", "Legal & Judicial Practice", "Consulting & Speaking"],
-    4: ["Software & IT Engineering", "Real Estate Development", "Astrology & Occult Sciences", "Investigative Research"],
-    5: ["Marketing & Public Relations", "Stock Trading & Brokerage", "Journalism & Media Production", "Travel & Tourism Planning"],
-    6: ["Fashion & Interior Designing", "Luxury Goods & Hospitality", "Media, Cinema & Music", "Health & Beauty Services"],
-    7: ["Scientific & Data Research", "Spiritual Healing / Occultism", "Philosophy & Writing", "Financial Audit & Analysis"],
-    8: ["Real Estate & Construction", "Legal Practice & Judiciary", "Heavy Metals & Machinery", "Corporate Restructuring"],
-    9: ["Defense & Police Services", "Sports & Fitness Training", "Surgical Medicine", "NGO & Humanitarian Projects"]
-  };
+  // 1 & 8 / 8 & 1 combination
+  if ((mulank === 1 && bhagyank === 8) || (mulank === 8 && bhagyank === 1)) {
+    esotericReason = "The intense cosmic friction between Sun (absolute power & ego) and Saturn (justice & structural delays) demands that actions be purified by discipline before rewards manifest.";
+    workstyle = `The Mulank ${mulank} and Bhagyank ${bhagyank} combination shapes a highly authoritative, determined, and resilient professional profile. You possess immense leadership ambitions (Sun energy) but face systemic delays, heavy initial duties, or early-career friction (Saturn energy). You work best when having absolute independent control over projects, serving as an executive decision-maker, or acting as an independent expert rather than functioning within a rigid subordinate hierarchy.`;
+    topCareers = [
+      {
+        field: "Real Estate & Infrastructure Development",
+        explanation: "Prioritizing the Conductor/Destiny energy of Saturn (8) which rules land, iron, concrete, and physical structural assets, aligned with Sun's administrative authority."
+      },
+      {
+        field: "Corporate Law & Judicial Advisory",
+        explanation: "Saturn governs justice and evidence, while the Sun provides the administrative authority and leadership presence required to command respect in legal and regulatory frameworks."
+      },
+      {
+        field: "Large-Scale Industrial Management",
+        explanation: "Saturn rules heavy manufacturing, mining, and operations, while the Sun provides the executive leadership needed to direct large organizations or corporate entities."
+      }
+    ];
+    careersToAvoid = [
+      "Speculative stock trading, quick-money schemes, or gambling ventures where Saturnian lessons can lead to severe sudden financial losses.",
+      "Partnership-heavy retail boutiques or design agencies without a clear, legally bounded operating structure."
+    ];
+    goldenRemedy = "Keep a copper Sun symbol on the East wall of your office workspace. Always write your main business plans or signatures with a royal blue ink pen on green paper to balance solar authority and Saturnian structure.";
+  } else {
+    // Generate for all other combinations
+    // Esoteric Reasons
+    if (compat.status === "friend") {
+      esotericReason = `The planetary alliance between ${p1} and ${p2} creates an open energetic channel, aligning your core impulses with your life's destiny path.`;
+    } else if (compat.status === "enemy") {
+      esotericReason = `The opposing vibrations of ${p1} and ${p2} create structural tension, requiring conscious alignment between your daily impulses and destiny path.`;
+    } else {
+      esotericReason = `A neutral relationship between ${p1} and ${p2} offers a clean slate where professional growth is directly proportional to structured effort.`;
+    }
 
-  const set = new Set([
-    ...(professionsMap[mulank] || professionsMap[1]).slice(0, 2),
-    ...(professionsMap[bhagyank] || professionsMap[1]).slice(0, 2)
-  ]);
+    // Workstyle
+    const mulankQualities = {
+      1: "independent, authoritative, and pioneering",
+      2: "diplomatic, intuitive, and collaborative",
+      3: "philosophical, wise, and expressive",
+      4: "organized, analytical, and unconventional",
+      5: "adaptable, quick-witted, and trade-focused",
+      6: "creative, harmony-seeking, and aesthetic",
+      7: "introspective, analytical, and research-driven",
+      8: "disciplined, administrative, and persistent",
+      9: "courageous, dynamic, and goal-oriented"
+    };
 
-  let professionsList = Array.from(set);
-  if (professionsList.length < 4) {
-    const fallback = professionsMap[mulank] || professionsMap[1];
-    fallback.forEach(p => {
-      if (!professionsList.includes(p)) professionsList.push(p);
-    });
+    const bhagyankInfluence = {
+      1: "independent control, executive decisions, and pioneering new projects.",
+      2: "partnerships, counseling, public relations, or artistic creation.",
+      3: "training, higher advisory, academic research, or financial auditing.",
+      4: "systems architecture, technical research, or complex project execution.",
+      5: "trading, client negotiations, quick communications, and marketing.",
+      6: "design, luxury services, client relationships, and media campaigns.",
+      7: "data science, technical research, counseling, or writing.",
+      8: "heavy manufacturing, real estate development, legal structures, or operations.",
+      9: "defense, engineering execution, sports management, or crisis control."
+    };
+
+    workstyle = `Your workstyle is driven by the ${mulankQualities[mulank] || "purposeful"} energy of Mulank ${mulank} and guided by the destiny path of Bhagyank ${bhagyank}. You operate most effectively in environments that allow for ${bhagyankInfluence[bhagyank] || "professional growth"}`;
+
+    // Industry database
+    const industries = {
+      1: [
+        { field: "Government Services & Public Administration", explanation: "Sun (1) rules state power and high authority, making administrative management highly favorable." },
+        { field: "Independent Entrepreneurship & CEO Roles", explanation: "Your pioneering spirit demands independent decision-making and business ownership." },
+        { field: "Management Consulting & Corporate Leadership", explanation: "You possess a natural capability to direct others and consult on strategic business decisions." }
+      ],
+      2: [
+        { field: "Imports-Exports & Liquid Industries", explanation: "Moon (2) rules water, liquids, and travel, making trade in these sectors highly profitable." },
+        { field: "Counseling, Psychology & Human Resources", explanation: "Grants deep emotional intelligence and an intuitive understanding of human nature." },
+        { field: "Creative Arts, Writing & Design", explanation: "Enables expression of rich imagination and refined artistic sensibilities." }
+      ],
+      3: [
+        { field: "Higher Education & Academic Research", explanation: "Jupiter (3) represents Guru and wisdom, aligning perfectly with academic training and speaking." },
+        { field: "Financial Advisory, Auditing & Banking", explanation: "Enforces strong ethical standards and analytical wisdom for large-scale financial management." },
+        { field: "Legal Services & Judicial Practice", explanation: "Jupiter is the guardian of law and order, ensuring success in litigation and advisory roles." }
+      ],
+      4: [
+        { field: "Information Technology & Software Systems", explanation: "Rahu (4) rules future tech, code development, and electronics, supporting technical innovation." },
+        { field: "Real Estate Development & Planning", explanation: "Rahu governs physical layouts and building foundations, matching construction sectors." },
+        { field: "Occult Sciences & Technical Research", explanation: "Grants unconventional analytical capabilities to decode complex patterns and mysteries." }
+      ],
+      5: [
+        { field: "International Trade, Commerce & Brokerage", explanation: "Mercury (5) governs business transactions and trade channels, boosting commercial success." },
+        { field: "Marketing, Journalism & Media Production", explanation: "Grants exceptional verbal intelligence, public relations skills, and quick adaptability." },
+        { field: "Travel, Logistics & Tourism Planning", explanation: "Mercury rules movement, making shipping, travel agency, or logistics highly favorable." }
+      ],
+      6: [
+        { field: "Fashion Design & Luxury Goods Retail", explanation: "Venus (6) rules aesthetic beauty, luxury, and style, aligning with premium lifestyle brands." },
+        { field: "Hospitality & High-End Services", explanation: "Venus rules comfort and relationship management, promising success in guest relations and hotels." },
+        { field: "Media, Cinema & Entertainment Industries", explanation: "Your natural magnetic charisma and creative expression support visual media and performing arts." }
+      ],
+      7: [
+        { field: "Scientific Research & Data Analytics", explanation: "Ketu (7) is the seeker of hidden truths, making analytical research and coding highly suitable." },
+        { field: "Spiritual Healing, Yoga & Metaphysical Sciences", explanation: "Grants high intuitive capabilities and affinity for holistic wellness and astrology." },
+        { field: "Creative Literature & Philosophic Writing", explanation: "Enables deep introspection, original thought generation, and analytical authorship." }
+      ],
+      8: [
+        { field: "Real Estate, Mining & Heavy Metal Industries", explanation: "Saturn (8) rules earth elements and construction materials, supporting real estate ventures." },
+        { field: "Legal Practice & Judicial Services", explanation: "Saturn governs justice and karma, supporting legal advocacy and regulatory compliance." },
+        { field: "Manufacturing & Operations Management", explanation: "Rules machinery and structured work systems, ensuring high operational efficiency." }
+      ],
+      9: [
+        { field: "Defense, Law Enforcement & Security Operations", explanation: "Mars (9) represents physical courage, discipline, and security management." },
+        { field: "Surgical Medicine & Physical Engineering", explanation: "Rules sharp tools, mechanics, and physical construction engineering." },
+        { field: "Sports Administration & Athletic Coaching", explanation: "Mars infuses high physical dynamism, competitive endurance, and team leadership." }
+      ]
+    };
+
+    topCareers = industries[bhagyank] || industries[1];
+
+    // Careers to Avoid
+    const avoidMap = {
+      1: "Low-authority service jobs or highly subordinate roles which limit personal identity and growth.",
+      2: "Heavy chemical manufacturing, petroleum refining, or iron factories due to high health and accident hazards.",
+      3: "Fashion boutique retail or glamorous hospitality where Venusian focus may clash with your Jupiterian principles.",
+      4: "Speculative cash lending, short-term stock trading, or unstructured freelance contracts without written agreements.",
+      5: "Slow-paced administrative jobs or raw agricultural farming that limit your active mental agility.",
+      6: "Academic teaching, high-metal metallurgy, or mining operations which clash with Venusian harmony.",
+      7: "High-pressure, daily retail counter sales or short-term day trading which deplete your intuitive nature.",
+      8: "Government contracts or partnerships with close friends/family which might trigger legal disputes or delays.",
+      9: "Soft, passive desk-bound support roles or liquid trade (chemicals, beverages) which suppress Martian drive."
+    };
+
+    careersToAvoid = [
+      avoidMap[mulank] || "Speculative day trading or fields with loose regulatory controls.",
+      avoidMap[bhagyank] || "Highly stagnant administrative roles with zero growth avenues."
+    ];
+
+    // Remedies
+    const remedyMap = {
+      1: "Face East while working and place a small wooden plant or green aventurine pyramid on your desk to invite progress.",
+      2: "Face North while working and place a water fountain or blue glass bottle on the northern corner of your desk.",
+      3: "Face North-East while working and keep a clear quartz crystal ball on your desk to enhance clarity.",
+      4: "Face South-East while working and place a small green bamboo plant on your desk to invite material abundance.",
+      5: "Face Center or North while working and use a green ink pen for all business agreements and documents.",
+      6: "Face North-West while working and keep a brass metal bell on your desk to invite luxury and helpful friends.",
+      7: "Face West while working and place a metal showpiece or white crystal cluster on your desk.",
+      8: "Face North-East while working and keep a grey or black tourmaline stone on your desk for protection.",
+      9: "Face South while working and place a red copper pyramid on your desk to boost authority and fame."
+    };
+
+    goldenRemedy = remedyMap[bhagyank] || remedyMap[1];
   }
+
+  // Backwards compatible professions list
+  const professionsList = topCareers.map(c => c.field);
+
+  // Backwards compatible summary
+  const careerIntroText = `Driven by Mulank ${mulank} and Bhagyank ${bhagyank}, you are suited for ${professionsList.slice(0, 2).join(" and ")}. ${workstyle}`;
 
   return {
     careerIntroText,
-    professionsList: professionsList.slice(0, 4)
+    professionsList,
+    compatibilityStatus: status,
+    esotericReason,
+    workstyle,
+    topCareers,
+    careersToAvoid,
+    goldenRemedy
   };
 };
 

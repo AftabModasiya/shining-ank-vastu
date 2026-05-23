@@ -477,19 +477,60 @@ function ReportView() {
           <section className="report-section">
             <h3 className="section-title">💼 Professional & Career Outlook</h3>
             <div className="career-outlook-container">
-              <div className="career-intro-card">
-                <span className="detail-label">Dynamic Career Guidance & Best Paths</span>
-                <p className="detail-value">{careerData.careerIntroText}</p>
-              </div>
-              <div className="career-professions-card">
-                <span className="detail-label">Top Recommended Professions</span>
-                <div className="professions-badge-row">
-                  {careerData.professionsList.map((prof, idx) => (
-                    <span key={idx} className="profession-badge">
-                      <strong>{prof}</strong>
-                    </span>
-                  ))}
+              {/* Compatibility matrix block */}
+              <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3f6fc, #eaf0fc)', border: '1px solid #adc1e6', marginBottom: '15px' }}>
+                <h4>Compatibility: Mulank {mulank} & Bhagyank {bhagyank} (Combination {mulank}-{bhagyank})</h4>
+                <div className="name-badge-row">
+                  <span className="badge" style={{
+                    background: careerData.compatibilityStatus === 'Highly Compatible' ? '#e6f4ea' :
+                                careerData.compatibilityStatus === 'Anti' ? '#fce8e6' : '#fff7e6',
+                    color: careerData.compatibilityStatus === 'Highly Compatible' ? '#137333' :
+                           careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
+                    border: '1px solid currentColor'
+                  }}>
+                    <strong>{careerData.compatibilityStatus} Connection</strong>
+                  </span>
                 </div>
+                <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#444', fontStyle: 'italic' }}>
+                  <strong>Esoteric Insight:</strong> {careerData.esotericReason}
+                </p>
+              </div>
+
+              {/* Workstyle */}
+              <div className="name-detail-card" style={{ marginBottom: '15px' }}>
+                <span className="detail-label">Impact on Workstyle</span>
+                <p className="detail-value" style={{ lineHeight: '1.6' }}>{careerData.workstyle}</p>
+              </div>
+
+              {/* Suitable Careers */}
+              <div className="name-detail-card" style={{ marginBottom: '15px' }}>
+                <span className="detail-label">Top 3 Most Suitable Career Fields</span>
+                <ul className="career-fields-list" style={{ listStyle: 'none', padding: 0, margin: '10px 0 0 0' }}>
+                  {careerData.topCareers.map((c, idx) => (
+                    <li key={idx} style={{ marginBottom: '12px', borderLeft: '3px solid #d4a017', paddingLeft: '12px' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>Field {idx + 1}: {c.field}</strong>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#555' }}>{c.explanation}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Careers to Avoid */}
+              <div className="name-detail-card" style={{ background: '#fff0f0', border: '1px solid #f9d5d5', marginBottom: '15px' }}>
+                <span className="detail-label" style={{ color: '#c5221f' }}>⚠️ Careers to Avoid (Strict Warning)</span>
+                <ul style={{ paddingLeft: '20px', margin: '10px 0 0 0', fontSize: '0.88rem', color: '#444', lineHeight: '1.5' }}>
+                  {careerData.careersToAvoid.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Golden Remedy */}
+              <div className="name-detail-card" style={{ background: '#fef9e7', border: '1px solid #f9e79f' }}>
+                <span className="detail-label" style={{ color: '#b06000' }}>✨ Golden Professional Remedy</span>
+                <p className="detail-value" style={{ marginTop: '8px', lineHeight: '1.6', fontSize: '0.9rem', fontWeight: '500' }}>
+                  {careerData.goldenRemedy}
+                </p>
               </div>
             </div>
           </section>
