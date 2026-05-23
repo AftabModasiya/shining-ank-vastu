@@ -653,14 +653,24 @@ function ReportView() {
                       </div>
                     ) : (
                       <div className="remedy-content">
-                        <p><strong>Effects:</strong> {remedy.effects}</p>
-                        <p className="crystal-text"><strong>Crystal Remedy:</strong> {remedy.crystal}</p>
-                        {remedy.benefits && (
-                          <div className="benefits-list">
-                            <strong>Benefits:</strong>
-                            <ul>{remedy.benefits.map((b, bIdx) => <li key={bIdx}>{b}</li>)}</ul>
-                          </div>
-                        )}
+                        <div style={{ marginBottom: '12px' }}>
+                          <strong style={{ color: '#c5221f', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>EFFECT:</strong>
+                          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
+                            {(remedy.effectsList || (remedy.effects || '').split('\n')).map((e, eIdx) => {
+                              const cleanText = e.replace(/^•\s*/, '').trim();
+                              return cleanText ? <li key={eIdx}>{cleanText}</li> : null;
+                            })}
+                          </ul>
+                        </div>
+                        <div>
+                          <strong style={{ color: '#137333', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>REMEDIES:</strong>
+                          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
+                            {(remedy.remediesList || (remedy.crystal || '').split('\n')).map((r, rIdx) => {
+                              const cleanText = r.replace(/^•\s*/, '').trim();
+                              return cleanText ? <li key={rIdx}>{cleanText}</li> : null;
+                            })}
+                          </ul>
+                        </div>
                       </div>
                     )}
                   </div>

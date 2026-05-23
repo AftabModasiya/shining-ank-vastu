@@ -838,66 +838,113 @@ export const getKuaVastuData = (kuaNum) => {
 const MISSING_NUMBER_REMEDIES = {
   1: {
     planet: "Sun (Surya)",
-    effects: "Lacks confidence, leadership, and self-assertion. May struggle with identity, face issues with authority figures, and find it hard to make independent decisions. Low vital energy and poor father relationship.",
-    crystal: "Ruby or Red Garnet Bracelet",
-    benefits: ["Builds self-confidence and leadership qualities", "Improves relationship with father and authority", "Activates solar plexus chakra and boosts vitality"]
+    effects: [
+      "Lacks confidence, leadership, and self-assertion",
+      "Struggles with identity, faces issues with authority figures, and finds it hard to make independent decisions",
+      "Low vital energy and poor relationship with father"
+    ],
+    remedies: [
+      "Wear a Ruby or Red Garnet Bracelet",
+      "Offer water to the rising Sun daily",
+      "Respect and care for father or father-figures"
+    ]
   },
   2: {
     planet: "Moon (Chandra)",
-    effects: "Emotionally imbalanced, lacks intuition, may be insensitive to others. Poor relationship with mother, sleep disturbances, and digestive issues. Struggles in partnerships and creative imagination.",
-    crystal: "Pearl or Moonstone Bracelet",
-    benefits: ["Balances emotions and enhances intuition", "Improves maternal relationships and domestic harmony", "Promotes restful sleep and mental peace"]
+    effects: [
+      "Lots of confusion, lack of sensitivity, lack of intuition, creates misunderstanding in life, has to work extremely hard to attain success"
+    ],
+    remedies: [
+      "Wear Crystal/Sphatik/White Quartz Mala or Bracelet",
+      "Place a rough Crystal rock in the South-West direction of the house or office"
+    ]
   },
   3: {
     planet: "Jupiter (Guru)",
-    effects: "Lacks wisdom, optimism, and philosophical depth. May face challenges in education, financial planning, and spiritual growth. Poor luck with expansive opportunities and teaching roles.",
-    crystal: "Yellow Sapphire or Citrine Bracelet",
-    benefits: ["Attracts wisdom, luck, and spiritual growth", "Improves financial planning and higher education", "Enhances optimism and philosophical understanding"]
+    effects: [
+      "Delays or problems in marriage, tough to express feelings, lack of deep thinking ability, poor imaginative power, and lack of creativity"
+    ],
+    remedies: [
+      "Wear Wood, Chandan, Tulsi, or Rudraksh mala/bracelet",
+      "Wear more green colored clothes",
+      "Use a wooden body pen and hang a wooden clock on the East wall"
+    ]
   },
   4: {
     planet: "Uranus (Rahu)",
-    effects: "Avoids physical work, needs constant motivation, highly unorganized, not hardworking, believes in shortcuts, and misses opportunities. Lacks stability and practical grounding.",
-    crystal: "Rudraksha and Crystal Bracelet",
-    benefits: ["Brings stability and structure to life", "Helps overcome sudden obstacles and challenges", "Improves focus and organizational skills"]
+    effects: [
+      "Lack of discipline, poorly organized life, financial instability, struggle in accumulating wealth, and feeling directionless"
+    ],
+    remedies: [
+      "Wear a silver ring or bracelet, keep a green aventurine crystal, or feed birds daily"
+    ]
   },
   5: {
     planet: "Mercury (Budh)",
-    effects: "Most confused personality, frequent changes in decisions, afraid of new things, less adventurous, highly insecure, and difficulty adapting to change. Poor communication and business acumen.",
-    crystal: "Green Aventurine Bracelet",
-    benefits: ["Attracts luck, abundance, and prosperity", "Enhances communication and business skills", "Promotes emotional healing and adaptability"]
+    effects: [
+      "Unrealistic expectations from people and life, constant dissatisfaction, poor communication or presentation skills, lack of a sharp business mind, tendencies of laziness"
+    ],
+    remedies: [
+      "Wear Crystal/Sphatik/White Quartz Mala or Bracelet",
+      "Place a Green Fluorite or Green Jade crystal in the Center (Brahmasthan) of the house or office"
+    ]
   },
   6: {
     planet: "Venus (Shukar)",
-    effects: "Struggles with relationships, love life, and artistic expression. Lacks aesthetic sense, may face financial instability in luxury and comfort. Domestic life is often chaotic or unfulfilling.",
-    crystal: "Diamond, Sphatik, or Rose Quartz Bracelet",
-    benefits: ["Enhances love life and relationship harmony", "Attracts luxury, beauty, and creative expression", "Brings domestic peace and financial comfort"]
+    effects: [
+      "Poor bonding with family or friends, may face relationship/marriage problems, unexpected or uncontrolled expenditures, lack of luxury, comfort, and creative blocks"
+    ],
+    remedies: [
+      "Wear a Golden Stainless Steel (SS) plated wrist watch on any hand",
+      "Place a White rough Quartz crystal in the North or North-West direction"
+    ]
   },
   7: {
     planet: "Neptune (Ketu)",
-    effects: "Lacks spiritual depth and introspective wisdom. May be overly materialistic, restless, and disconnected from inner self. Struggles with analytical research and long-term focus.",
-    crystal: "Cat's Eye or Amethyst Bracelet",
-    benefits: ["Deepens spiritual awareness and introspection", "Enhances analytical and research capabilities", "Brings inner peace and detachment from materialism"]
+    effects: [
+      "Lack of support from friends or children, chaotic practical life, highly unorganized, loses focus easily"
+    ],
+    remedies: [
+      "Wear a watch with a metallic strap, use light gray or metallic colors"
+    ]
   },
   8: {
     planet: "Saturn (Shani)",
-    effects: "Lacks discipline, endurance, and long-term planning. May face repeated failures due to shortcuts and laziness. Karmic debts and obstacles in career. Poor relationship with employees and subordinates.",
-    crystal: "Blue Sapphire or Black Tourmaline Bracelet",
-    benefits: ["Builds discipline, patience, and endurance", "Clears karmic debts and obstacles in career", "Improves administrative and leadership capabilities"]
+    effects: [
+      "Poor financial planning, poor judgment of people, inability to manage real estate or assets efficiently"
+    ],
+    remedies: [
+      "Wear an Amethyst crystal bracelet, help or donate to construction workers or laborers"
+    ]
   },
   9: {
     planet: "Mars (Mangal)",
-    effects: "Lacks courage, drive, and competitive spirit. May be passive, fearful, and unable to assert themselves. Struggles in physical activities, sports, and crisis management situations.",
-    crystal: "Coral or Red Jasper Bracelet",
-    benefits: ["Boosts courage, energy, and competitive drive", "Improves physical vitality and assertiveness", "Enhances leadership in crisis situations"]
+    effects: [
+      "Lack of energy, drive, and enthusiasm. Name and fame are difficult to achieve"
+    ],
+    remedies: [
+      "Keep a red cloth or red wallet, use bright colors"
+    ]
   }
 };
 
 export const getMissingNumberRemedyData = (num) => {
-  return MISSING_NUMBER_REMEDIES[num] || {
-    planet: "Unknown",
-    effects: `Faces issues related to the energy plane of Number ${num}.`,
-    crystal: "Clear Quartz Bracelet",
-    benefits: ["Balances the missing energy", "Restores harmony in affected life areas"]
+  const data = MISSING_NUMBER_REMEDIES[num];
+  if (!data) {
+    return {
+      planet: "Unknown",
+      effects: "Faces issues related to this energy plane.",
+      crystal: "Clear Quartz Bracelet",
+      effectsList: ["Faces issues related to this energy plane."],
+      remediesList: ["Clear Quartz Bracelet"]
+    };
+  }
+  return {
+    planet: data.planet,
+    effects: data.effects.map(e => `• ${e}`).join("\n"),
+    crystal: data.remedies.map(r => `• ${r}`).join("\n"),
+    effectsList: data.effects,
+    remediesList: data.remedies
   };
 };
 

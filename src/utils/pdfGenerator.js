@@ -647,8 +647,32 @@ export const generatePDF = async (clientData) => {
     missingArr.forEach(num => {
       const remInfo = getMissingNumberRemedyData(num);
 
-      const effectsWrapped = doc.splitTextToSize(`Effects: ${remInfo.effects}`, pageWidth - 42);
-      const cardH = 14 + effectsWrapped.length * 4.5 + 8;
+      // Handle arrays of effects/remedies if available, else split string by newline
+      const effectsList = remInfo.effectsList || (remInfo.effects || "").split("\n").map(e => e.replace(/^•\s*/, ""));
+      const remediesList = remInfo.remediesList || (remInfo.crystal || "").split("\n").map(r => r.replace(/^•\s*/, ""));
+
+      // Set active font to helvetica normal size 8.2 for splitTextToSize calculations
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+
+      const wrappedEffects = [];
+      effectsList.forEach(eff => {
+        const lines = doc.splitTextToSize(`• ${eff}`, pageWidth - 46);
+        wrappedEffects.push(lines);
+      });
+
+      const wrappedRemedies = [];
+      remediesList.forEach(rem => {
+        const lines = doc.splitTextToSize(`• ${rem}`, pageWidth - 46);
+        wrappedRemedies.push(lines);
+      });
+
+      // Calculate total text lines to size the card dynamically
+      const totalEffectsLines = wrappedEffects.reduce((acc, lines) => acc + lines.length, 0);
+      const totalRemediesLines = wrappedRemedies.reduce((acc, lines) => acc + lines.length, 0);
+
+      // Height: Header title (9.5) + "EFFECT:" title (5.5) + effects lines + "REMEDIES:" title (5.5) + remedies lines + padding
+      const cardH = 9.5 + 5.5 + (totalEffectsLines * 4.2) + 5.5 + (totalRemediesLines * 4.2) + 7;
 
       // Guard: add new page if content overflows
       if (remY + cardH > pageHeight - 25) {
@@ -658,25 +682,50 @@ export const generatePDF = async (clientData) => {
         remY = 25;
       }
 
-      doc.setFillColor(253, 234, 234); // Pastel pink for missing
+      doc.setFillColor(253, 234, 234); // Pastel pink card
       doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "F");
       doc.setDrawColor(...goldPrimary);
       doc.setLineWidth(0.25);
       doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "D");
 
+      // Draw title
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
-      doc.text(`Missing Number ${num} (${remInfo.planet})`, 20, remY + 6);
+      doc.text(`Missing Number ${num} (${remInfo.planet})`, 20, remY + 6.5);
+
+      let textY = remY + 11.5;
+
+      // EFFECT section
+      doc.setTextColor(197, 34, 31); // Reddish text for effect heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text("EFFECT:", 20, textY);
+      textY += 4.2;
 
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text(effectsWrapped, 20, remY + 11);
+      doc.setFontSize(8.2);
+      wrappedEffects.forEach(lines => {
+        doc.text(lines, 20, textY);
+        textY += lines.length * 4.2;
+      });
 
-      doc.setTextColor(0, 128, 0);
+      // REMEDIES section
+      textY += 1.5;
+      doc.setTextColor(19, 115, 51); // Greenish text for remedies heading
       doc.setFont("helvetica", "bold");
-      doc.text(`Remedy: ${remInfo.crystal}`, 20, remY + 11 + effectsWrapped.length * 4.5 + 2);
+      doc.setFontSize(8.5);
+      doc.text("REMEDIES:", 20, textY);
+      textY += 4.2;
+
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      wrappedRemedies.forEach(lines => {
+        doc.text(lines, 20, textY);
+        textY += lines.length * 4.2;
+      });
 
       remY += cardH + 4;
     });
