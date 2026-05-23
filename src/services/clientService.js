@@ -27,6 +27,28 @@ export const saveClient = async (clientData) => {
   }
 };
 
+// Check if a client with the same name AND date of birth already exists
+export const checkDuplicateClient = async (name, dob) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
+    const normalizedName = name.trim().toLowerCase();
+    let duplicate = null;
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const existingName = (data.name || "").trim().toLowerCase();
+      if (existingName === normalizedName && data.dob === dob) {
+        duplicate = { id: doc.id, ...data };
+      }
+    });
+    return { success: true, duplicate };
+  } catch (error) {
+    console.error("Error checking duplicate:", error);
+    return { success: false, duplicate: null };
+  }
+};
+
+
+
 export const getAllClients = async () => {
   try {
     const q = query(

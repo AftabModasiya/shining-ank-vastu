@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Grid3x3, Compass, FileDown, ChevronDown, Menu, X } from 'lucide-react';
 import { generateReport } from '../utils/numerology';
-import { saveClient } from '../services/clientService';
+import { saveClient, checkDuplicateClient } from '../services/clientService';
 import './Home.css';
 
 // Language translations
@@ -100,6 +100,7 @@ function Home() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [duplicateModal, setDuplicateModal] = useState(null); // holds existing client data if duplicate found
 
   const t = translations[language];
 
@@ -132,19 +133,31 @@ function Home() {
     setLoading(true);
 
     try {
-      // Generate numerology report
-      const report = generateReport(formData.name, formData.dob, formData.gender);
+      // Check for duplicate client (same name + same DOB)
+      const dupCheck = await checkDuplicateClient(formData.name, formData.dob);
+      if (dupCheck.success && dupCheck.duplicate) {
+        setDuplicateModal(dupCheck.duplicate);
+        setLoading(false);
+        return;
+      }
 
-      // Save to Firebase
-      const clientData = {
-        ...formData,
-        report
-      };
+      await doSaveAndNavigate(formData);
+    } catch (err) {
+      console.error('Error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Extracted save+navigate logic so it can be reused by the "Create Anyway" button
+  const doSaveAndNavigate = async (data) => {
+    setLoading(true);
+    try {
+      const report = generateReport(data.name, data.dob, data.gender);
+      const clientData = { ...data, report };
       const result = await saveClient(clientData);
-
       if (result.success) {
-        // Navigate to report view
         navigate(`/report/${result.id}`, { state: { clientData } });
       } else {
         setError('Failed to save client data. Please try again.');
@@ -159,7 +172,129 @@ function Home() {
 
   return (
     <div className="home-page">
+
+      {/* ── DUPLICATE CLIENT MODAL ──────────────────────────────────── */}
+      {duplicateModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setDuplicateModal(null)}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #fffdf7 0%, #fdf5e2 100%)',
+              border: '2px solid #b5820a',
+              borderRadius: '18px',
+              padding: '36px 32px',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 24px 60px rgba(181,130,10,0.22)',
+              textAlign: 'center',
+              position: 'relative'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setDuplicateModal(null)}
+              style={{
+                position: 'absolute', top: '14px', right: '16px',
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '20px', color: '#8a6207', lineHeight: 1
+              }}
+              aria-label="Close"
+            >✕</button>
+
+            {/* Icon */}
+            <div style={{
+              width: '64px', height: '64px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #fff3cd, #ffe8a0)',
+              border: '2px solid #b5820a',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '30px', margin: '0 auto 18px'
+            }}>⚠️</div>
+
+            <h2 style={{ color: '#7a5500', fontSize: '20px', fontWeight: 700, margin: '0 0 8px' }}>
+              Client Already Exists!
+            </h2>
+            <p style={{ color: '#9a7a3a', fontSize: '14px', margin: '0 0 20px', lineHeight: 1.5 }}>
+              A report for <strong style={{ color: '#5a3e00' }}>{duplicateModal.name}</strong> with
+              DOB <strong style={{ color: '#5a3e00' }}>
+                {(() => {
+                  const p = (duplicateModal.dob || '').split('-');
+                  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : duplicateModal.dob;
+                })()}
+              </strong> already exists in the system.
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setDuplicateModal(null);
+                  navigate(`/report/${duplicateModal.id}`, { state: { clientData: duplicateModal } });
+                }}
+                style={{
+                  padding: '13px 20px',
+                  background: 'linear-gradient(135deg, #b5820a, #d4a017)',
+                  color: '#fff',
+                  border: 'none', borderRadius: '10px',
+                  fontWeight: 700, fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(181,130,10,0.35)',
+                  transition: 'transform 0.15s ease',
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                📋 View Existing Report
+              </button>
+              <button
+                onClick={async () => {
+                  setDuplicateModal(null);
+                  await doSaveAndNavigate(formData);
+                }}
+                disabled={loading}
+                style={{
+                  padding: '11px 20px',
+                  background: 'transparent',
+                  color: '#8a6207',
+                  border: '1.5px solid #b5820a',
+                  borderRadius: '10px',
+                  fontWeight: 600, fontSize: '13px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(181,130,10,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                {loading ? 'Creating...' : '➕ Create New Anyway'}
+              </button>
+              <button
+                onClick={() => setDuplicateModal(null)}
+                style={{
+                  padding: '9px 20px',
+                  background: 'none',
+                  color: '#b0926a',
+                  border: 'none',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
+
       <header className="header">
         <div className="container">
           <div className="header-content">
