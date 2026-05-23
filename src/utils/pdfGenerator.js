@@ -16,7 +16,9 @@ import {
   getNameCompatibilityAnalysis,
   getCareerOutlook,
   getArrows,
-  getRepeatedNumbers
+  getRepeatedNumbers,
+  getKuaVastuData,
+  getMissingNumberRemedyData
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -60,8 +62,8 @@ export const generatePDF = async (clientData) => {
   // Dynamic lucky elements (fully calculated from bhagyank, mulank, kuaNum)
   const luckyData = getLuckyElements(bhagyank, mulank, kuaNum);
 
-  // Dynamic mobile number compatibility insights
-  const mobileData = getMobileAnalysis(phone, bhagyank);
+  // Dynamic mobile number compatibility insights (Bug 3 fix: pass mulank AND bhagyank)
+  const mobileData = getMobileAnalysis(phone, mulank, bhagyank);
 
   // Dynamic name number compatibility insights
   const nameCompatData = getNameCompatibilityAnalysis(clientData.name || '', mulank, bhagyank);
@@ -108,8 +110,9 @@ export const generatePDF = async (clientData) => {
   const today = new Date();
   const reportDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
 
-  // ── Pre-compute new analysis data ─────────────────────────────────────
-  const loShuGridEarly = calculateLoShuGrid(rawDob);
+  // Pre-compute new analysis data
+  // Full Lo Shu Grid including Mulank, Bhagyank & Kua digits (Bug 2 fix / client spec)
+  const loShuGridEarly = calculateLoShuGrid(rawDob, [mulank, bhagyank, kuaNum]);
 
   // 1. Chaldean Compatibility between Mulank & Bhagyank
   const compatibilityAnalysis = getNumberCompatibilityAnalysis(mulank, bhagyank);
@@ -310,8 +313,8 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(12);
   doc.text("BIRTH CHART OVERVIEW", 14, 27);
 
-  // Render Lo Shu Grid (Raw DOB frequencies only, no Kua numbers inside the grid)
-  const loShuGrid = calculateLoShuGrid(rawDob);
+  // Use full grid (with Mulank/Bhagyank/Kua) for PDF too
+  const loShuGrid = calculateLoShuGrid(rawDob, [mulank, bhagyank, kuaNum]);
   const gridSize = 22;
   const gridStartX = 25;
   const gridStartY = 42;
@@ -399,13 +402,14 @@ export const generatePDF = async (clientData) => {
   drawLine("Positive Arrows: ", posArrowsStr, 25);
   drawLine("Negative Arrows: ", negArrowsStr, 26);
   
-  // Kua Details line
+  // Kua Vastu direction (Issue 7 fix: use getKuaVastuData for correct direction)
+  const kuaVastuInfo = getKuaVastuData(kuaNum);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...textDark);
   doc.setFontSize(8.2);
   doc.text("Kua Details: ", sideX + 6, currY);
   doc.setFont("helvetica", "bold");
-  doc.text(`${kuaNum} (Direction: ${reportData.luckyElements?.luckyDirection || "East"})`, sideX + 24, currY);
+  doc.text(`${kuaNum} (Direction: ${kuaVastuInfo.direction})`, sideX + 24, currY);
 
   // Section 2: Core Personality Insights
   const coreY = gridStartY + (gridSize * 3) + 15;
@@ -613,6 +617,7 @@ export const generatePDF = async (clientData) => {
   let remY = repY + 20;
   const missingArr = getMissingNumbers(loShuGrid);
   
+  // Issue 8 fix: Show ALL missing numbers using dynamic getMissingNumberRemedyData
   if (missingArr.length === 0) {
     doc.setFillColor(255, 254, 249);
     doc.roundedRect(15, remY, pageWidth - 30, 16, 2, 2, "F");
@@ -621,21 +626,25 @@ export const generatePDF = async (clientData) => {
     doc.setFontSize(9.5);
     doc.text("Congratulations! Your Lo Shu Grid contains no missing numbers. You have a highly cohesive primary energy spectrum.", 20, remY + 10);
   } else {
-    // Show top 3 missing numbers to fit page beautifully
-    missingArr.slice(0, 3).forEach(num => {
-      // Find matching remedy info or generate dynamic ones
-      const remInfo = reportData.missingNumbersRemedies?.find(r => r.num === num) || {
-        num: num,
-        planet: num === 1 ? "Sun" : num === 2 ? "Moon" : num === 3 ? "Jupiter" : num === 6 ? "Venus" : num === 7 ? "Ketu" : num === 8 ? "Saturn" : num === 9 ? "Mars" : "Mercury",
-        effects: `Faces minor issues related to the specific energy plane of Number ${num}.`,
-        crystal: num === 1 ? "Ruby" : num === 2 ? "Pearl / Moonstone" : num === 3 ? "Yellow Sapphire" : num === 6 ? "Diamond / Sphatik" : num === 7 ? "Cat's Eye" : num === 8 ? "Blue Sapphire" : "Coral Bracelet"
-      };
+    missingArr.forEach(num => {
+      const remInfo = getMissingNumberRemedyData(num);
+
+      const effectsWrapped = doc.splitTextToSize(`Effects: ${remInfo.effects}`, pageWidth - 42);
+      const cardH = 14 + effectsWrapped.length * 4.5 + 8;
+
+      // Guard: add new page if content overflows
+      if (remY + cardH > pageHeight - 25) {
+        doc.addPage();
+        drawPageShell(doc);
+        drawFooter(doc);
+        remY = 25;
+      }
 
       doc.setFillColor(253, 234, 234); // Pastel pink for missing
-      doc.roundedRect(15, remY, pageWidth - 30, 24, 3, 3, "F");
+      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "F");
       doc.setDrawColor(...goldPrimary);
       doc.setLineWidth(0.25);
-      doc.roundedRect(15, remY, pageWidth - 30, 24, 3, 3, "D");
+      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "D");
 
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
@@ -645,14 +654,13 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      const effectsText = doc.splitTextToSize(`Effects: ${remInfo.effects || "Flipped planes, minor work delays."}`, pageWidth - 42);
-      doc.text(effectsText, 20, remY + 11);
+      doc.text(effectsWrapped, 20, remY + 11);
 
       doc.setTextColor(0, 128, 0);
       doc.setFont("helvetica", "bold");
-      doc.text(`Remedy Bracelet: ${remInfo.crystal || "Vedic Crystal"}`, 20, remY + 20);
+      doc.text(`Remedy: ${remInfo.crystal}`, 20, remY + 11 + effectsWrapped.length * 4.5 + 2);
 
-      remY += 27.5;
+      remY += cardH + 4;
     });
   }
 

@@ -28,12 +28,17 @@ export const LETTER_MAP = {
 };
 
 // Helper function to calculate Lo Shu Grid from DOB
-export const calculateLoShuGrid = (dob) => {
+// extraDigits: optional array of additional single-digit numbers to include
+// (e.g. Mulank, Bhagyank single digits, and Kua single digits per client spec)
+export const calculateLoShuGrid = (dob, extraDigits = []) => {
   if (!dob) return Array(9).fill(0);
-  const digits = dob.replace(/-/g, "").split("").map(Number);
+  const dobDigits = dob.replace(/-/g, "").split("").map(Number);
+  // Decompose each extra number into its individual digits
+  const expandedExtra = extraDigits.flatMap(n => String(n).split("").map(Number));
+  const allDigits = [...dobDigits, ...expandedExtra];
   const grid = Array(9).fill(0);
 
-  digits.forEach((digit) => {
+  allDigits.forEach((digit) => {
     if (digit > 0 && digit <= 9) {
       grid[digit - 1]++;
     }
@@ -338,19 +343,13 @@ export const getLuckyElements = (bhagyank, mulank, kuaNum) => {
   const luckyColors = LUCKY_COLORS[lp] || ["Gold"];
   const challengingColors = CHALLENGING_COLORS[lp] || ["Black"];
 
-  // Direction Mapping
-  const DIRECTION_MAP = {
-    1: "East",
-    2: "North-West",
-    3: "North-East",
-    4: "South",
-    5: "North",
-    6: "South-East",
-    7: "West",
-    8: "North",
-    9: "South"
-  };
-  const direction = DIRECTION_MAP[lp] || "East";
+  // Direction — use KUA-based Vastu direction (Bug 4 fix)
+  const kuaVastu = KUA_VASTU_DATA[kuaNum] || KUA_VASTU_DATA[1];
+  const direction = kuaVastu.direction;
+
+
+  // Kua-based Lucky Colors (override general colors with Vastu-specific ones)
+  const kuaLuckyColors = kuaVastu.colors;
 
   // Element Mapping
   const ELEMENT_MAP = {
@@ -376,13 +375,17 @@ export const getLuckyElements = (bhagyank, mulank, kuaNum) => {
     luckyColor: luckyColors.join(", "),
     unluckyColor: challengingColors.join(", "),
     luckyDirection: direction,
+    kuaColors: kuaLuckyColors,
+    kuaTheme: kuaVastu.theme,
     element,
     planetEnergy,
     rulingPlanet: planet
   };
 };
 
-export const getMobileAnalysis = (phone, bhagyank) => {
+// getMobileAnalysis: checks phone root digit against BOTH mulank AND bhagyank
+// per client specification for Lucky Mobile/Vehicle Number Checker.
+export const getMobileAnalysis = (phone, mulank, bhagyank) => {
   if (!phone || phone === "-" || phone.trim() === "") {
     return {
       isValid: false,
@@ -447,23 +450,35 @@ export const getMobileAnalysis = (phone, bhagyank) => {
     9: "Relates to humanitarianism, completion, and compassion. Best for NGOs, teachers, and social workers."
   };
 
-  const compat = getCompatibility(singleDigit, bhagyank);
+  const compat_mulank  = getCompatibility(singleDigit, mulank);
+  const compat_bhagyank = getCompatibility(singleDigit, bhagyank);
+
+  // Client spec: friend in BOTH = "Highly Compatible / Super Lucky"
+  //              in ANY nonFriends = "Incompatible / Avoid"
   let compatibilityLabel = "Neutral";
   let isCompatible = false;
   let compatibilityDescription = "";
 
-  if (compat.status === "friend") {
-    compatibilityLabel = "Friendly / Highly Compatible";
+  const inMulankFriends   = compat_mulank.status  === "friend";
+  const inBhagyankFriends = compat_bhagyank.status === "friend";
+  const inAnyEnemy        = compat_mulank.status   === "enemy" || compat_bhagyank.status === "enemy";
+
+  if (inMulankFriends && inBhagyankFriends) {
+    compatibilityLabel = "Highly Compatible / Super Lucky";
     isCompatible = true;
-    compatibilityDescription = `Your mobile total of ${singleDigit} is highly compatible with your Life Path Number ${bhagyank}. This vibration supports career progression, financial success, and smooth social/professional interactions.`;
-  } else if (compat.status === "enemy") {
-    compatibilityLabel = "Non-Friendly / Challenging";
+    compatibilityDescription = `Your mobile total of ${singleDigit} is friendly to BOTH your Psychic Number ${mulank} and Destiny Number ${bhagyank}. This is a Super Lucky number that supports career progression, financial success, and smooth social/professional interactions.`;
+  } else if (inAnyEnemy) {
+    compatibilityLabel = "Incompatible / Avoid this Number";
     isCompatible = false;
-    compatibilityDescription = `Your mobile total of ${singleDigit} is challenging/non-friendly to your Life Path Number ${bhagyank}. This can bring sudden obstacles, delays, or misunderstandings in business dealings. It is recommended to choose a number with a friendly total like 1, 5, or 6.`;
+    compatibilityDescription = `Your mobile total of ${singleDigit} is challenging/non-friendly to your core numbers (Psychic ${mulank} or Destiny ${bhagyank}). This can bring sudden obstacles, delays, or misunderstandings in business dealings. Choose a number whose total is in both your friendly lists.`;
+  } else if (inMulankFriends || inBhagyankFriends) {
+    compatibilityLabel = "Partially Compatible / Good";
+    isCompatible = true;
+    compatibilityDescription = `Your mobile total of ${singleDigit} is friendly to one of your core numbers but neutral to the other. Reasonably good, but aligning to a number friendly to BOTH will maximize positive results.`;
   } else {
     compatibilityLabel = "Neutral";
     isCompatible = false;
-    compatibilityDescription = `Your mobile total of ${singleDigit} has a neutral connection with your Life Path Number ${bhagyank}. To maximize positive results and business success, aligning your total to 1, 5, or 6 is advised.`;
+    compatibilityDescription = `Your mobile total of ${singleDigit} has a neutral connection with your core numbers (Psychic ${mulank} and Destiny ${bhagyank}). To maximize positive results, choose a number whose digit total appears in both your friendly lists.`;
   }
 
   const zeroCount = (digits.match(/0/g) || []).length;
@@ -640,20 +655,109 @@ export const getCareerOutlook = (mulank, bhagyank) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CHALDEAN LO SHU COMPATIBILITY CHART
-//    Based on traditional planetary friend/enemy/neutral relationships
-//    Planet mapping: 1=Sun, 2=Moon, 3=Jupiter, 4=Rahu(Uranus), 5=Mercury,
-//                    6=Venus, 7=Ketu(Neptune), 8=Saturn, 9=Mars
+//    Exact reference from client specification.
+//    Planet mapping: 1=Sun(Surya), 2=Moon(Chandra), 3=Jupiter(Guru),
+//    4=Uranus(Rahu), 5=Mercury(Budh), 6=Venus(Shukar), 7=Neptune(Ketu),
+//    8=Saturn(Shani), 9=Mars(Mangal)
 // ─────────────────────────────────────────────────────────────────────────────
 const COMPATIBILITY_TABLE = {
-  1: { friends: [9, 2, 5, 3, 6, 1], nonFriends: [8], neutral: [4, 7] },
-  2: { friends: [1, 5, 3, 2, 7], nonFriends: [8, 4, 9], neutral: [6, 7] },
-  3: { friends: [1, 5, 3, 7], nonFriends: [6], neutral: [4, 8, 9, 2] },
-  4: { friends: [7, 1, 5, 6, 4, 8], nonFriends: [2, 9], neutral: [3] },
-  5: { friends: [1, 2, 3, 6, 5], nonFriends: [], neutral: [4, 7, 8, 9] },
-  6: { friends: [1, 7, 4, 6, 5], nonFriends: [3], neutral: [2, 8, 9] },
-  7: { friends: [4, 6, 1, 5, 3, 7], nonFriends: [], neutral: [2, 8, 9] },
-  8: { friends: [5, 3, 8, 4, 6, 7], nonFriends: [1, 2, 4], neutral: [9, 6, 7] },
-  9: { friends: [1, 5], nonFriends: [2, 4], neutral: [3, 7, 6, 8, 9] }
+  1: { friends: [9, 2, 5, 3, 6, 1], nonFriends: [8],       neutral: [4, 7] },
+  2: { friends: [1, 5, 3, 2, 7],    nonFriends: [8, 4, 9],  neutral: [6] },
+  3: { friends: [1, 5, 3, 7],       nonFriends: [6],         neutral: [4, 8, 9, 2] },
+  4: { friends: [7, 1, 5, 6],       nonFriends: [2, 9],      neutral: [3] },
+  5: { friends: [1, 2, 3, 6, 5],    nonFriends: [],          neutral: [4, 7, 8, 9] },
+  6: { friends: [1, 7, 4, 6, 5],    nonFriends: [3],         neutral: [2, 8, 9] },
+  7: { friends: [4, 6, 1, 5, 3],    nonFriends: [],          neutral: [2, 8, 9, 7] },
+  8: { friends: [5, 3, 6, 7],       nonFriends: [1, 2],      neutral: [9] },
+  9: { friends: [1, 5],             nonFriends: [2, 4],      neutral: [3, 7, 6, 8, 9] }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KUA VASTU DATA — exact client-provided Kua → Direction + Colors table
+// ─────────────────────────────────────────────────────────────────────────────
+const KUA_VASTU_DATA = {
+  1: { direction: "North",              colors: "Blue, Black",             theme: "Career Growth" },
+  2: { direction: "South-West",         colors: "Yellow, Cream",           theme: "Stability & Relationships" },
+  3: { direction: "East",               colors: "Green, Light Green",      theme: "Health & Growth" },
+  4: { direction: "South-East",         colors: "Green, Wood Tones",       theme: "Wealth Accumulation" },
+  5: { direction: "Center (Brahmasthan)", colors: "Golden, Yellow",        theme: "Overall Balance" },
+  6: { direction: "North-West",         colors: "White, Silver, Metallic", theme: "Helpful Friends & Luxury" },
+  7: { direction: "West",               colors: "White, Light Gray",       theme: "Creativity & Legacy" },
+  8: { direction: "North-East",         colors: "Blue, Gray, Earthy Tones",theme: "Knowledge & Wisdom" },
+  9: { direction: "South",              colors: "Red, Orange, Bright Pink",theme: "Fame & Reputation" },
+};
+
+export const getKuaVastuData = (kuaNum) => {
+  return KUA_VASTU_DATA[kuaNum] || KUA_VASTU_DATA[1];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MISSING NUMBER REMEDY DATA — complete lookup for all 9 numbers
+// ─────────────────────────────────────────────────────────────────────────────
+const MISSING_NUMBER_REMEDIES = {
+  1: {
+    planet: "Sun (Surya)",
+    effects: "Lacks confidence, leadership, and self-assertion. May struggle with identity, face issues with authority figures, and find it hard to make independent decisions. Low vital energy and poor father relationship.",
+    crystal: "Ruby or Red Garnet Bracelet",
+    benefits: ["Builds self-confidence and leadership qualities", "Improves relationship with father and authority", "Activates solar plexus chakra and boosts vitality"]
+  },
+  2: {
+    planet: "Moon (Chandra)",
+    effects: "Emotionally imbalanced, lacks intuition, may be insensitive to others. Poor relationship with mother, sleep disturbances, and digestive issues. Struggles in partnerships and creative imagination.",
+    crystal: "Pearl or Moonstone Bracelet",
+    benefits: ["Balances emotions and enhances intuition", "Improves maternal relationships and domestic harmony", "Promotes restful sleep and mental peace"]
+  },
+  3: {
+    planet: "Jupiter (Guru)",
+    effects: "Lacks wisdom, optimism, and philosophical depth. May face challenges in education, financial planning, and spiritual growth. Poor luck with expansive opportunities and teaching roles.",
+    crystal: "Yellow Sapphire or Citrine Bracelet",
+    benefits: ["Attracts wisdom, luck, and spiritual growth", "Improves financial planning and higher education", "Enhances optimism and philosophical understanding"]
+  },
+  4: {
+    planet: "Uranus (Rahu)",
+    effects: "Avoids physical work, needs constant motivation, highly unorganized, not hardworking, believes in shortcuts, and misses opportunities. Lacks stability and practical grounding.",
+    crystal: "Rudraksha and Crystal Bracelet",
+    benefits: ["Brings stability and structure to life", "Helps overcome sudden obstacles and challenges", "Improves focus and organizational skills"]
+  },
+  5: {
+    planet: "Mercury (Budh)",
+    effects: "Most confused personality, frequent changes in decisions, afraid of new things, less adventurous, highly insecure, and difficulty adapting to change. Poor communication and business acumen.",
+    crystal: "Green Aventurine Bracelet",
+    benefits: ["Attracts luck, abundance, and prosperity", "Enhances communication and business skills", "Promotes emotional healing and adaptability"]
+  },
+  6: {
+    planet: "Venus (Shukar)",
+    effects: "Struggles with relationships, love life, and artistic expression. Lacks aesthetic sense, may face financial instability in luxury and comfort. Domestic life is often chaotic or unfulfilling.",
+    crystal: "Diamond, Sphatik, or Rose Quartz Bracelet",
+    benefits: ["Enhances love life and relationship harmony", "Attracts luxury, beauty, and creative expression", "Brings domestic peace and financial comfort"]
+  },
+  7: {
+    planet: "Neptune (Ketu)",
+    effects: "Lacks spiritual depth and introspective wisdom. May be overly materialistic, restless, and disconnected from inner self. Struggles with analytical research and long-term focus.",
+    crystal: "Cat's Eye or Amethyst Bracelet",
+    benefits: ["Deepens spiritual awareness and introspection", "Enhances analytical and research capabilities", "Brings inner peace and detachment from materialism"]
+  },
+  8: {
+    planet: "Saturn (Shani)",
+    effects: "Lacks discipline, endurance, and long-term planning. May face repeated failures due to shortcuts and laziness. Karmic debts and obstacles in career. Poor relationship with employees and subordinates.",
+    crystal: "Blue Sapphire or Black Tourmaline Bracelet",
+    benefits: ["Builds discipline, patience, and endurance", "Clears karmic debts and obstacles in career", "Improves administrative and leadership capabilities"]
+  },
+  9: {
+    planet: "Mars (Mangal)",
+    effects: "Lacks courage, drive, and competitive spirit. May be passive, fearful, and unable to assert themselves. Struggles in physical activities, sports, and crisis management situations.",
+    crystal: "Coral or Red Jasper Bracelet",
+    benefits: ["Boosts courage, energy, and competitive drive", "Improves physical vitality and assertiveness", "Enhances leadership in crisis situations"]
+  }
+};
+
+export const getMissingNumberRemedyData = (num) => {
+  return MISSING_NUMBER_REMEDIES[num] || {
+    planet: "Unknown",
+    effects: `Faces issues related to the energy plane of Number ${num}.`,
+    crystal: "Clear Quartz Bracelet",
+    benefits: ["Balances the missing energy", "Restores harmony in affected life areas"]
+  };
 };
 
 export const getCompatibility = (num1, num2) => {
@@ -671,7 +775,18 @@ export const getNumberCompatibilityAnalysis = (mulank, bhagyank) => {
   const compat = getCompatibility(mulank, bhagyank);
   const reverseCompat = getCompatibility(bhagyank, mulank);
 
-  const planetNames = { 1:"Sun",2:"Moon",3:"Jupiter",4:"Rahu",5:"Mercury",6:"Venus",7:"Ketu",8:"Saturn",9:"Mars" };
+  // Bug 5 fix: Full planet names with Indian names
+  const planetNames = {
+    1: "Sun (Surya)",
+    2: "Moon (Chandra)",
+    3: "Jupiter (Guru)",
+    4: "Uranus (Rahu)",
+    5: "Mercury (Budh)",
+    6: "Venus (Shukar)",
+    7: "Neptune (Ketu)",
+    8: "Saturn (Shani)",
+    9: "Mars (Mangal)"
+  };
 
   const statusDescriptions = {
     friend: "Your Mulank and Bhagyank planets are in a highly favorable relationship. You will experience strong support from your destiny number, smooth financial growth, and harmonious relationships. Career opportunities align naturally.",
@@ -1095,11 +1210,120 @@ export const generateReport = (name, dob, gender) => {
 
   const lifePathTraits = getTraits(lifePath);
   const expressionTraits = getTraits(expression);
-  
-  const loShuGrid = calculateLoShuGrid(dob);
-  const presentNumbers = getPresentNumbers(loShuGrid);
+  const mulankTraits = getTraits(mulank);
+
+  // Use full Lo Shu grid including Mulank, Bhagyank & Kua (per client spec)
   const kuaNum = calculateKua(dob, gender);
+  const loShuGrid = calculateLoShuGrid(dob, [mulank, bhagyank, kuaNum]);
+  const presentNumbers = getPresentNumbers(loShuGrid);
+  const missingNums = getMissingNumbers(loShuGrid);
   const elements = getLuckyElements(bhagyank, mulank, kuaNum);
+
+  // Dynamic key traits from TRAITS data
+  const KEY_TRAITS_MAP = {
+    1: ["Natural leader and trailblazer", "Self-reliant and highly independent", "Original thinker with strong willpower", "Ambitious and goal-oriented achiever", "Commands respect and authority easily"],
+    2: ["Highly empathetic and emotionally intelligent", "Natural peacemaker and diplomat", "Deeply intuitive and perceptive", "Works best in partnerships and collaboration", "Artistic and imaginative by nature"],
+    3: ["Creative expression is their greatest gift", "Excellent communicator and social connector", "Optimistic, joyful, and inspiring to others", "Natural teacher, writer, or entertainer", "Thrives in creative and expressive roles"],
+    4: ["Disciplined builder of lasting foundations", "Systematic, organized, and methodical thinker", "Extremely loyal and dependable partner", "Thrives on structure, routine, and hard work", "Long-term planner with exceptional endurance"],
+    5: ["Freedom-seeker and adventurous spirit", "Highly adaptable to change and new experiences", "Quick-witted and versatile communicator", "Natural salesperson and marketing talent", "Thrives in dynamic, multi-tasking environments"],
+    6: ["Deeply caring, nurturing, and responsible", "Natural healer and protector of loved ones", "Strong sense of beauty, harmony, and aesthetics", "Excels in family, home, and community roles", "Artistic and creatively gifted individual"],
+    7: ["Deep analytical thinker and researcher", "Strong spiritual inclination and intuition", "Seeker of truth and hidden knowledge", "Private, introspective, and self-reliant", "Excellent in technical, scientific, and occult fields"],
+    8: ["Powerhouse of ambition and material success", "Natural authority and commanding presence", "Strong karmic understanding of cause and effect", "Excellence in business, finance, and management", "Persistent and resilient under pressure"],
+    9: ["Compassionate humanitarian at heart", "Broad-minded and deeply philosophical", "Natural leader in social and global causes", "Generous, giving, and selfless by nature", "Completes what others cannot finish"],
+    11: ["Highly intuitive spiritual messenger", "Inspirational and visionary thinker", "Bridges the physical and spiritual realms", "Powerful healer and teacher", "Sensitive to the needs of humanity"],
+    22: ["Master architect of grand visions", "Bridges idealism with practical reality", "Extraordinary capacity for large-scale projects", "Natural leader on a global scale", "Manifests what others only dream"],
+    33: ["Pure channel of unconditional love", "Master healer and compassionate teacher", "Selfless service to the world at large", "Deeply spiritual and emotionally evolved", "Creates healing through wisdom and love"]
+  };
+
+  // Dynamic personality content based on mulank + bhagyank
+  const PLANET_NAMES_SHORT = {
+    1: "Sun", 2: "Moon", 3: "Jupiter", 4: "Rahu", 5: "Mercury",
+    6: "Venus", 7: "Ketu", 8: "Saturn", 9: "Mars"
+  };
+  const mulankPlanet  = PLANET_NAMES_SHORT[mulank]  || "Sun";
+  const bhagyankPlanet = PLANET_NAMES_SHORT[bhagyank] || "Moon";
+  const compat = getCompatibility(mulank, bhagyank);
+  const compatText = compat.status === "friend"
+    ? "This creates a powerful cosmic harmony — your birth energy and destiny path are aligned, leading to smooth personal growth and career success."
+    : compat.status === "enemy"
+    ? "This creates inner tension between your birth energy and destiny path. With conscious effort, remedies, and alignment with lucky numbers, you can overcome these challenges."
+    : "Your birth energy and destiny path have a neutral interaction. Neither strongly supportive nor opposing, outcomes are largely shaped by your choices and consistent effort.";
+
+  const personalityContent = `Your Psychic Number ${mulank} is ruled by ${mulankPlanet}, shaping your core personality and daily impulses. Your Destiny Number ${bhagyank} is ruled by ${bhagyankPlanet}, guiding the long-term direction of your life's achievements. ${compatText} Your most productive periods come when you actively work with your lucky numbers and favorable dates to align your actions with cosmic timing.`;
+
+  // Dynamic date influencer content
+  const dayNum = parseInt(dob.split("-")[2]);
+  const DATE_INFLUENCER_CONTENT = {
+    1: "Born on the 1st, you are a natural initiator. Sun energy gives you remarkable leadership and an unbreakable drive. You achieve greatest success in independent ventures and pioneering roles.",
+    2: "Born on the 2nd, Moon energy makes you highly intuitive and empathetic. You excel in partnerships, counseling, and creative arts. Your sensitivity is your greatest strength.",
+    3: "Born on the 3rd, Jupiter blesses you with wisdom, optimism, and excellent communication. You thrive in teaching, writing, and creative expression roles.",
+    4: "Born on the 4th, Rahu energy makes you unconventional and analytically sharp. You excel in technology, research, and building reliable structures.",
+    5: "Born on the 5th, Mercury gives you quick wit and adaptability. Sales, marketing, travel, and communication are your natural domains.",
+    6: "Born on the 6th, Venus bestows charm, aesthetic sensitivity, and a nurturing nature. You shine in creative, hospitality, and family-oriented roles.",
+    7: "Born on the 7th, Neptune (Ketu) energy deepens your spiritual awareness and analytical mind. You are drawn to research, occult sciences, and spiritual paths.",
+    8: "Born on the 8th, Saturn energy provides exceptional discipline and material manifestation ability. Business, authority roles, and long-term investments favor you.",
+    9: "Born on the 9th, Mars infuses you with courage, drive, and humanitarian passion. You excel in leadership, defense, sports, and social causes.",
+    10: "Born on the 10th (reduces to 1), you carry strong Sun energy — a natural leader who inspires others and achieves remarkable independence.",
+    11: "Born on the 11th (Master Number), you are a highly intuitive spiritual messenger. Inspiration, healing, and visionary thinking define your life path.",
+    12: "Born on the 12th (reduces to 3), Jupiter's creative and expressive energy flows through you — a natural communicator and creative mind.",
+    13: "Born on the 13th (reduces to 4), Rahu energy combined with disciplined Saturnian influence makes you a determined builder of lasting structures.",
+    14: "Born on the 14th (reduces to 5), you carry dynamic Mercury energy — versatile, communicative, and naturally drawn to variety and change.",
+    15: "Born on the 15th (reduces to 6), you carry strong Venus energy amplified by the Sun — charismatic, creative, and deeply nurturing.",
+    16: "Born on the 16th (reduces to 7), you are spiritually inclined and analytically gifted — drawn to deeper truths and solitary contemplation.",
+    17: "Born on the 17th (reduces to 8), Saturn's karmic power and the visionary 7 combine for powerful material manifestation and authority.",
+    18: "Born on the 18th (reduces to 9), Mars energy is amplified — you are a natural warrior for justice with a humanitarian heart.",
+    19: "Born on the 19th (reduces to 1), Sun energy is doubly strong — exceptional leadership potential and the drive to overcome all obstacles.",
+    20: "Born on the 20th (reduces to 2), Moon energy is magnified — deeply intuitive, emotionally rich, and naturally skilled in creating harmony.",
+    21: "Born on the 21st (reduces to 3), Jupiter's wisdom combines with the Moon's creativity — an inspired and expressive communicator.",
+    22: "Born on the 22nd (Master Number), you carry the vibration of a Master Builder — capable of manifesting extraordinary visions into reality.",
+    23: "Born on the 23rd (reduces to 5), you carry the Royal Star of the Lion — highly adaptable, communicative, and naturally charismatic.",
+    24: "Born on the 24th (reduces to 6), Venus energy combined with Moon nurturing makes you a natural caretaker with great artistic gifts.",
+    25: "Born on the 25th (reduces to 7), you have powerful spiritual insight and analytical depth — a seeker of wisdom and hidden truths.",
+    26: "Born on the 26th (reduces to 8), Saturn's discipline meets Venus's creativity — strong material manifestation with artistic sensibility.",
+    27: "Born on the 27th (reduces to 9), Mars energy is refined by spiritual 7 — a courageous humanitarian with deep compassion.",
+    28: "Born on the 28th (reduces to 1), Sun leadership is tempered by the Moon and Saturn — a balanced leader who builds lasting legacies.",
+    29: "Born on the 29th (reduces to 11), Moon and Mars combine with Master 11 energy — deeply intuitive and inspired by a higher calling.",
+    30: "Born on the 30th (reduces to 3), pure Jupiter energy flows through you — a natural teacher, philosopher, and creative expression master.",
+    31: "Born on the 31st (reduces to 4), Rahu and Jupiter combine — an innovative builder who thinks outside conventional frameworks."
+  };
+
+  // Dynamic missing number remedies from actual grid
+  const missingNumbersRemedies = missingNums.map(num => ({
+    num,
+    ...getMissingNumberRemedyData(num)
+  }));
+
+  // Dynamic future predictions using personal year formula
+  const currentYear = new Date().getFullYear();
+  const futurePredictions = {};
+  for (let i = 0; i < 3; i++) {
+    const yr = currentYear + i;
+    const pyNum = calcPersonalYearForYear(dob, yr);
+    const pyData = getPersonalYearData(pyNum);
+    futurePredictions[`year${i + 1}`] = {
+      year: yr,
+      personalYear: pyNum,
+      title: pyData.title.toUpperCase(),
+      desc: pyData.theme,
+      health: pyData.health,
+      finance: pyData.finance,
+      career: pyData.career,
+      relationship: pyData.relationship
+    };
+  }
+
+  // Dynamic repeated numbers influence map
+  const REPEATED_INFLUENCE = {
+    1: "Amplified Sun energy: strong willpower, authority, and leadership. Can become domineering if unchecked.",
+    2: "Amplified Moon energy: heightened sensitivity, intuition, and emotional depth. Guard against mood swings.",
+    3: "Amplified Jupiter energy: exceptional wisdom, creative expression, and luck. A highly auspicious repetition.",
+    4: "Amplified Rahu energy: intense organizational drive and unconventional thinking. Can cause restlessness.",
+    5: "Amplified Mercury energy: exceptional communication skills and adaptability. Guard against scattered focus.",
+    6: "Amplified Venus energy: magnetic charm, artistic gifts, and nurturing ability. Very favorable for love life.",
+    7: "Amplified Neptune (Ketu) energy: deep spiritual insight and analytical capability. Can lead to isolation.",
+    8: "Amplified Saturn energy: exceptional discipline and material manifestation power. Karmic responsibility increases.",
+    9: "Amplified Mars energy: extraordinary courage and humanitarian drive. Guard against aggression."
+  };
 
   return {
     name,
@@ -1115,32 +1339,20 @@ export const generateReport = (name, dob, gender) => {
     personalYear,
     lifePathTraits: {
       ...lifePathTraits,
-      keyTraits: [
-        "Leadership qualities, can easily dominate people",
-        "Problem solvers who tackle every situation easily",
-        "Very positive, strong, determined, good initiators",
-        "Ability to change dreams into reality",
-        "Occupy higher positions in society",
-      ],
+      keyTraits: KEY_TRAITS_MAP[mulank] || KEY_TRAITS_MAP[1],
     },
     expressionTraits: {
       ...expressionTraits,
-      keyTraits: [
-        "Most feminine number, signifies human soul",
-        "Extremely sensitive and emotional",
-        "Imaginative, intuitive, deep thinkers",
-        "Ability to think out of the box",
-        "Good presenters and ability to convince",
-      ],
+      keyTraits: KEY_TRAITS_MAP[bhagyank] || KEY_TRAITS_MAP[1],
     },
     dateInfluencer: {
-      title: `Date Influencer - Born on ${parseInt(dob.split("-")[2])}`,
-      desc: `People born on ${parseInt(dob.split("-")[2])}, ${parseInt(dob.split("-")[2]) + 9}, ${parseInt(dob.split("-")[2]) + 18} (any month)`,
-      content: "These people give importance to other's point of view as well but have a rational mind. Due to the presence of 2, Moon, they will have a pleasing personality.",
+      title: `Date Influencer — Born on ${dayNum}`,
+      desc: `People born on ${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} share this birth energy.`.trim(),
+      content: DATE_INFLUENCER_CONTENT[dayNum] || `Born on the ${dayNum}th, you carry a unique blend of planetary energies that shapes your personality, strengths, and life path in distinctive ways.`,
     },
     personalityAnalysis: {
-      title: `Life Path ${lifePath} + Destiny ${expression}`,
-      content: "You will fulfil all that you take up in life provided you have good name number. You will work far more efficiently for others than if you work independently. In case you work independently, you will remain confused between the choices to make. You are physically strong but mentally emotional or sensitive. You will get a lot of attention from the opposite sex.",
+      title: `Mulank ${mulank} (${mulankPlanet}) + Bhagyank ${bhagyank} (${bhagyankPlanet}) Combination`,
+      content: personalityContent,
     },
     luckyElements: {
       luckyDates: elements.luckyDates,
@@ -1148,63 +1360,23 @@ export const generateReport = (name, dob, gender) => {
       luckyColor: elements.luckyColor,
       unluckyColor: elements.unluckyColor,
       luckyDirection: elements.luckyDirection,
+      kuaColors: elements.kuaColors,
+      kuaTheme: elements.kuaTheme,
       element: elements.element,
       planetEnergy: elements.planetEnergy,
     },
     repeatedNumbersAnalysis: presentNumbers.filter(n => n.count > 1).map(n => ({
       num: n.num,
       count: n.count,
-      influence: n.num === 1 ? "Strong willpower and determination. Can be authoritative." : 
-                 n.num === 2 ? "High sensitivity and intuition. Deeply emotional." : 
-                 "Enhanced qualities of the core number."
+      influence: REPEATED_INFLUENCE[n.num] || `Enhanced qualities of Number ${n.num} — its planetary energy is amplified in your chart.`
     })),
-    suitableProfessions: [
-      "Leadership roles",
-      "Creative arts",
-      "Social services",
-      "Consulting"
-    ],
-    missingNumbersRemedies: [
-      {
-        num: 4,
-        planet: "Rahu",
-        effects: "Avoids physical work, needs constant motivation, highly unorganized, not hardworking, believes in shortcuts, misses opportunities",
-        crystal: "Rudraksh and Crystal Bracelet",
-        benefits: ["Brings stability and structure to life", "Helps overcome sudden obstacles and challenges", "Improves focus and organizational skills"]
-      },
-      {
-        num: 5,
-        planet: "Mercury",
-        effects: "Most confused personality, frequent changes, afraid of new things, less adventurous, highly insecure, difficulty adapting",
-        crystal: "Green Aventurine Bracelet",
-        benefits: ["Attracts luck, abundance, and prosperity", "Enhances communication and business skills", "Promotes emotional healing"]
-      }
-    ],
-    futurePredictions: {
-      year1: {
-        year: new Date().getFullYear(),
-        title: "THE YEAR OF HARD WORK, DISCIPLINE AND BUILDING FOUNDATIONS",
-        desc: "A serious year requiring hard work and discipline. Focus on building solid foundations in all areas of life. Health needs attention."
-      },
-      year2: {
-        year: new Date().getFullYear() + 1,
-        title: "THE YEAR OF CHANGE, FREEDOM AND NEW EXPERIENCES",
-        desc: "A dynamic year of change, travel, and new experiences. The unexpected happens. Embrace freedom and variety."
-      }
-    },
+    suitableProfessions: getCareerOutlook(mulank, bhagyank).professionsList,
+    missingNumbersRemedies,
+    futurePredictions,
     affirmations: getAffirmations(lifePath),
-    customPage1: {
-      title: "Note Page 1",
-      content: "",
-    },
-    customPage2: {
-      title: "Note Page 2",
-      content: "",
-    },
-    customPage3: {
-      title: "Note Page 3",
-      content: "",
-    },
+    customPage1: { title: 'Note Page 1', content: '' },
+    customPage2: { title: 'Note Page 2', content: '' },
+    customPage3: { title: 'Note Page 3', content: '' },
   };
 };
 

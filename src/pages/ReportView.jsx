@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData } from '../utils/numerology';
 import './ReportView.css';
 
 const formatDateToDDMMYYYY = (dateStr) => {
@@ -177,8 +177,8 @@ function ReportView() {
   // Current personal year
   const personalYearNum = calcPersonalYearForYear(displayData.dob || '', new Date().getFullYear());
 
-  // Dynamic mobile number compatibility insights
-  const mobileData = getMobileAnalysis(displayData.phone || '', bhagyank);
+  // Dynamic mobile number compatibility insights (Bug 3 fix: pass mulank AND bhagyank)
+  const mobileData = getMobileAnalysis(displayData.phone || '', mulank, bhagyank);
 
   // Dynamic name compatibility insights
   const nameCompatData = getNameCompatibilityAnalysis(displayData.name || '', mulank, bhagyank);
@@ -467,9 +467,10 @@ function ReportView() {
             <div className="loshu-container">
               <div className="loshu-grid">
                 {[4, 9, 2, 3, 5, 7, 8, 1, 6].map((num, idx) => {
-                  const grid = calculateLoShuGrid(displayData.dob);
+                  // Full grid with Mulank, Bhagyank & Kua included per client spec
+                  const grid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
                   const count = grid[num - 1];
-                  const cellValue = count > 0 ? String(num).repeat(count) : '';
+                  const cellValue = count > 0 ? Array(count).fill(num).join(' ') : '';
                   return (
                     <div key={idx} className={`grid-cell ${count > 0 ? 'present' : 'empty'}`}>
                       {cellValue}
@@ -477,82 +478,83 @@ function ReportView() {
                   );
                 })}
               </div>
+
+              {/* Grid Highlights — computed from FULL grid (DOB + Mulank + Bhagyank + Kua) */}
               <div className="grid-interpretation">
                 <h4>Grid Highlights</h4>
-                
-                <div className="present-numbers">
-                  <p><strong>Present Numbers:</strong></p>
-                  <div className="number-tags">
-                    {getPresentNumbers(calculateLoShuGrid(displayData.dob)).map((item, idx) => (
-                      <span key={idx} className="tag tag-present">
-                        {item.num} ({item.planet}) {item.count > 1 ? `(x${item.count})` : ''}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="missing-numbers" style={{ marginTop: '12px' }}>
-                  <p><strong>Missing Numbers:</strong></p>
-                  <div className="number-tags">
-                    {getMissingNumbers(calculateLoShuGrid(displayData.dob)).map((num, idx) => (
-                      <span key={idx} className="tag tag-missing">{num}</span>
-                    ))}
-                  </div>
-                </div>
-
                 {(() => {
-                  const grid = calculateLoShuGrid(displayData.dob);
-                  const repeats = getRepeatedNumbers(grid);
-                  if (repeats.length > 0) {
-                    return (
-                      <div className="repeated-numbers" style={{ marginTop: '12px' }}>
-                        <p><strong>Repeated Numbers &amp; Strength:</strong></p>
-                        <div className="number-tags" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                          {repeats.map((item, idx) => (
-                            <span key={idx} className="tag tag-present" style={{ background: 'linear-gradient(145deg, #fdf2cc, #fde4a3)', border: '1px solid rgba(181,130,10,0.3)', color: '#8a6207' }}>
-                              Digit {item.num}: {item.strength} ({item.count}x)
+                  const fullGrid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
+                  const presentNums = getPresentNumbers(fullGrid);
+                  const missingNums = getMissingNumbers(fullGrid);
+                  const repeatedNums = getRepeatedNumbers(fullGrid);
+                  const arrows = getArrows(fullGrid);
+
+                  return (
+                    <>
+                      <div className="present-numbers">
+                        <p><strong>Present Numbers:</strong></p>
+                        <div className="number-tags">
+                          {presentNums.map((item, idx) => (
+                            <span key={idx} className="tag tag-present">
+                              {item.num} ({item.planet}) {item.count > 1 ? `(x${item.count})` : ''}
                             </span>
                           ))}
                         </div>
                       </div>
-                    );
-                  }
-                  return null;
-                })()}
 
-                {(() => {
-                  const grid = calculateLoShuGrid(displayData.dob);
-                  const arrows = getArrows(grid);
-                  return (
-                    <div className="arrow-analysis" style={{ marginTop: '14px', borderTop: '1px solid rgba(232,213,191,0.4)', paddingTop: '10px' }}>
-                      {arrows.positive.length > 0 && (
-                        <div style={{ marginBottom: '8px' }}>
-                          <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Positive Planes / Arrows:</strong></p>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {arrows.positive.map((arr, idx) => (
-                              <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#e6f4ea', color: '#137333', fontSize: '11px', fontWeight: 'bold' }}>
-                                {arr}
+                      <div className="missing-numbers" style={{ marginTop: '12px' }}>
+                        <p><strong>Missing Numbers:</strong></p>
+                        <div className="number-tags">
+                          {missingNums.length > 0 ? missingNums.map((num, idx) => (
+                            <span key={idx} className="tag tag-missing">{num}</span>
+                          )) : (
+                            <span className="tag tag-present">None — Complete Grid! ✓</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {repeatedNums.length > 0 && (
+                        <div className="repeated-numbers" style={{ marginTop: '12px' }}>
+                          <p><strong>Repeated Numbers &amp; Strength:</strong></p>
+                          <div className="number-tags" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                            {repeatedNums.map((item, idx) => (
+                              <span key={idx} className="tag tag-present" style={{ background: 'linear-gradient(145deg, #fdf2cc, #fde4a3)', border: '1px solid rgba(181,130,10,0.3)', color: '#8a6207' }}>
+                                Digit {item.num}: {item.strength} ({item.count}x)
                               </span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {arrows.negative.length > 0 && (
-                        <div>
-                          <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Weaknesses / Negative Arrows:</strong></p>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {arrows.negative.map((arr, idx) => (
-                              <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#fce8e6', color: '#c5221f', fontSize: '11px', fontWeight: 'bold' }}>
-                                {arr}
-                              </span>
-                            ))}
+
+                      <div className="arrow-analysis" style={{ marginTop: '14px', borderTop: '1px solid rgba(232,213,191,0.4)', paddingTop: '10px' }}>
+                        {arrows.positive.length > 0 && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Positive Planes / Arrows:</strong></p>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {arrows.positive.map((arr, idx) => (
+                                <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#e6f4ea', color: '#137333', fontSize: '11px', fontWeight: 'bold' }}>
+                                  {arr}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                        {arrows.negative.length > 0 && (
+                          <div>
+                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Weaknesses / Negative Arrows:</strong></p>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {arrows.negative.map((arr, idx) => (
+                                <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#fce8e6', color: '#c5221f', fontSize: '11px', fontWeight: 'bold' }}>
+                                  {arr}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   );
                 })()}
-
                 <p className="kua-note" style={{ marginTop: '14px' }}><strong>Your Kua Number: {calculateKua(displayData.dob, displayData.gender)}</strong></p>
               </div>
             </div>
