@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis } from '../utils/numerology';
 import './ReportView.css';
 
 const formatDateToDDMMYYYY = (dateStr) => {
@@ -182,6 +182,9 @@ function ReportView() {
 
   // Dynamic name compatibility insights
   const nameCompatData = getNameCompatibilityAnalysis(displayData.name || '', mulank, bhagyank);
+
+  // Dynamic Chaldean compatibility insights
+  const compatibilityAnalysis = getNumberCompatibilityAnalysis(mulank, bhagyank);
 
   // Dynamic career outlook insights
   const careerData = getCareerOutlook(mulank, bhagyank);
@@ -436,6 +439,36 @@ function ReportView() {
               <div className="name-detail-card">
                 <span className="detail-label">Planetary & Core Compatibility</span>
                 <p className="detail-value">{nameCompatData.description}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
+          <section className="report-section">
+            <h3 className="section-title">Chaldean Number Compatibility Analysis</h3>
+            <div className="name-compatibility-container">
+              <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
+                <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
+                <div className="name-badge-row">
+                  <span className="badge" style={{
+                    background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
+                                compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
+                    color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
+                           compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
+                    border: '1px solid currentColor'
+                  }}>
+                    <strong>
+                      {compatibilityAnalysis.overallStatus === 'friend' ? 'HIGHLY COMPATIBLE ✓' :
+                       compatibilityAnalysis.overallStatus === 'enemy' ? 'CHALLENGING — REMEDY RECOMMENDED' : 'NEUTRAL'}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+              <div className="name-detail-card" style={{ display: 'block' }}>
+                <span className="detail-label">Chaldean Planetary Relationship & Remedies</span>
+                <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
+                  {compatibilityAnalysis.description}
+                </div>
               </div>
             </div>
           </section>

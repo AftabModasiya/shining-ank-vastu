@@ -771,6 +771,7 @@ export const getCompatibility = (num1, num2) => {
 };
 
 // Returns a full compatibility analysis between mulank and bhagyank
+// Returns a full compatibility analysis between mulank and bhagyank
 export const getNumberCompatibilityAnalysis = (mulank, bhagyank) => {
   const compat = getCompatibility(mulank, bhagyank);
   const reverseCompat = getCompatibility(bhagyank, mulank);
@@ -788,19 +789,87 @@ export const getNumberCompatibilityAnalysis = (mulank, bhagyank) => {
     9: "Mars (Mangal)"
   };
 
-  const statusDescriptions = {
-    friend: "Your Mulank and Bhagyank planets are in a highly favorable relationship. You will experience strong support from your destiny number, smooth financial growth, and harmonious relationships. Career opportunities align naturally.",
-    enemy: "Your Mulank and Bhagyank planets are in a challenging relationship. This creates internal conflicts between your birth energy and destiny path. Special remedies and alignment through lucky dates are recommended for smoother results.",
-    neutral: "Your Mulank and Bhagyank planets share a neutral relationship. Neither strongly supporting nor opposing, the results depend on effort and environment. With proper remedies, you can amplify the positive outcomes significantly."
-  };
+  const p1 = planetNames[mulank] || "Unknown";
+  const p2 = planetNames[bhagyank] || "Unknown";
+
+  let description = "";
+
+  // 1 & 8 or 8 & 1 specialized combination
+  if ((mulank === 1 && bhagyank === 8) || (mulank === 8 && bhagyank === 1)) {
+    description = `1. THE CONFLICT & REALITY (The Anti-Relationship):
+- Mulank ${mulank} (${mulank === 1 ? 'Sun' : 'Saturn'}) and Bhagyank ${bhagyank} (${bhagyank === 8 ? 'Saturn' : 'Sun'}) are governed by the Sun (Surya) and Saturn (Shani), which are mythological and planetary enemies (Anti).
+- This creates intense internal and external friction, often manifesting as: father-son conflicts, delays in achieving major success, identity struggles, and heavy duties or responsibilities before the age of 35.
+
+2. THE NEUTRALIZATION & EVOLUTION:
+- Over time, this combination acts as a powerful "Neutralizer". The Sun provides vision and leadership, while Saturn instills ultimate discipline, patience, and execution power.
+- After the age of 34-36, the 'Anti' friction transitions into a highly stable, powerful 'Neutral' state where you achieve massive material success, corporate leadership, or public authority through sheer perseverance and grit.
+
+3. LO SHU GRID IMPACT:
+- The presence of 1 (Water Element / Career Plane) and 8 (Earth Element / Knowledge Plane) affects the grid structure. Water (1) is the source of flow and career drive, while Earth (8) provides knowledge and stability. The relationship requires balancing, as the dry Earth of 8 can absorb and block the career flow of 1, demanding mental flexibility and continuous learning.
+
+4. 100% SPECIFIC REMEDIES (The Bridge):
+- Name Numerology: Bring the spelling total of your name to Number 5 (Mercury) which acts as a friendly bridge for both 1 and 8, or Number 6 (Venus) for material harmony.
+- Lucky Colors: Strictly avoid Black and Dark Blue in your clothing/surroundings. Instead, choose Royal Blue, Light Greens, or Saffron.
+- Actionable Advice: Respect and serve father/mentor figures. Help, donate to, or support laborers and lower-income workers to balance Saturn's karmic energy.`;
+  } else {
+    // Generate high quality descriptive markdown for other combinations dynamically
+    const relationshipType = compat.status === "friend" ? "Friendly / Harmonious" :
+                             compat.status === "enemy" ? "Opposing / Challenging" : "Neutral / Balanced";
+    
+    let conflictReality = "";
+    let evolution = "";
+    let gridImpact = "";
+    let remedies = "";
+
+    if (compat.status === "friend") {
+      conflictReality = `- Mulank ${mulank} (${p1}) and Bhagyank ${bhagyank} (${p2}) share a highly favorable, friendly relationship.
+- This creates smooth energy flows between your core personality traits and your destiny path. You encounter fewer roadblocks, experience easy recognition, and enjoy natural support from peers and family.`;
+      evolution = `- This combination allows for a natural flow of opportunities. Your natural talents align seamlessly with your destiny's timing.
+- Success comes relatively early and smoothly. You are able to leverage resources and relationships with ease, leading to sustained progress and emotional satisfaction.`;
+      gridImpact = `- The harmonious interaction between these numbers strengthens the plane they reside on. Your Lo Shu grid functions with high coherence, allowing you to convert your plans into physical realities without energy leakage.`;
+      remedies = `- Name Numerology: Align your name spelling total with your Lucky Number (Bhagyank) or Mercury (5) to further amplify your success.
+- Lucky Colors: Choose colors associated with the dominant planet to enhance your positive aura.
+- Actionable Advice: Practice gratitude, maintain charity work, and share your good fortune to sustain positive planetary blessings.`;
+    } else if (compat.status === "enemy") {
+      conflictReality = `- Mulank ${mulank} (${p1}) and Bhagyank ${bhagyank} (${p2}) share an opposing, challenging relationship.
+- This indicates internal friction between your innate desires and the external path of your destiny. You may face repeated trials, misunderstandings in relationships, or unexpected career transitions.`;
+      evolution = `- While challenging, this friction forces you to cultivate strength, resilience, and unique problem-solving abilities.
+- Over time (typically after age 30), this friction acts as a crucible, refining your character. If handled with discipline and correct remedies, it can lead to unique achievements and deep wisdom.`;
+      gridImpact = `- The tension between these opposing numbers creates dynamic polarities in your grid. It requires conscious effort and balancing elements to prevent the stronger number's energy from overpowering the other.`;
+      remedies = `- Name Numerology: The ultimate remedy is to bring your Name Spelling Total to a neutral or friendly "Bridge Number" that harmonizes both ruling planets.
+- Lucky Colors: Strictly avoid colors that provoke the opposing planet. Focus on neutral, supportive pastel colors.
+- Actionable Advice: Practice mindfulness or meditation to manage inner conflicts. Engage in specific charity acts aligned with the weaker planet.`;
+    } else {
+      conflictReality = `- Mulank ${mulank} (${p1}) and Bhagyank ${bhagyank} (${p2}) share a neutral, balanced relationship.
+- This represents a balanced canvas where results depend heavily on your personal effort and choices rather than predetermined ease or friction.`;
+      evolution = `- The neutral flow allows you to choose your direction with free will. There is no active planetary opposition, but there is also no effortless push from destiny.
+- Success is stable and builds gradually. Your patience and consistent efforts will determine the height of your achievements.`;
+      gridImpact = `- Your grid remains balanced and flexible. The energy flows smoothly but requires active stimulation from other active numbers or remedies to reach full potential.`;
+      remedies = `- Name Numerology: Align your name spelling total to a highly active friendly number (such as 1, 5, or 6) to give an extra boost of energy to your destiny.
+- Lucky Colors: Use colors that blend well with both planets, avoiding extreme dark shades.
+- Actionable Advice: Keep a highly structured routine and actively seek out mentor guidance to maintain focus.`;
+    }
+
+    description = `1. THE CONFLICT & REALITY (The ${relationshipType} Relationship):
+${conflictReality}
+
+2. THE NEUTRALIZATION & EVOLUTION:
+${evolution}
+
+3. LO SHU GRID IMPACT:
+${gridImpact}
+
+4. 100% SPECIFIC REMEDIES (The Bridge):
+${remedies}`;
+  }
 
   return {
-    mulankPlanet: planetNames[mulank] || "Unknown",
-    bhagyankPlanet: planetNames[bhagyank] || "Unknown",
+    mulankPlanet: p1,
+    bhagyankPlanet: p2,
     mulankToBhagyank: compat,
     bhagyankToMulank: reverseCompat,
     overallStatus: compat.status,
-    description: statusDescriptions[compat.status] || statusDescriptions.neutral
+    description
   };
 };
 

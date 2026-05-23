@@ -980,6 +980,14 @@ export const generatePDF = async (clientData) => {
   const caDescCardH = caDescLines.length * 5.5 + 6;
   let remPlaneY = 90 + caDescCardH + 10;
 
+  // Guard: if vertical planes will overflow this page, push them to a new page
+  if (remPlaneY + 40 > pageHeight - 25) {
+    doc.addPage();
+    drawPageShell(doc);
+    drawFooter(doc);
+    remPlaneY = 25;
+  }
+
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, remPlaneY, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
