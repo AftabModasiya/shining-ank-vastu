@@ -1878,3 +1878,266 @@ export const getNameNumerologyCheck = (name, mulank, bhagyank) => {
   };
 };
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FOREIGN SETTLEMENT PREDICTION ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getForeignSettlement = (dob, mulank, bhagyank) => {
+  const grid = calculateLoShuGrid(dob, [mulank, bhagyank]);
+  const presentNums = [];
+  const missingNums = [];
+  for (let i = 1; i <= 9; i++) {
+    if (grid[i - 1] > 0) presentNums.push(i);
+    else missingNums.push(i);
+  }
+
+  const has5 = presentNums.includes(5);
+  const has6 = presentNums.includes(6);
+  const missing5 = missingNums.includes(5);
+  const missing6 = missingNums.includes(6);
+
+  // ── Rule 1 & 2: Core 5 & 6 check ──────────────────────────────────────────
+  let baseChance;
+  let coreResult;
+  let coreGood;
+
+  if (missing5 && missing6) {
+    baseChance = 15;
+    coreResult = 'If 5 & 6 Both Missing in the grid, Less chances for foreign settlement.';
+    coreGood = false;
+  } else if (has5 && has6) {
+    baseChance = 85;
+    coreResult = 'Strong elements for international travel found. High chances for foreign settlement.';
+    coreGood = true;
+  } else if (has5 || has6) {
+    baseChance = 50;
+    coreResult = has5
+      ? 'Number 5 (travel energy) is present but 6 (comforts abroad) is missing. Moderate chances for foreign settlement.'
+      : 'Number 6 (foreign comforts) is present but 5 (travel energy) is missing. Moderate chances for foreign settlement.';
+    coreGood = false;
+  } else {
+    baseChance = 30;
+    coreResult = 'Travel-support numbers are partially absent. Limited foreign settlement potential.';
+    coreGood = false;
+  }
+
+  // ── Rule 3: Driver/Conductor friction with travel numbers (2, 5, 6) ────────
+  const travelNums = [2, 5, 6];
+  const frictionLines = [];
+
+  travelNums.forEach(tn => {
+    const dComp = getCompatibility(mulank, tn);
+    const bComp = getCompatibility(bhagyank, tn);
+    if (dComp.status === 'enemy') {
+      frictionLines.push(`Driver ${mulank} is a Non-Friend to Number ${tn} — initial visa delays or travel friction possible.`);
+    }
+    if (bComp.status === 'enemy') {
+      frictionLines.push(`Conductor ${bhagyank} is a Non-Friend to Number ${tn} — persistence is key to overcome settlement hurdles.`);
+    }
+  });
+
+  // Adjustment for driver/conductor relationship
+  const driverToFive  = getCompatibility(mulank, 5).status;
+  const conductorToSix = getCompatibility(bhagyank, 6).status;
+
+  let planetaryNote = '';
+  if (driverToFive === 'friend' && conductorToSix === 'friend') {
+    planetaryNote = `Driver ${mulank} is friendly to Number 5 and Conductor ${bhagyank} is friendly to Number 6 — both energies support foreign settlement strongly.`;
+    baseChance = Math.min(baseChance + 10, 95);
+  } else if (driverToFive === 'enemy' || conductorToSix === 'enemy') {
+    planetaryNote = `Since ${driverToFive === 'enemy' ? `Driver ${mulank}` : `Conductor ${bhagyank}`} carries friction with travel numbers, balancing these missing elements with remedies is highly recommended.`;
+    baseChance = Math.max(baseChance - 10, 10);
+  } else {
+    planetaryNote = `Driver ${mulank} and Conductor ${bhagyank} maintain a neutral-to-supportive stance on foreign travel energies. Focused effort will yield results.`;
+  }
+
+  return {
+    presentNums,
+    missingNums,
+    coreResult,
+    coreGood,
+    probabilityScore: baseChance,
+    frictionLines,
+    planetaryNote,
+    has5,
+    has6,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MATCH MAKING COMPATIBILITY ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Cross-grid pair compatibility table (Male num ⇌ Female num that balance)
+const BALANCE_PAIRS = [
+  [2, 7], [7, 2],
+  [4, 5], [5, 4],
+  [1, 6], [6, 1],
+  [3, 9], [9, 3],
+  [1, 2], [2, 1],
+  [8, 5], [5, 8],
+];
+
+export const getMatchMaking = (maleData, femaleData) => {
+  // maleData / femaleData: { name, dob, mulank, bhagyank, grid[] }
+  const { name: mName, mulank: mDriver, bhagyank: mConductor, grid: mGrid = [] } = maleData;
+  const { name: fName, mulank: fDriver, bhagyank: fConductor, grid: fGrid = [] } = femaleData;
+
+  let totalPct = 0;
+  const boostLogs = [];
+  const highlights = [];
+  const sharedPairs = [];
+
+  // ── 1. Driver Dominance Check ─────────────────────────────────────────────
+  const driverCompat = getCompatibility(mDriver, fDriver);
+  if (driverCompat.status === 'friend') {
+    totalPct += 30;
+    boostLogs.push(`${mName} has driver ${mDriver} which is a Good Friend to ${fName}'s driver ${fDriver}. This adds a positive impact and boosts profile compatibility by 30%.`);
+    highlights.push(`Both driver numbers are harmonious — a strong foundation for the relationship.`);
+  } else if (driverCompat.status === 'enemy') {
+    totalPct += 5;
+    boostLogs.push(`${mName}'s driver ${mDriver} and ${fName}'s driver ${fDriver} are Non-Friends. Personality clashes are possible — compatibility adds only 5%.`);
+    highlights.push(`Driver numbers clash — differences in core nature require conscious effort.`);
+  } else {
+    totalPct += 15;
+    boostLogs.push(`${mName}'s driver ${mDriver} is Neutral to ${fName}'s driver ${fDriver}. This brings a stable but neutral energy, adding 15%.`);
+    highlights.push(`Driver numbers are neutral — the relationship is stable but needs nurturing.`);
+  }
+
+  // ── 2. Marriage Core: 5 & 6 across both grids ────────────────────────────
+  const allNums = [...new Set([...mGrid, ...fGrid])];
+  if (allNums.includes(5) && allNums.includes(6)) {
+    totalPct += 5;
+    boostLogs.push(`For marriage relations, presence of 5 and 6 across the combined grids is extremely auspicious. This gives a boost of 5% to this profile!`);
+    highlights.push(`Auspicious numbers 5 & 6 are present across the combined grids — excellent for a lasting bond.`);
+  }
+
+  // ── 3. Number Sharing (cross-grid balance pairs) ─────────────────────────
+  let pairsFound = 0;
+  BALANCE_PAIRS.forEach(([mNum, fNum]) => {
+    if (mGrid.includes(mNum) && fGrid.includes(fNum)) {
+      const key = `${Math.min(mNum, fNum)} ⇌ ${Math.max(mNum, fNum)}`;
+      if (!sharedPairs.some(p => p.pair === key)) {
+        sharedPairs.push({ pair: key, mNum, fNum });
+        totalPct += 10;
+        pairsFound++;
+        boostLogs.push(`${mName} can share ${mNum} and ${fName} can share ${fNum}. This will add 10% to profile match.`);
+      }
+    }
+  });
+  if (pairsFound >= 2) {
+    highlights.push(`${pairsFound} number pairs are being shared across Lo Shu grids — this balances out the negative impacts of each other.`);
+  } else if (pairsFound === 1) {
+    highlights.push(`One balancing number pair found across grids — a positive signal for mutual understanding.`);
+  } else {
+    highlights.push(`No direct number-sharing pairs found — independent energy profiles.`);
+  }
+
+  // ── 4. Conductor bonus ────────────────────────────────────────────────────
+  const conductorCompat = getCompatibility(mConductor, fConductor);
+  if (conductorCompat.status === 'friend') {
+    totalPct += 10;
+    boostLogs.push(`Conductor ${mConductor} (${mName}) is friendly to Conductor ${fConductor} (${fName}) — long-term life paths align. +10%.`);
+  }
+
+  totalPct = Math.min(totalPct, 100);
+
+  // ── Star Rating Scale ────────────────────────────────────────────────────
+  let stars, ratingLabel;
+  if (totalPct >= 80) {
+    stars = 5;
+    ratingLabel = 'Excellent Compatibility';
+  } else if (totalPct >= 50) {
+    stars = totalPct >= 65 ? 4 : 3;
+    ratingLabel = 'Moderate Compatibility';
+  } else {
+    stars = totalPct >= 30 ? 2 : 1;
+    ratingLabel = 'Low Compatibility';
+  }
+
+  return {
+    totalPercentage: totalPct,
+    stars,
+    ratingLabel,
+    highlights,
+    sharedPairs,
+    boostLogs,
+    driverCompatStatus: driverCompat.status,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOVE vs ARRANGED MARRIAGE ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getMarriageType = (dob, mulank, bhagyank) => {
+  const grid = calculateLoShuGrid(dob, [mulank, bhagyank]);
+  const presentNums = [];
+  const missingNums = [];
+  for (let i = 1; i <= 9; i++) {
+    if (grid[i - 1] > 0) presentNums.push(i);
+    else missingNums.push(i);
+  }
+
+  let lovePct = 40;   // base
+  let arrangePct = 40; // base
+  const comments = [];
+
+  // ── Rule 1: Driver/Conductor relationship ─────────────────────────────────
+  const dcRelation = getCompatibility(mulank, bhagyank);
+  const dcLabel = getRelationLabel(dcRelation.status);
+  comments.push(`The Conductor number ${bhagyank} is ${dcLabel} with Driver number ${mulank}.`);
+
+  // ── Rule 2: Love Marriage Boosters — 5 & 6 ───────────────────────────────
+  const loveBoostNums = [5, 6];
+  const loveFound = loveBoostNums.filter(n => presentNums.includes(n));
+  if (loveFound.length === 2) {
+    lovePct += 25;
+    comments.push(`Numbers {${loveFound.join(', ')}} are present. This increases chances of a love marriage.`);
+  } else if (loveFound.length === 1) {
+    lovePct += 12;
+    comments.push(`Number ${loveFound[0]} is present. This partially increases chances of a love marriage.`);
+  }
+
+  // ── Rule 3: Arranged Marriage Boosters — 9, 3, 2 ─────────────────────────
+  const arrangeBoostNums = [9, 3, 2];
+  const arrangeFound = arrangeBoostNums.filter(n => presentNums.includes(n));
+  if (arrangeFound.length >= 2) {
+    arrangePct += 20 + (arrangeFound.length - 2) * 5;
+    comments.push(`Numbers {${arrangeFound.join(', ')}} are present. This increases chances of an arranged marriage.`);
+  } else if (arrangeFound.length === 1) {
+    arrangePct += 8;
+    comments.push(`Number ${arrangeFound[0]} is present. This slightly increases chances of an arranged marriage.`);
+  }
+
+  // ── Rule 4: Missing Support Check ─────────────────────────────────────────
+  // Love support numbers: 1, 7
+  [1, 7].forEach(n => {
+    if (missingNums.includes(n)) {
+      comments.push(`The number ${n} which supports chances of love marriage is MISSING!`);
+      lovePct = Math.max(lovePct - 8, 10);
+    }
+  });
+  // Arranged support number: 8
+  if (missingNums.includes(8)) {
+    comments.push(`The number 8 which supports chances of arrange marriage is MISSING!`);
+    arrangePct = Math.max(arrangePct - 8, 10);
+  }
+
+  lovePct    = Math.min(lovePct, 95);
+  arrangePct = Math.min(arrangePct, 95);
+
+  const dominant = lovePct >= arrangePct ? 'Love' : 'Arranged';
+  const highlight = `More chances of ${dominant} Marriage as compared to ${dominant === 'Love' ? 'Arranged' : 'Love'} Marriage.`;
+
+  return {
+    lovePct,
+    arrangePct,
+    dominant,
+    highlight,
+    comments,
+    presentNums,
+    missingNums,
+  };
+};

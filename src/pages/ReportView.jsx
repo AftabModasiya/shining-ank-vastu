@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType } from '../utils/numerology';
 import './ReportView.css';
 
 const formatDateToDDMMYYYY = (dateStr) => {
@@ -195,6 +195,16 @@ function ReportView() {
   // Dynamic career outlook insights
   const careerData = getCareerOutlook(mulank, bhagyank);
 
+  // NEW: Foreign Settlement prediction
+  const foreignSettlement = getForeignSettlement(displayData.dob || '', mulank, bhagyank);
+
+  // NEW: Love vs Arranged Marriage prediction
+  const marriageType = getMarriageType(displayData.dob || '', mulank, bhagyank);
+
+  // NOTE: Match Making uses two separate client profiles — it's filled by the consultant
+  // in edit mode via report.matchMaking fields; default empty guard here
+  const mmData = report?.matchMaking || null;
+
   return (
     <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
       {/* ── Header ───────────────────────────────────────── */}
@@ -374,7 +384,7 @@ function ReportView() {
             <div className="lucky-grid">
               {[
                 { label: 'Lucky Number', value: `${luckyData.luckyNumber} (Life Path)` },
-// ... (header and report content)
+                // ... (header and report content)
 
                 { label: 'Lucky Dates', value: luckyData.luckyDates },
                 { label: 'Challenging Dates', value: luckyData.unluckyDates },
@@ -567,14 +577,14 @@ function ReportView() {
                 <div className="name-badge-row">
                   <span className="badge" style={{
                     background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
-                                compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
+                      compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
                     color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
-                           compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
+                      compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
                     border: '1px solid currentColor'
                   }}>
                     <strong>
                       {compatibilityAnalysis.overallStatus === 'friend' ? 'HIGHLY COMPATIBLE ✓' :
-                       compatibilityAnalysis.overallStatus === 'enemy' ? 'CHALLENGING — REMEDY RECOMMENDED' : 'NEUTRAL'}
+                        compatibilityAnalysis.overallStatus === 'enemy' ? 'CHALLENGING — REMEDY RECOMMENDED' : 'NEUTRAL'}
                     </strong>
                   </span>
                 </div>
@@ -598,9 +608,9 @@ function ReportView() {
                 <div className="name-badge-row">
                   <span className="badge" style={{
                     background: careerData.compatibilityStatus === 'Highly Compatible' ? '#e6f4ea' :
-                                careerData.compatibilityStatus === 'Anti' ? '#fce8e6' : '#fff7e6',
+                      careerData.compatibilityStatus === 'Anti' ? '#fce8e6' : '#fff7e6',
                     color: careerData.compatibilityStatus === 'Highly Compatible' ? '#137333' :
-                           careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
+                      careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
                     border: '1px solid currentColor'
                   }}>
                     <strong>{careerData.compatibilityStatus} Connection</strong>
@@ -893,6 +903,198 @@ function ReportView() {
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* ── FOREIGN SETTLEMENT PREDICTION ──────────────── */}
+          <section className="report-section">
+            <h3 className="section-title">✈️ Foreign Settlement Prediction</h3>
+            <div className="name-compatibility-container">
+
+              {/* Header card */}
+              <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #e8f4fd, #d1eaf7)', border: '1.5px solid #1a6fa8', marginBottom: '10px' }}>
+                <h4 style={{ color: '#0d3c5e' }}>
+                  Probability Score: <span className="highlight-text" style={{ fontSize: '1.3rem' }}>{foreignSettlement.probabilityScore}%</span>
+                </h4>
+                <div className="name-badge-row" style={{ marginTop: '6px' }}>
+                  <span className="badge" style={{ background: '#d0f0e8', color: '#0a5c3b' }}>Present: {foreignSettlement.presentNums.join(', ')}</span>
+                  <span className="badge" style={{ background: '#fde8e8', color: '#7a1a1a' }}>Missing: {foreignSettlement.missingNums.join(', ') || 'None'}</span>
+                </div>
+              </div>
+
+              {/* Core result */}
+              <div className="name-detail-card" style={{ marginBottom: '10px' }}>
+                <span className="detail-label">FOREIGN SETTLEMENT PREDICTIONS</span>
+                <div style={{ marginTop: '10px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{foreignSettlement.coreGood ? '🟢' : '🔴'}</span>
+                  <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.6', color: '#333' }}>
+                    <strong>{foreignSettlement.coreGood ? 'Match' : 'Alert'}:</strong> {foreignSettlement.coreResult}
+                  </p>
+                </div>
+              </div>
+
+              {/* Planetary friction */}
+              {foreignSettlement.frictionLines.length > 0 && (
+                <div className="name-detail-card" style={{ background: '#fff4e6', border: '1px solid #f5c07a', marginBottom: '10px' }}>
+                  <span className="detail-label" style={{ color: '#8a4500' }}>⚠️ PLANETARY FRICTION</span>
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {foreignSettlement.frictionLines.map((line, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span>🔴</span>
+                        <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#555' }}>{line}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Planetary note */}
+              <div className="name-detail-card" style={{ background: '#f0f4ff', border: '1px solid #bfd0f7' }}>
+                <span className="detail-label" style={{ color: '#1a3a6e' }}>🪐 PLANETARY ALIGNMENT</span>
+                <p style={{ margin: '8px 0 0', fontSize: '0.9rem', lineHeight: '1.6', color: '#333' }}>{foreignSettlement.planetaryNote}</p>
+              </div>
+
+            </div>
+          </section>
+
+          {/* ── LOVE vs ARRANGED MARRIAGE ───────────────────── */}
+          <section className="report-section">
+            <h3 className="section-title">💍 Love vs Arranged Marriage Prediction</h3>
+            <div className="name-compatibility-container">
+
+              {/* Percentage row */}
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <div style={{
+                  flex: 1, minWidth: '140px', padding: '18px 14px', borderRadius: '10px', textAlign: 'center',
+                  background: marriageType.dominant === 'Love' ? 'linear-gradient(135deg, #ffe0ec, #ffc2d4)' : 'linear-gradient(135deg, #fff0f0, #ffe5e5)',
+                  border: `2px solid ${marriageType.dominant === 'Love' ? '#e91e63' : '#f5c6cb'}`,
+                  transform: marriageType.dominant === 'Love' ? 'scale(1.04)' : 'scale(1)',
+                  transition: 'transform 0.2s',
+                }}>
+                  <div style={{ fontSize: marriageType.dominant === 'Love' ? '2.2rem' : '1.8rem' }}>💗</div>
+                  <div style={{ fontWeight: 700, fontSize: '1.5rem', color: '#c2185b' }}>{marriageType.lovePct}%</div>
+                  <div style={{ fontSize: '0.85rem', color: '#880e4f', marginTop: '4px', fontWeight: 600 }}>Love Marriage</div>
+                </div>
+                <div style={{
+                  flex: 1, minWidth: '140px', padding: '18px 14px', borderRadius: '10px', textAlign: 'center',
+                  background: marriageType.dominant === 'Arranged' ? 'linear-gradient(135deg, #e3f2fd, #bbdefb)' : 'linear-gradient(135deg, #f0f8ff, #e8f4fd)',
+                  border: `2px solid ${marriageType.dominant === 'Arranged' ? '#1976d2' : '#bee0f5'}`,
+                  transform: marriageType.dominant === 'Arranged' ? 'scale(1.04)' : 'scale(1)',
+                  transition: 'transform 0.2s',
+                }}>
+                  <div style={{ fontSize: marriageType.dominant === 'Arranged' ? '2.2rem' : '1.8rem' }}>💑</div>
+                  <div style={{ fontWeight: 700, fontSize: '1.5rem', color: '#1565c0' }}>{marriageType.arrangePct}%</div>
+                  <div style={{ fontSize: '0.85rem', color: '#0d47a1', marginTop: '4px', fontWeight: 600 }}>Arranged Marriage</div>
+                </div>
+              </div>
+
+              {/* Highlight */}
+              <div style={{ padding: '12px 16px', borderRadius: '8px', background: '#fef9e7', border: '1px solid #f9e79f', marginBottom: '10px' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#8a5500' }}>💡 {marriageType.highlight}</strong>
+              </div>
+
+              {/* Comments */}
+              <div className="name-detail-card">
+                <span className="detail-label">COMMENTS & JUSTIFICATION</span>
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {marriageType.comments.map((c, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '1rem' }}>{c.includes('MISSING') ? '🔴' : '🟢'}</span>
+                      <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{c}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          {/* ── MATCH MAKING (Consultant fills two profiles in Edit mode) ── */}
+          <section className="report-section">
+            <h3 className="section-title">💞 Match Making Compatibility</h3>
+            {isEditing ? (
+              <div className="name-detail-card" style={{ display: 'block' }}>
+                <span className="detail-label">Enter both profiles for compatibility analysis</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
+                  {['male', 'female'].map(gender => (
+                    <div key={gender} style={{ border: '1px solid #e8ddc4', borderRadius: '8px', padding: '12px' }}>
+                      <strong style={{ textTransform: 'capitalize', color: '#8a6207' }}>{gender} Profile</strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                        <input placeholder="Name" className="edit-input" name={`report.matchMaking.${gender}.name`}
+                          value={editedData?.report?.matchMaking?.[gender]?.name || ''} onChange={handleInputChange} />
+                        <input placeholder="Date of Birth (YYYY-MM-DD)" className="edit-input" name={`report.matchMaking.${gender}.dob`}
+                          value={editedData?.report?.matchMaking?.[gender]?.dob || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : mmData?.male?.dob && mmData?.female?.dob ? (() => {
+              const mDob = mmData.male.dob;
+              const fDob = mmData.female.dob;
+              const mMulank = calcMulank(mDob);
+              const mBhagyank = calcBhagyank(mDob);
+              const fMulank = calcMulank(fDob);
+              const fBhagyank = calcBhagyank(fDob);
+              const mGrid = calculateLoShuGrid(mDob, [mMulank, mBhagyank]);
+              const fGrid = calculateLoShuGrid(fDob, [fMulank, fBhagyank]);
+              const mPresent = mGrid.flatMap((cnt, i) => cnt > 0 ? Array(cnt).fill(i + 1) : []);
+              const fPresent = fGrid.flatMap((cnt, i) => cnt > 0 ? Array(cnt).fill(i + 1) : []);
+              const mm = getMatchMaking(
+                { name: mmData.male.name, mulank: mMulank, bhagyank: mBhagyank, grid: [...new Set(mPresent)] },
+                { name: mmData.female.name, mulank: fMulank, bhagyank: fBhagyank, grid: [...new Set(fPresent)] }
+              );
+              const starStr = '★'.repeat(mm.stars) + '☆'.repeat(5 - mm.stars);
+              return (
+                <div className="name-compatibility-container">
+                  {/* Rating header */}
+                  <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fff0f8, #ffe4f0)', border: '1.5px solid #e91e63', marginBottom: '10px' }}>
+                    <h4 style={{ color: '#880e4f' }}>{mmData.male.name} & {mmData.female.name}</h4>
+                    <div style={{ fontSize: '1.6rem', color: '#e91e63', letterSpacing: '2px', margin: '4px 0' }}>{starStr}</div>
+                    <div className="name-badge-row">
+                      <span className="badge" style={{ background: '#fce4ec', color: '#880e4f', fontWeight: 700 }}>{mm.ratingLabel}</span>
+                      <span className="badge" style={{ background: '#fff', color: '#c2185b', border: '1px solid #e91e63' }}>Total: {mm.totalPercentage}%</span>
+                    </div>
+                  </div>
+
+                  {/* Highlights */}
+                  <div className="name-detail-card" style={{ marginBottom: '10px' }}>
+                    <span className="detail-label">HIGHLIGHTS</span>
+                    <ul style={{ margin: '8px 0 0', paddingLeft: '18px', fontSize: '0.88rem', lineHeight: '1.6', color: '#444' }}>
+                      {mm.highlights.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+
+                  {/* Shared pairs */}
+                  {mm.sharedPairs.length > 0 && (
+                    <div className="name-detail-card" style={{ background: '#f0fff4', border: '1px solid #a5d6a7', marginBottom: '10px' }}>
+                      <span className="detail-label" style={{ color: '#2e7d32' }}>🔗 SHARABLE NUMBER PAIRS</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                        {mm.sharedPairs.map((p, i) => (
+                          <span key={i} style={{ background: '#e8f5e9', border: '1px solid #81c784', borderRadius: '20px', padding: '4px 14px', fontSize: '0.9rem', fontWeight: 600, color: '#1b5e20' }}>{p.pair}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Boost logs */}
+                  <div className="name-detail-card">
+                    <span className="detail-label">COMPATIBILITY INSIGHTS</span>
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {mm.boostLogs.map((log, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>🟢</span>
+                          <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{log}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div className="empty-state-box">
+                <p>Enter both profiles in Edit mode to generate Match Making analysis.</p>
+              </div>
+            )}
           </section>
 
           {/* ── 13. CUSTOM NOTE PAGE 1 ─────────────────── */}

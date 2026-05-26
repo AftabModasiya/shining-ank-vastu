@@ -20,7 +20,10 @@ import {
   getKuaVastuData,
   getMissingNumberRemedyData,
   getMobileCompatibilityCheck,
-  getNameNumerologyCheck
+  getNameNumerologyCheck,
+  getForeignSettlement,
+  getMatchMaking,
+  getMarriageType
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -76,6 +79,30 @@ export const generatePDF = async (clientData) => {
   // NEW: Strict planetary matrix mobile & name checks (client spec)
   const mobileCheck = getMobileCompatibilityCheck(phone, mulank, bhagyank);
   const nameNumerologyCheck = getNameNumerologyCheck(clientData.name || '', mulank, bhagyank);
+
+  // NEW: Foreign Settlement, Marriage Type
+  const foreignSettlement = getForeignSettlement(rawDob, mulank, bhagyank);
+  const marriageType = getMarriageType(rawDob, mulank, bhagyank);
+
+  // NEW: Match Making (from report.matchMaking if consultant filled it)
+  const mmRaw = (clientData.report || clientData).matchMaking || null;
+  let mmResult = null;
+  if (mmRaw?.male?.dob && mmRaw?.female?.dob) {
+    const mMulank = calcMulank(mmRaw.male.dob);
+    const mBhagyank = calcBhagyank(mmRaw.male.dob);
+    const fMulank = calcMulank(mmRaw.female.dob);
+    const fBhagyank = calcBhagyank(mmRaw.female.dob);
+    const mGrid = calculateLoShuGrid(mmRaw.male.dob, [mMulank, mBhagyank]);
+    const fGrid = calculateLoShuGrid(mmRaw.female.dob, [fMulank, fBhagyank]);
+    const mPresent = [...new Set(mGrid.flatMap((cnt, i) => cnt > 0 ? [i + 1] : []))];
+    const fPresent = [...new Set(fGrid.flatMap((cnt, i) => cnt > 0 ? [i + 1] : []))];
+    mmResult = getMatchMaking(
+      { name: mmRaw.male.name, mulank: mMulank, bhagyank: mBhagyank, grid: mPresent },
+      { name: mmRaw.female.name, mulank: fMulank, bhagyank: fBhagyank, grid: fPresent }
+    );
+    mmResult.maleName = mmRaw.male.name;
+    mmResult.femaleName = mmRaw.female.name;
+  }
 
   // Helper: build the display breakdown string for Mulank
   const mulankBreakdown = (() => {
@@ -1434,7 +1461,286 @@ export const generatePDF = async (clientData) => {
   // doc.setTextColor(0, 150, 100);
   // doc.text("Recommended: Multi-Gemstone Prosperity Bracelet (Wear on Left hand)", 20, 154);
 
-  // (Mobile Analysis and Name Numerology pages inserted here — see below)
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: FOREIGN SETTLEMENT PREDICTION
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("FOREIGN SETTLEMENT PREDICTION", 14, 27);
+
+  // Probability header card
+  doc.setFillColor(232, 244, 253);
+  doc.roundedRect(15, 34, pageWidth - 30, 22, 3, 3, "F");
+  doc.setDrawColor(26, 111, 168);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 34, pageWidth - 30, 22, 3, 3, "D");
+
+  doc.setTextColor(13, 60, 94);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(`Probability Score: ${foreignSettlement.probabilityScore}%`, 20, 42);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...textMuted);
+  doc.text(`Present: ${foreignSettlement.presentNums.join(', ')}`, 20, 50);
+  doc.text(`Missing: ${foreignSettlement.missingNums.join(', ') || 'None'}`, pageWidth / 2, 50);
+
+  let fsY = 62;
+
+  // Core result
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, fsY, pageWidth - 30, 26, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, fsY, pageWidth - 30, 26, 2, 2, "D");
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("FOREIGN SETTLEMENT PREDICTIONS", 20, fsY + 6);
+
+  const coreColor = foreignSettlement.coreGood ? [19, 115, 51] : [197, 34, 31];
+  doc.setFillColor(...coreColor);
+  doc.circle(21, fsY + 17, 2, "F");
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const coreLines = doc.splitTextToSize(`${foreignSettlement.coreGood ? 'Match' : 'Alert'}: ${foreignSettlement.coreResult}`, pageWidth - 50);
+  doc.text(coreLines, 26, fsY + 18);
+  fsY += 32;
+
+  // Friction lines
+  if (foreignSettlement.frictionLines.length > 0) {
+    const frH = 10 + foreignSettlement.frictionLines.length * 8;
+    doc.setFillColor(255, 244, 230);
+    doc.roundedRect(15, fsY, pageWidth - 30, frH, 2, 2, "F");
+    doc.setDrawColor(245, 192, 122);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, fsY, pageWidth - 30, frH, 2, 2, "D");
+    doc.setTextColor(138, 69, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("PLANETARY FRICTION", 20, fsY + 6);
+    let fline = fsY + 13;
+    foreignSettlement.frictionLines.forEach(line => {
+      doc.setFillColor(197, 34, 31);
+      doc.circle(21, fline, 1.8, "F");
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const fl = doc.splitTextToSize(line, pageWidth - 52);
+      doc.text(fl, 26, fline + 1);
+      fline += fl.length * 4.5 + 2;
+    });
+    fsY += frH + 6;
+  }
+
+  // Planetary note
+  const pnLines = doc.splitTextToSize(foreignSettlement.planetaryNote, pageWidth - 42);
+  const pnH = 10 + pnLines.length * 4.5;
+  doc.setFillColor(240, 244, 255);
+  doc.roundedRect(15, fsY, pageWidth - 30, pnH, 2, 2, "F");
+  doc.setDrawColor(191, 208, 247);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, fsY, pageWidth - 30, pnH, 2, 2, "D");
+  doc.setTextColor(26, 58, 110);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("PLANETARY ALIGNMENT", 20, fsY + 6);
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.text(pnLines, 20, fsY + 12);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: LOVE vs ARRANGED MARRIAGE PREDICTION
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("LOVE vs ARRANGED MARRIAGE PREDICTION", 14, 27);
+
+  let mrY = 36;
+
+  // Two percentage boxes side by side
+  const boxW = (pageWidth - 36) / 2;
+  // Love box
+  const loveBg   = marriageType.dominant === 'Love' ? [255, 194, 212] : [255, 235, 240];
+  const loveFg   = [194, 24, 91];
+  doc.setFillColor(...loveBg);
+  doc.roundedRect(15, mrY, boxW, 28, 3, 3, "F");
+  doc.setDrawColor(...loveFg);
+  doc.setLineWidth(marriageType.dominant === 'Love' ? 0.6 : 0.2);
+  doc.roundedRect(15, mrY, boxW, 28, 3, 3, "D");
+  doc.setTextColor(...loveFg);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(marriageType.dominant === 'Love' ? 14 : 12);
+  doc.text(`${marriageType.lovePct}%`, 15 + boxW / 2, mrY + 12, { align: "center" });
+  doc.setFontSize(8.5);
+  doc.text("Love Marriage", 15 + boxW / 2, mrY + 22, { align: "center" });
+
+  // Arranged box
+  const arrBg  = marriageType.dominant === 'Arranged' ? [187, 222, 251] : [232, 244, 253];
+  const arrFg  = [21, 101, 192];
+  doc.setFillColor(...arrBg);
+  doc.roundedRect(21 + boxW, mrY, boxW, 28, 3, 3, "F");
+  doc.setDrawColor(...arrFg);
+  doc.setLineWidth(marriageType.dominant === 'Arranged' ? 0.6 : 0.2);
+  doc.roundedRect(21 + boxW, mrY, boxW, 28, 3, 3, "D");
+  doc.setTextColor(...arrFg);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(marriageType.dominant === 'Arranged' ? 14 : 12);
+  doc.text(`${marriageType.arrangePct}%`, 21 + boxW + boxW / 2, mrY + 12, { align: "center" });
+  doc.setFontSize(8.5);
+  doc.text("Arranged Marriage", 21 + boxW + boxW / 2, mrY + 22, { align: "center" });
+  mrY += 34;
+
+  // Highlight banner
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(15, mrY, pageWidth - 30, 12, 2, 2, "F");
+  doc.setDrawColor(249, 231, 159);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, mrY, pageWidth - 30, 12, 2, 2, "D");
+  doc.setTextColor(138, 85, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text(marriageType.highlight, pageWidth / 2, mrY + 8, { align: "center" });
+  mrY += 18;
+
+  // Comments section
+  const commentsH = 10 + marriageType.comments.length * 9;
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, mrY, pageWidth - 30, commentsH, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, mrY, pageWidth - 30, commentsH, 2, 2, "D");
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("COMMENTS & JUSTIFICATION", 20, mrY + 6);
+  let cmY = mrY + 13;
+  marriageType.comments.forEach(c => {
+    const isMissing = c.includes('MISSING');
+    doc.setFillColor(...(isMissing ? [197, 34, 31] : [19, 115, 51]));
+    doc.circle(21, cmY, 1.8, "F");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    const cl = doc.splitTextToSize(c, pageWidth - 52);
+    doc.text(cl, 26, cmY + 1);
+    cmY += cl.length * 4.2 + 3;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: MATCH MAKING COMPATIBILITY (only if consultant filled the data)
+  // ════════════════════════════════════════════════════════════════════════
+  if (mmResult) {
+    doc.addPage();
+    drawPageShell(doc);
+
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("MATCH MAKING COMPATIBILITY", 14, 27);
+
+    // Rating header
+    doc.setFillColor(255, 228, 240);
+    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "F");
+    doc.setDrawColor(233, 30, 99);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "D");
+
+    doc.setTextColor(136, 14, 79);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`${mmResult.maleName} & ${mmResult.femaleName}`, 20, 42);
+    doc.setFontSize(9);
+    doc.text(`${mmResult.ratingLabel}  |  Total: ${mmResult.totalPercentage}%`, 20, 51);
+    doc.setFontSize(10);
+    // Draw stars as text using standard chars
+    const starText = `${'*'.repeat(mmResult.stars)}${'o'.repeat(5 - mmResult.stars)}  (${mmResult.stars}/5 Stars)`;
+    doc.text(starText, pageWidth - 20, 51, { align: "right" });
+
+    let mmY = 64;
+
+    // Highlights
+    const hlH = 10 + mmResult.highlights.length * 7;
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, mmY, pageWidth - 30, hlH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, mmY, pageWidth - 30, hlH, 2, 2, "D");
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("HIGHLIGHTS", 20, mmY + 6);
+    let hlY = mmY + 13;
+    mmResult.highlights.forEach(h => {
+      doc.setFillColor(...goldPrimary);
+      doc.circle(21, hlY, 1.5, "F");
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const hl = doc.splitTextToSize(h, pageWidth - 52);
+      doc.text(hl, 26, hlY + 1);
+      hlY += hl.length * 4.2 + 2;
+    });
+    mmY += hlH + 6;
+
+    // Shared pairs
+    if (mmResult.sharedPairs.length > 0) {
+      doc.setFillColor(240, 255, 244);
+      doc.roundedRect(15, mmY, pageWidth - 30, 18, 2, 2, "F");
+      doc.setDrawColor(165, 214, 167);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(15, mmY, pageWidth - 30, 18, 2, 2, "D");
+      doc.setTextColor(46, 125, 50);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.text("SHARABLE NUMBER PAIRS", 20, mmY + 6);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(mmResult.sharedPairs.map(p => p.pair).join('   '), 20, mmY + 14);
+      mmY += 24;
+    }
+
+    // Boost logs
+    const blH = 10 + mmResult.boostLogs.length * 9;
+    if (mmY + blH < pageHeight - 30) {
+      doc.setFillColor(255, 254, 249);
+      doc.roundedRect(15, mmY, pageWidth - 30, blH, 2, 2, "F");
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(15, mmY, pageWidth - 30, blH, 2, 2, "D");
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.text("COMPATIBILITY INSIGHTS", 20, mmY + 6);
+      let blY = mmY + 13;
+      mmResult.boostLogs.forEach(log => {
+        doc.setFillColor(19, 115, 51);
+        doc.circle(21, blY, 1.8, "F");
+        doc.setTextColor(...textDark);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.2);
+        const bl = doc.splitTextToSize(cleanStars(log), pageWidth - 52);
+        doc.text(bl, 26, blY + 1);
+        blY += bl.length * 4.2 + 3;
+      });
+    }
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 12b: MOBILE NUMBER ANALYSIS (Strict Planetary Matrix)
