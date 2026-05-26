@@ -77,7 +77,7 @@ export const generatePDF = async (clientData) => {
   const careerData = getCareerOutlook(mulank, bhagyank);
 
   // NEW: Strict planetary matrix mobile & name checks (client spec)
-  const mobileCheck = getMobileCompatibilityCheck(phone, mulank, bhagyank);
+  const mobileCheck = getMobileCompatibilityCheck(phone, mulank, bhagyank, rawDob);
   const nameNumerologyCheck = getNameNumerologyCheck(clientData.name || '', mulank, bhagyank);
 
   // NEW: Foreign Settlement, Marriage Type
@@ -1778,103 +1778,75 @@ export const generatePDF = async (clientData) => {
 
   if (mobileCheck.isValid) {
     // Header card
-    doc.setFillColor(232, 248, 238);
+    doc.setFillColor(244, 246, 249);
     doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "F");
-    doc.setDrawColor(46, 125, 82);
+    doc.setDrawColor(108, 117, 125);
     doc.setLineWidth(0.3);
     doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "D");
 
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
-    doc.text(`Mobile: ${phone}`, 20, mbY + 7);
+    doc.text(`Mobile Number: ${phone}`, 20, mbY + 7);
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.text(`Compound Total: ${mobileCheck.totalSum}   |   Single Digit: ${mobileCheck.singleDigit}`, 20, mbY + 13);
-
-    const statusColor = mobileCheck.isCompatible ? [19, 115, 51] : [197, 34, 31];
-    doc.setTextColor(...statusColor);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(mobileCheck.overallStatus, pageWidth - 20, mbY + 10, { align: "right" });
+    doc.text(`Mobile Total: ${mobileCheck.totalSum} (${mobileCheck.singleDigit})   |   Mulank: ${mobileCheck.mulank}   |   Bhagyank: ${mobileCheck.bhagyank}`, 20, mbY + 14);
 
     mbY += 28;
 
-    // Section A: Mobile Number Compatibility Check
+    // Detailed Insights Card
+    // Pre-calculate height of all bullets to draw a clean container
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    let cardH = 12; // top padding + title
+    mobileCheck.bullets.forEach(bullet => {
+      const lines = doc.splitTextToSize(bullet, pageWidth - 54);
+      cardH += lines.length * 4.2 + 3.5;
+    });
+    cardH += 4; // bottom padding
+
     doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "F");
+    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "F");
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.2);
-    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "D");
+    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "D");
 
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text("MOBILE NUMBER COMPATIBILITY CHECK", 20, mbY + 6);
+    doc.text("DETAILED COMPATIBILITY INSIGHTS", 20, mbY + 6);
 
-    const dot1 = mobileCheck.isCompatible ? [19, 115, 51] : [197, 34, 31];
-    doc.setFillColor(...dot1);
-    doc.circle(21, mbY + 14, 2, "F");
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    const cLine1 = doc.splitTextToSize(mobileCheck.compatSentence, pageWidth - 50);
-    doc.text(cLine1, 26, mbY + 15);
+    let bulletY = mbY + 12;
+    mobileCheck.bullets.forEach(bullet => {
+      // Draw bullet point dot
+      doc.setFillColor(...goldPrimary);
+      doc.circle(21, bulletY + 1, 1.6, "F");
+      
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const lines = doc.splitTextToSize(bullet, pageWidth - 54);
+      doc.text(lines, 26, bulletY + 2);
+      bulletY += lines.length * 4.2 + 3.5;
+    });
 
-    const ratingColor = mobileCheck.compoundRating.label === 'Very Good' ? [19, 115, 51] : mobileCheck.compoundRating.label === 'Bad' ? [197, 34, 31] : [176, 96, 0];
-    doc.setFillColor(...ratingColor);
-    doc.circle(21, mbY + 23, 2, "F");
-    doc.setTextColor(...textDark);
-    const cLine2 = doc.splitTextToSize(cleanStars(mobileCheck.compoundSentence), pageWidth - 50);
-    doc.text(cLine2, 26, mbY + 24);
+    mbY += cardH + 6;
 
-    mbY += 36;
+    // Status Banner at bottom
+    const statusBg = mobileCheck.overallStatus === 'Friendly' ? [212, 237, 218] : mobileCheck.overallStatus === 'Non-Friendly' ? [248, 215, 218] : [255, 243, 205];
+    const statusFg = mobileCheck.overallStatus === 'Friendly' ? [21, 87, 36]   : mobileCheck.overallStatus === 'Non-Friendly' ? [114, 28, 36]  : [133, 100, 4];
+    const statusBorder = mobileCheck.overallStatus === 'Friendly' ? [40, 167, 69] : mobileCheck.overallStatus === 'Non-Friendly' ? [220, 53, 69] : [255, 193, 7];
 
-    // Section B: Good To Have
-    doc.setFillColor(254, 249, 231);
-    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "F");
-    doc.setDrawColor(249, 231, 159);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "D");
+    doc.setFillColor(...statusBg);
+    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "F");
+    doc.setDrawColor(...statusBorder);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "D");
 
-    doc.setTextColor(176, 96, 0);
+    doc.setTextColor(...statusFg);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text("GOOD TO HAVE", 20, mbY + 6);
-
-    doc.setFillColor(19, 115, 51);
-    doc.circle(21, mbY + 14, 2, "F");
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    const gLine1 = doc.splitTextToSize(mobileCheck.goodToHave, pageWidth - 50);
-    doc.text(gLine1, 26, mbY + 15);
-
-    doc.setFillColor(197, 34, 31);
-    doc.circle(21, mbY + 23, 2, "F");
-    const gLine2 = doc.splitTextToSize(mobileCheck.avoidSentence, pageWidth - 50);
-    doc.text(gLine2, 26, mbY + 24);
-
-    mbY += 36;
-
-    // Section C: Impact on Life & Work
-    const impactLines = doc.splitTextToSize(mobileCheck.impactLine, pageWidth - 42);
-    const impactCardH = 10 + impactLines.length * 4.5;
-    doc.setFillColor(240, 244, 255);
-    doc.roundedRect(15, mbY, pageWidth - 30, impactCardH, 2, 2, "F");
-    doc.setDrawColor(191, 208, 247);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, mbY, pageWidth - 30, impactCardH, 2, 2, "D");
-
-    doc.setTextColor(26, 58, 110);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text("IMPACT ON LIFE & WORK", 20, mbY + 6);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(impactLines, 20, mbY + 12);
+    doc.setFontSize(10.5);
+    doc.text(`STATUS: ${mobileCheck.overallStatus}`, pageWidth / 2, mbY + 9, { align: "center" });
 
   } else {
     doc.setFillColor(255, 254, 249);
@@ -1960,11 +1932,13 @@ export const generatePDF = async (clientData) => {
   };
 
   if (nameNumerologyCheck.isValid) {
-    drawNameCard(`FIRST NAME: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
-    if (nameNumerologyCheck.lastNameCard) {
+    if (!nameNumerologyCheck.lastNameCard) {
+      drawNameCard(`NAME ANALYSIS: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+    } else {
+      drawNameCard(`FIRST NAME: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
       drawNameCard(`LAST NAME: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
+      drawNameCard(`FULL NAME: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
     }
-    drawNameCard(`FULL NAME: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
 
     // Final Status Banner
     if (nmY + 16 > pageHeight - 30) {

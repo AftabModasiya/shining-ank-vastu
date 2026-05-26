@@ -1678,7 +1678,7 @@ const getDigitsToAvoid = (mulank, bhagyank) => {
   return [...new Set([...me, ...be])];
 };
 
-export const getMobileCompatibilityCheck = (phone, mulank, bhagyank) => {
+export const getMobileCompatibilityCheck = (phone, mulank, bhagyank, dob = '') => {
   if (!phone || phone.trim() === '' || phone === '-') {
     return { isValid: false };
   }
@@ -1696,22 +1696,86 @@ export const getMobileCompatibilityCheck = (phone, mulank, bhagyank) => {
   const mLabel = getRelationLabel(mCompat.status);
   const bLabel = getRelationLabel(bCompat.status);
 
-  // Main compatibility sentence
-  const compatSentence = `Sum of number is ${singleDigit} which is ${mLabel} with Driver ${mulank} and ${bLabel} with Conductor ${bhagyank}.`;
-
-  // Compound rating
-  const cRating = getCompoundRating(totalSum);
-  const compoundSentence = `Your number Combination Count is ${totalSum} which is ${cRating.label} and rating is ${cRating.stars}.`;
-
-  // Overall status
-  const bothFriends = mCompat.status === 'friend' && bCompat.status === 'friend';
-  const anyEnemy    = mCompat.status === 'enemy'  || bCompat.status === 'enemy';
+  // Overall status: Friendly / Neutral / Non-Friendly
   let overallStatus = 'Neutral';
-  if (bothFriends)      overallStatus = 'Highly Compatible / Super Lucky ✓';
-  else if (anyEnemy)    overallStatus = 'Incompatible / Avoid';
-  else if (mCompat.status === 'friend' || bCompat.status === 'friend') overallStatus = 'Partially Compatible / Good';
+  if (mCompat.status === 'enemy' || bCompat.status === 'enemy') {
+    overallStatus = 'Non-Friendly';
+  } else if (mCompat.status === 'friend' || bCompat.status === 'friend') {
+    overallStatus = 'Friendly';
+  } else {
+    overallStatus = 'Neutral';
+  }
 
-  // Good to have
+  const PLANET_NAMES = {
+    1: 'Sun (Surya)',
+    2: 'Moon (Chandra)',
+    3: 'Jupiter (Guru)',
+    4: 'Rahu (Uranus)',
+    5: 'Mercury (Budh)',
+    6: 'Venus (Shukra)',
+    7: 'Ketu (Neptune)',
+    8: 'Saturn (Shani)',
+    9: 'Mars (Mangal)'
+  };
+
+  const planet = PLANET_NAMES[singleDigit] || 'Planet';
+
+  // Bullet 1: Total calculation and base nature
+  const b1 = `The mobile number compound total is ${totalSum}, reducing to single digit ${singleDigit}, which is ruled by ${planet} and represents its base qualities.`;
+
+  // Bullet 2: Relation with Mulank
+  let b2 = '';
+  if (mCompat.status === 'friend') {
+    b2 = `The single digit sum ${singleDigit} is friendly with your Driver ${mulank}, creating an active flow of supportive and constructive energy.`;
+  } else if (mCompat.status === 'enemy') {
+    b2 = `The single digit sum ${singleDigit} is non-friendly with your Driver ${mulank}, creating planetary friction and potential obstacles in your daily actions.`;
+  } else {
+    b2 = `The single digit sum ${singleDigit} is neutral with your Driver ${mulank}, offering a stable and balanced relationship with your root energy.`;
+  }
+
+  // Bullet 3: Relation with Bhagyank
+  let b3 = '';
+  if (bCompat.status === 'friend') {
+    b3 = `It has a friendly relationship with your Conductor ${bhagyank}, which aligns with your destiny path and supports overall progress.`;
+  } else if (bCompat.status === 'enemy') {
+    b3 = `It conflicts with your Conductor ${bhagyank}, introducing underlying friction that can delay key goals or destiny outcomes.`;
+  } else {
+    b3 = `It maintains a neutral relationship with your Conductor ${bhagyank}, avoiding clashes and keeping your destiny path unhindered.`;
+  }
+
+  // Bullet 4: Lo Shu / DOB digit support or missing energy
+  const dobDigits = (dob || '').replace(/\D/g, '');
+  const hasDigit = dobDigits.includes(singleDigit.toString());
+  let b4 = '';
+  if (hasDigit) {
+    b4 = `The number ${singleDigit} is already present in your birth date, reinforcing your native planetary energies and strengthening your grid's stability.`;
+  } else {
+    b4 = `Since the number ${singleDigit} is missing from your birth date, using this mobile number acts as an energetic remedy, introducing this much-needed vibration into your life.`;
+  }
+
+  // Bullet 5: Practical effect or caution
+  let b5 = '';
+  if (overallStatus === 'Friendly') {
+    b5 = `Using this vibration regularly will attract positive communication, helpful business leads, and smooth interpersonal relationships.`;
+  } else if (overallStatus === 'Non-Friendly') {
+    b5 = `Caution is advised: this frequency may trigger sudden misunderstandings, dropped leads, or unexpected professional delays.`;
+  } else {
+    b5 = `It serves as a reliable, balanced connection for routine communications without causing any major positive or negative disruptions.`;
+  }
+
+  // Bullet 6: Final conclusion bullet
+  let b6 = '';
+  if (overallStatus === 'Friendly') {
+    b6 = `Overall, this mobile number is highly favorable for you, and keeping it active will enhance your prosperity and communication.`;
+  } else if (overallStatus === 'Non-Friendly') {
+    b6 = `Overall, this mobile number is not recommended due to direct planetary clashes, and transitioning to a friendly total sum is suggested.`;
+  } else {
+    b6 = `Overall, this mobile number is neutral, offering steady performance without causing any adverse planetary friction.`;
+  }
+
+  const bullets = [b1, b2, b3, b4, b5, b6];
+
+  const cRating = getCompoundRating(totalSum);
   const bestNums   = getBestMobileNumbers(mulank, bhagyank);
   const avoidDigits = getDigitsToAvoid(mulank, bhagyank);
   const goodToHave  = `Try to have number sum in between ${bestNums.join(', ')}.`;
@@ -1719,37 +1783,23 @@ export const getMobileCompatibilityCheck = (phone, mulank, bhagyank) => {
     ? `It is recommended that the number does not include the digits ${avoidDigits.join(' or ')}.`
     : 'No specific digits to avoid based on your planetary matrix.';
 
-  // Impact on life & work
-  const VIBRATION_IMPACT = {
-    1: 'This mobile number radiates strong Sun energy, enhancing your leadership authority and incoming business calls from high-status connections. Social standing improves noticeably.',
-    2: 'This number vibrates with Moon energy, attracting emotional and nurturing clientele. Ideal for counselors and relationship-driven businesses, though it may slow decisive business closures.',
-    3: 'Jupiter\'s frequency here brings expansion, referrals, and knowledge-based networking. Incoming calls often bring opportunity, but guard against over-commitment.',
-    4: 'Rahu\'s frequency creates an unconventional energy; calls may bring disruptive or unexpected leads. Maintain discipline in how you respond to business inquiries.',
-    5: 'Mercury\'s versatile energy makes this number highly active for trade, marketing, and negotiations. Excellent for entrepreneurs and sales-driven professionals.',
-    6: 'Venus frequency attracts luxury clientele, family businesses, and creative industries. Incoming calls are often from trusted relationships and repeat customers.',
-    7: 'Ketu\'s introspective energy attracts a niche, spiritually aligned clientele. Less volume, but higher quality and depth in business interactions.',
-    8: 'Saturn\'s dense energy can attract heavy-duty corporate clients and authority figures. Business growth is steady but requires patience; avoid impulsive decisions on calls.',
-    9: 'Mars energy makes this number highly active and competitive. High call volume, fast-paced energy, and strong incoming leads from dynamic and ambitious contacts.',
-  };
-  const impactLine = VIBRATION_IMPACT[singleDigit] || 'This number carries a balanced vibration that supports steady communication and professional interactions.';
-
   return {
     isValid: true,
     phone: digits,
     totalSum,
     singleDigit,
-    compatSentence,
-    compoundSentence,
+    mulank,
+    bhagyank,
+    bullets,
     overallStatus,
     goodToHave,
     avoidSentence,
-    impactLine,
     driverRelation:    mLabel,
     conductorRelation: bLabel,
     compoundRating:    cRating,
     bestNumbers:       bestNums,
     avoidDigits,
-    isCompatible: bothFriends || (!anyEnemy && (mCompat.status === 'friend' || bCompat.status === 'friend')),
+    isCompatible: overallStatus === 'Friendly',
   };
 };
 

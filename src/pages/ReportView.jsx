@@ -198,7 +198,7 @@ function ReportView() {
   const mobileData = getMobileAnalysis(displayData.phone || '', mulank, bhagyank);
 
   // NEW: Strict planetary matrix mobile compatibility check
-  const mobileCheck = getMobileCompatibilityCheck(displayData.phone || '', mulank, bhagyank);
+  const mobileCheck = getMobileCompatibilityCheck(displayData.phone || '', mulank, bhagyank, displayData.dob || '');
 
   // Dynamic name compatibility insights
   const nameCompatData = getNameCompatibilityAnalysis(displayData.name || '', mulank, bhagyank);
@@ -440,54 +440,40 @@ function ReportView() {
             {mobileCheck.isValid ? (
               <div className="name-compatibility-container">
 
-                {/* Header */}
-                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3fbf6, #e8f5ee)', border: '1.5px solid #2e7d52' }}>
-                  <h4 style={{ color: '#1a3a2e', marginBottom: '8px' }}>Mobile: <span className="highlight-text">{displayData.phone}</span></h4>
-                  <div className="name-badge-row">
-                    <span className="badge" style={{ background: '#e8f5ee', color: '#1a5c35', border: '1px solid #2e7d52' }}>Compound Total: <strong>{mobileCheck.totalSum}</strong></span>
-                    <span className="badge" style={{ background: '#e8f5ee', color: '#1a5c35', border: '1px solid #2e7d52' }}>Single Digit: <strong>{mobileCheck.singleDigit}</strong></span>
-                    <span className="badge" style={{
-                      background: mobileCheck.isCompatible ? '#d4edda' : '#f8d7da',
-                      color: mobileCheck.isCompatible ? '#155724' : '#721c24',
-                      border: `1px solid ${mobileCheck.isCompatible ? '#28a745' : '#dc3545'}`
-                    }}><strong>{mobileCheck.overallStatus}</strong></span>
+                {/* Inputs Info Header */}
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f4f6f9, #e9ecef)', border: '1.5px solid #6c757d', marginBottom: '10px' }}>
+                  <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>MOBILE NUMBER ANALYSIS</h4>
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mobile Total: <strong style={{ color: '#007bff' }}>{mobileCheck.totalSum} ({mobileCheck.singleDigit})</strong></span>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mulank: <strong>{mobileCheck.mulank}</strong></span>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Bhagyank: <strong>{mobileCheck.bhagyank}</strong></span>
                   </div>
                 </div>
 
-                {/* MOBILE NUMBER COMPATIBILITY CHECK */}
-                <div className="name-detail-card" style={{ marginTop: '12px' }}>
-                  <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>✅ MOBILE NUMBER COMPATIBILITY CHECK</span>
+                {/* Analysis Bullets */}
+                <div className="name-detail-card" style={{ marginBottom: '10px' }}>
+                  <span className="detail-label">DETAILED COMPATIBILITY INSIGHTS</span>
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{mobileCheck.isCompatible ? '🟢' : '🔴'}</span>
-                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', color: '#333' }}>{mobileCheck.compatSentence}</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{mobileCheck.compoundRating.label === 'Very Good' ? '🟢' : mobileCheck.compoundRating.label === 'Bad' ? '🔴' : '🟡'}</span>
-                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', color: '#333' }}>{mobileCheck.compoundSentence}</p>
-                    </div>
+                    {mobileCheck.bullets.map((bullet, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '1rem', color: '#495057' }}>•</span>
+                        <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{bullet}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* GOOD TO HAVE */}
-                <div className="name-detail-card" style={{ marginTop: '10px', background: '#fef9e7', border: '1px solid #f9e79f' }}>
-                  <span className="detail-label" style={{ fontSize: '0.95rem', color: '#8a6207' }}>💡 GOOD TO HAVE</span>
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>🟢</span>
-                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', color: '#333' }}>{mobileCheck.goodToHave}</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>🔴</span>
-                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', color: '#333' }}>{mobileCheck.avoidSentence}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* IMPACT ON LIFE & WORK */}
-                <div className="name-detail-card" style={{ marginTop: '10px', background: '#f0f4ff', border: '1px solid #bfd0f7' }}>
-                  <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a6e' }}>⚡ IMPACT ON LIFE & WORK</span>
-                  <p style={{ margin: '10px 0 0', fontSize: '0.9rem', lineHeight: '1.6', color: '#333' }}>{mobileCheck.impactLine}</p>
+                {/* Status Banner */}
+                <div style={{
+                  padding: '12px 18px',
+                  borderRadius: '8px',
+                  background: mobileCheck.overallStatus === 'Friendly' ? '#d4edda' : mobileCheck.overallStatus === 'Non-Friendly' ? '#f8d7da' : '#fff3cd',
+                  border: `2px solid ${mobileCheck.overallStatus === 'Friendly' ? '#28a745' : mobileCheck.overallStatus === 'Non-Friendly' ? '#dc3545' : '#ffc107'}`,
+                  textAlign: 'center'
+                }}>
+                  <strong style={{ fontSize: '1.05rem', color: mobileCheck.overallStatus === 'Friendly' ? '#155724' : mobileCheck.overallStatus === 'Non-Friendly' ? '#721c24' : '#856404' }}>
+                    STATUS: {mobileCheck.overallStatus}
+                  </strong>
                 </div>
 
               </div>
@@ -504,82 +490,118 @@ function ReportView() {
             {nameNumerologyCheck.isValid ? (
               <div className="name-compatibility-container">
 
-                {/* FIRST NAME CARD */}
-                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                  <h4 style={{ color: '#1a3a2e' }}>FIRST NAME: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
-                  <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                    <span className="badge">Compound: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
-                    <span className="badge">Single: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
-                    <span className="badge" style={{
-                      background: nameNumerologyCheck.firstNameCard.overallGood ? '#d4edda' : '#f8d7da',
-                      color: nameNumerologyCheck.firstNameCard.overallGood ? '#155724' : '#721c24',
-                    }}>{nameNumerologyCheck.firstNameCard.overallGood ? '✓ Good' : '✗ Needs Attention'}</span>
-                  </div>
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.firstNameCard.not48Check ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>
-                        First Name Count should not be 4 or 8.{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.firstNameCard.single}.`}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.firstNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.firstNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compatLine}</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compoundLine}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* LAST NAME CARD — only if last name exists */}
-                {nameNumerologyCheck.lastNameCard && (
+                {!nameNumerologyCheck.lastNameCard ? (
+                  /* SINGLE NAME ANALYSIS (when no last name is present) */
                   <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                    <h4 style={{ color: '#1a3a2e' }}>LAST NAME: <span className="highlight-text">{nameNumerologyCheck.lastNameCard.name}</span></h4>
+                    <h4 style={{ color: '#1a3a2e' }}>NAME ANALYSIS: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
                     <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                      <span className="badge">Compound: <strong>{nameNumerologyCheck.lastNameCard.compound}</strong></span>
-                      <span className="badge">Single: <strong>{nameNumerologyCheck.lastNameCard.single}</strong></span>
+                      <span className="badge">Compound: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
+                      <span className="badge">Single: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
+                      <span className="badge" style={{
+                        background: nameNumerologyCheck.fullNameCard.overallGood ? '#d4edda' : '#f8d7da',
+                        color: nameNumerologyCheck.fullNameCard.overallGood ? '#155724' : '#721c24',
+                      }}>{nameNumerologyCheck.fullNameCard.overallGood ? '✓ Good' : '✗ Needs Attention'}</span>
                     </div>
                     <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                        <span>{nameNumerologyCheck.lastNameCard.not48Check ? '🟢' : '🔴'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>Last Name Count should not be 4 or 8.{nameNumerologyCheck.lastNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.lastNameCard.single}.`}</span>
+                        <span>{nameNumerologyCheck.firstNameCard.not48Check ? '🟢' : '🔴'}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>
+                          Name Count should not be 4 or 8.{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.firstNameCard.single}.`}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                        <span>{nameNumerologyCheck.lastNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.lastNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compatLine}</span>
+                        <span>{nameNumerologyCheck.firstNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.firstNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compatLine}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                        <span>{nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compoundLine}</span>
+                        <span>{nameNumerologyCheck.fullNameCard.targetOk ? '🟢' : '🔴'}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.targetLine}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span>{nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compoundLine}</span>
                       </div>
                     </div>
                   </div>
-                )}
+                ) : (
+                  /* THREE SECTIONS: FIRST, LAST, AND FULL NAME ANALYSIS */
+                  <>
+                    {/* FIRST NAME CARD */}
+                    <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
+                      <h4 style={{ color: '#1a3a2e' }}>FIRST NAME: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
+                      <div className="name-badge-row" style={{ marginTop: '6px' }}>
+                        <span className="badge">Compound: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
+                        <span className="badge">Single: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
+                        <span className="badge" style={{
+                          background: nameNumerologyCheck.firstNameCard.overallGood ? '#d4edda' : '#f8d7da',
+                          color: nameNumerologyCheck.firstNameCard.overallGood ? '#155724' : '#721c24',
+                        }}>{nameNumerologyCheck.firstNameCard.overallGood ? '✓ Good' : '✗ Needs Attention'}</span>
+                      </div>
+                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.firstNameCard.not48Check ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>
+                            First Name Count should not be 4 or 8.{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.firstNameCard.single}.`}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.firstNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.firstNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compatLine}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compoundLine}</span>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* FULL NAME CARD */}
-                <div className="name-detail-card" style={{ display: 'block', marginBottom: '10px' }}>
-                  <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>FULL NAME ANALYSIS</span>
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.fullNameCard.not48Check ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>Full Name Count should not be 4 or 8.{nameNumerologyCheck.fullNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.fullNameCard.single}.`}</span>
+                    {/* LAST NAME CARD */}
+                    <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
+                      <h4 style={{ color: '#1a3a2e' }}>LAST NAME: <span className="highlight-text">{nameNumerologyCheck.lastNameCard.name}</span></h4>
+                      <div className="name-badge-row" style={{ marginTop: '6px' }}>
+                        <span className="badge">Compound: <strong>{nameNumerologyCheck.lastNameCard.compound}</strong></span>
+                        <span className="badge">Single: <strong>{nameNumerologyCheck.lastNameCard.single}</strong></span>
+                      </div>
+                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.lastNameCard.not48Check ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>Last Name Count should not be 4 or 8.{nameNumerologyCheck.lastNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.lastNameCard.single}.`}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.lastNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.lastNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compatLine}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compoundLine}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.fullNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.fullNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compatLine}</span>
+
+                    {/* FULL NAME CARD */}
+                    <div className="name-detail-card" style={{ display: 'block', marginBottom: '10px' }}>
+                      <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>FULL NAME ANALYSIS</span>
+                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.fullNameCard.not48Check ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>Full Name Count should not be 4 or 8.{nameNumerologyCheck.fullNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.fullNameCard.single}.`}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.fullNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.fullNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compatLine}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.fullNameCard.targetOk ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.targetLine}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <span>{nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compoundLine}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.fullNameCard.targetOk ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.targetLine}</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span>{nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                      <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compoundLine}</span>
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 {/* FINAL STATUS */}
                 <div style={{
