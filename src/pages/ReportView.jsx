@@ -302,13 +302,32 @@ function ReportView() {
               ) : displayData.name}
             </h1>
 
-            <p className="report-meta">
-              {isEditing ? (
-                <input type="date" name="dob" value={editedData.dob} onChange={handleInputChange} className="edit-input edit-date" />
-              ) : formatDateToDDMMYYYY(displayData.dob)}
-              {' · '}
-              <span style={{ textTransform: 'capitalize' }}>{displayData.gender}</span>
-            </p>
+            {isEditing ? (
+              <div className="report-meta-edit" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginTop: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Date of Birth</label>
+                  <input type="date" name="dob" value={editedData.dob} onChange={handleInputChange} className="edit-input edit-date" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Phone Number</label>
+                  <input type="tel" name="phone" value={editedData.phone} onChange={handleInputChange} className="edit-input edit-phone" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem', width: '130px' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Gender</label>
+                  <select name="gender" value={editedData.gender} onChange={handleInputChange} className="edit-input edit-gender" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem' }}>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <p className="report-meta">
+                {formatDateToDDMMYYYY(displayData.dob)}
+                {' · '}
+                <span style={{ textTransform: 'capitalize' }}>{displayData.gender}</span>
+                {displayData.phone && ` · M: ${displayData.phone}`}
+              </p>
+            )}
           </div>
 
           {/* ── 2. ♦ Core Numbers ♦ DIVIDER ─────────────── */}
@@ -442,7 +461,7 @@ function ReportView() {
 
                 {/* Inputs Info Header */}
                 <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f4f6f9, #e9ecef)', border: '1.5px solid #6c757d', marginBottom: '10px' }}>
-                  <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>MOBILE NUMBER ANALYSIS</h4>
+                  <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>MOBILE NUMBER ANALYSIS: <span className="highlight-text">{displayData.phone}</span></h4>
                   <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '6px' }}>
                     <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mobile Total: <strong style={{ color: '#007bff' }}>{mobileCheck.totalSum} ({mobileCheck.singleDigit})</strong></span>
                     <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mulank: <strong>{mobileCheck.mulank}</strong></span>
