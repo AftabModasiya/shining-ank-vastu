@@ -27,14 +27,31 @@ function ReportView() {
   const getSafeClientData = (data) => {
     if (!data) return null;
     const safeData = { ...data };
-    if (safeData.report) {
-      safeData.report = {
-        ...safeData.report,
-        customPage1: safeData.report.customPage1 || { title: 'Note Page 1', content: '' },
-        customPage2: safeData.report.customPage2 || { title: 'Note Page 2', content: '' },
-        customPage3: safeData.report.customPage3 || { title: 'Note Page 3', content: '' }
-      };
+    if (!safeData.report) {
+      safeData.report = {};
     }
+    const clientGender = safeData.gender || 'male';
+    const clientName = safeData.name || '';
+    const clientDob = safeData.dob || '';
+    const spouseName = safeData.spouseName || '';
+    const clientIsFemale = clientGender === 'female';
+
+    safeData.report = {
+      ...safeData.report,
+      customPage1: safeData.report.customPage1 || { title: 'Note Page 1', content: '' },
+      customPage2: safeData.report.customPage2 || { title: 'Note Page 2', content: '' },
+      customPage3: safeData.report.customPage3 || { title: 'Note Page 3', content: '' },
+      matchMaking: safeData.report.matchMaking || {
+        male: {
+          name: clientIsFemale ? (spouseName || 'Partner Name Not Added') : clientName,
+          dob: clientIsFemale ? '1971-07-27' : clientDob
+        },
+        female: {
+          name: clientIsFemale ? clientName : (spouseName || 'Partner Name Not Added'),
+          dob: clientIsFemale ? clientDob : '1976-05-12'
+        }
+      }
+    };
     return safeData;
   };
 
@@ -203,7 +220,22 @@ function ReportView() {
 
   // NOTE: Match Making uses two separate client profiles — it's filled by the consultant
   // in edit mode via report.matchMaking fields; default empty guard here
-  const mmData = report?.matchMaking || null;
+  const clientGenderForMM = displayData.gender || 'male';
+  const clientNameForMM = displayData.name || '';
+  const clientDobForMM = displayData.dob || '';
+  const spouseNameForMM = displayData.spouseName || '';
+  const clientIsFemaleForMM = clientGenderForMM === 'female';
+
+  const mmData = {
+    male: {
+      name: report?.matchMaking?.male?.name || (clientIsFemaleForMM ? (spouseNameForMM || 'Partner Name Not Added') : clientNameForMM),
+      dob: report?.matchMaking?.male?.dob || (clientIsFemaleForMM ? '1971-07-27' : clientDobForMM)
+    },
+    female: {
+      name: report?.matchMaking?.female?.name || (clientIsFemaleForMM ? clientNameForMM : (spouseNameForMM || 'Partner Name Not Added')),
+      dob: report?.matchMaking?.female?.dob || (clientIsFemaleForMM ? clientDobForMM : '1976-05-12')
+    }
+  };
 
   return (
     <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
@@ -1028,7 +1060,7 @@ function ReportView() {
                   ))}
                 </div>
               </div>
-            ) : mmData?.male?.dob && mmData?.female?.dob ? (() => {
+            ) : (mmData?.male?.name && mmData?.female?.name && mmData.male.name !== 'Partner Name Not Added' && mmData.female.name !== 'Partner Name Not Added' && mmData?.male?.dob && mmData?.female?.dob) ? (() => {
               const mDob = mmData.male.dob;
               const fDob = mmData.female.dob;
               const mMulank = calcMulank(mDob);
@@ -1092,7 +1124,7 @@ function ReportView() {
               );
             })() : (
               <div className="empty-state-box">
-                <p>Enter both profiles in Edit mode to generate Match Making analysis.</p>
+                <p>Partner name not defined. Enter spouse name or partner details to generate Match Making analysis.</p>
               </div>
             )}
           </section>

@@ -85,9 +85,28 @@ export const generatePDF = async (clientData) => {
   const marriageType = getMarriageType(rawDob, mulank, bhagyank);
 
   // NEW: Match Making (from report.matchMaking if consultant filled it)
-  const mmRaw = (clientData.report || clientData).matchMaking || null;
+  const reportObj = clientData.report || clientData;
+  const clientGenderForPDF = clientData.gender || 'male';
+  const clientNameForPDF = clientData.name || '';
+  const clientDobForPDF = rawDob || '';
+  const spouseNameForPDF = clientData.spouseName || '';
+  const clientIsFemaleForPDF = clientGenderForPDF === 'female';
+
+  const mmRaw = {
+    male: {
+      name: reportObj.matchMaking?.male?.name || (clientIsFemaleForPDF ? (spouseNameForPDF || 'Partner Name Not Added') : clientNameForPDF),
+      dob: reportObj.matchMaking?.male?.dob || (clientIsFemaleForPDF ? '1971-07-27' : clientDobForPDF)
+    },
+    female: {
+      name: reportObj.matchMaking?.female?.name || (clientIsFemaleForPDF ? clientNameForPDF : (spouseNameForPDF || 'Partner Name Not Added')),
+      dob: reportObj.matchMaking?.female?.dob || (clientIsFemaleForPDF ? clientDobForPDF : '1976-05-12')
+    }
+  };
   let mmResult = null;
-  if (mmRaw?.male?.dob && mmRaw?.female?.dob) {
+  const hasPartnerName = mmRaw?.male?.name && mmRaw?.female?.name &&
+                         mmRaw.male.name !== 'Partner Name Not Added' &&
+                         mmRaw.female.name !== 'Partner Name Not Added';
+  if (hasPartnerName && mmRaw?.male?.dob && mmRaw?.female?.dob) {
     const mMulank = calcMulank(mmRaw.male.dob);
     const mBhagyank = calcBhagyank(mmRaw.male.dob);
     const fMulank = calcMulank(mmRaw.female.dob);
