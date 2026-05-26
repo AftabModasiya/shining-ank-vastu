@@ -18,7 +18,9 @@ import {
   getArrows,
   getRepeatedNumbers,
   getKuaVastuData,
-  getMissingNumberRemedyData
+  getMissingNumberRemedyData,
+  getMobileCompatibilityCheck,
+  getNameNumerologyCheck
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -71,6 +73,10 @@ export const generatePDF = async (clientData) => {
   // Dynamic professional & career outlook insights
   const careerData = getCareerOutlook(mulank, bhagyank);
 
+  // NEW: Strict planetary matrix mobile & name checks (client spec)
+  const mobileCheck = getMobileCompatibilityCheck(phone, mulank, bhagyank);
+  const nameNumerologyCheck = getNameNumerologyCheck(clientData.name || '', mulank, bhagyank);
+
   // Helper: build the display breakdown string for Mulank
   const mulankBreakdown = (() => {
     if (!rawDob) return "";
@@ -105,6 +111,17 @@ export const generatePDF = async (clientData) => {
       formattedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
   }
+
+  // Helper function to replace unicode stars with standard text representations for PDF compatibility
+  const cleanStars = (str) => {
+    if (!str) return "";
+    return str
+      .replace(/★★★★★/g, "5/5 Stars")
+      .replace(/★★★☆☆/g, "3/5 Stars")
+      .replace(/★☆☆☆☆/g, "1/5 Stars")
+      .replace(/★/g, "")
+      .replace(/☆/g, "");
+  };
 
   // Current Date in DD-MM-YYYY
   const today = new Date();
@@ -1417,15 +1434,249 @@ export const generatePDF = async (clientData) => {
   // doc.setTextColor(0, 150, 100);
   // doc.text("Recommended: Multi-Gemstone Prosperity Bracelet (Wear on Left hand)", 20, 154);
 
+  // (Mobile Analysis and Name Numerology pages inserted here — see below)
+
   // ════════════════════════════════════════════════════════════════════════
-  // PAGES 9, 10, 11: 3 BLANK PAGES FOR CONSULTANT NOTES (NO RULES)
+  // PAGE 12b: MOBILE NUMBER ANALYSIS (Strict Planetary Matrix)
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("MOBILE NUMBER ANALYSIS", 14, 27);
+
+  let mbY = 36;
+
+  if (mobileCheck.isValid) {
+    // Header card
+    doc.setFillColor(232, 248, 238);
+    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "F");
+    doc.setDrawColor(46, 125, 82);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "D");
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`Mobile: ${phone}`, 20, mbY + 7);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Compound Total: ${mobileCheck.totalSum}   |   Single Digit: ${mobileCheck.singleDigit}`, 20, mbY + 13);
+
+    const statusColor = mobileCheck.isCompatible ? [19, 115, 51] : [197, 34, 31];
+    doc.setTextColor(...statusColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(mobileCheck.overallStatus, pageWidth - 20, mbY + 10, { align: "right" });
+
+    mbY += 28;
+
+    // Section A: Mobile Number Compatibility Check
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("MOBILE NUMBER COMPATIBILITY CHECK", 20, mbY + 6);
+
+    const dot1 = mobileCheck.isCompatible ? [19, 115, 51] : [197, 34, 31];
+    doc.setFillColor(...dot1);
+    doc.circle(21, mbY + 14, 2, "F");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    const cLine1 = doc.splitTextToSize(mobileCheck.compatSentence, pageWidth - 50);
+    doc.text(cLine1, 26, mbY + 15);
+
+    const ratingColor = mobileCheck.compoundRating.label === 'Very Good' ? [19, 115, 51] : mobileCheck.compoundRating.label === 'Bad' ? [197, 34, 31] : [176, 96, 0];
+    doc.setFillColor(...ratingColor);
+    doc.circle(21, mbY + 23, 2, "F");
+    doc.setTextColor(...textDark);
+    const cLine2 = doc.splitTextToSize(cleanStars(mobileCheck.compoundSentence), pageWidth - 50);
+    doc.text(cLine2, 26, mbY + 24);
+
+    mbY += 36;
+
+    // Section B: Good To Have
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "F");
+    doc.setDrawColor(249, 231, 159);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, mbY, pageWidth - 30, 30, 2, 2, "D");
+
+    doc.setTextColor(176, 96, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("GOOD TO HAVE", 20, mbY + 6);
+
+    doc.setFillColor(19, 115, 51);
+    doc.circle(21, mbY + 14, 2, "F");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    const gLine1 = doc.splitTextToSize(mobileCheck.goodToHave, pageWidth - 50);
+    doc.text(gLine1, 26, mbY + 15);
+
+    doc.setFillColor(197, 34, 31);
+    doc.circle(21, mbY + 23, 2, "F");
+    const gLine2 = doc.splitTextToSize(mobileCheck.avoidSentence, pageWidth - 50);
+    doc.text(gLine2, 26, mbY + 24);
+
+    mbY += 36;
+
+    // Section C: Impact on Life & Work
+    const impactLines = doc.splitTextToSize(mobileCheck.impactLine, pageWidth - 42);
+    const impactCardH = 10 + impactLines.length * 4.5;
+    doc.setFillColor(240, 244, 255);
+    doc.roundedRect(15, mbY, pageWidth - 30, impactCardH, 2, 2, "F");
+    doc.setDrawColor(191, 208, 247);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, mbY, pageWidth - 30, impactCardH, 2, 2, "D");
+
+    doc.setTextColor(26, 58, 110);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("IMPACT ON LIFE & WORK", 20, mbY + 6);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text(impactLines, 20, mbY + 12);
+
+  } else {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, mbY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textMuted);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9.5);
+    doc.text("No mobile number provided for this client profile.", 20, mbY + 10);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 12c: NAME NUMEROLOGY ANALYSIS (Strict Planetary Matrix)
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("NAME NUMEROLOGY ANALYSIS", 14, 27);
+
+  let nmY = 36;
+
+  const drawNameCard = (title, cardData, isFullName = false) => {
+    if (!cardData) return;
+    const lineItems = [
+      { good: cardData.not48Check,     text: cleanStars(`Count should not be 4 or 8. ${cardData.not48Check ? '✓' : `Currently ${cardData.single}.`}`) },
+      { good: cardData.driverStatus !== 'enemy' && cardData.conductorStatus !== 'enemy', text: cleanStars(cardData.compatLine) },
+    ];
+    if (isFullName) {
+      lineItems.push({ good: cardData.targetOk, text: cleanStars(cardData.targetLine) });
+    }
+    lineItems.push({ good: cardData.compoundRating?.label !== 'Bad', text: cleanStars(cardData.compoundLine) });
+
+    // Pre-calculate height
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    let totalH = 12 + 6; // title + compound badge row
+    lineItems.forEach(item => {
+      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
+      totalH += lines.length * 4.2 + 3;
+    });
+    totalH += 4; // bottom padding
+
+    if (nmY + totalH > pageHeight - 30) {
+      doc.addPage();
+      drawPageShell(doc);
+      drawFooter(doc);
+      nmY = 25;
+    }
+
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "D");
+
+    // Title + numbers
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(title, 20, nmY + 6);
+    doc.setTextColor(...textMuted);
+    doc.setFontSize(8);
+    doc.text(`Compound: ${cardData.compound}   Single: ${cardData.single}`, pageWidth - 20, nmY + 6, { align: "right" });
+
+    let lineY = nmY + 12;
+    lineItems.forEach(item => {
+      const dotColor = item.good ? [19, 115, 51] : [197, 34, 31];
+      doc.setFillColor(...dotColor);
+      doc.circle(21, lineY + 1, 1.8, "F");
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
+      doc.text(lines, 26, lineY + 2);
+      lineY += lines.length * 4.2 + 3;
+    });
+
+    nmY += totalH + 5;
+  };
+
+  if (nameNumerologyCheck.isValid) {
+    drawNameCard(`FIRST NAME: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
+    if (nameNumerologyCheck.lastNameCard) {
+      drawNameCard(`LAST NAME: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
+    }
+    drawNameCard(`FULL NAME: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+
+    // Final Status Banner
+    if (nmY + 16 > pageHeight - 30) {
+      doc.addPage();
+      drawPageShell(doc);
+      drawFooter(doc);
+      nmY = 25;
+    }
+    const statusBg = nameNumerologyCheck.finalStatusGood ? [212, 237, 218] : [248, 215, 218];
+    const statusFg = nameNumerologyCheck.finalStatusGood ? [21, 87, 36]   : [114, 28, 36];
+    const statusBorder = nameNumerologyCheck.finalStatusGood ? [40, 167, 69] : [220, 53, 69];
+    doc.setFillColor(...statusBg);
+    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "F");
+    doc.setDrawColor(...statusBorder);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "D");
+    doc.setTextColor(...statusFg);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`STATUS: ${nameNumerologyCheck.finalStatus}`, pageWidth / 2, nmY + 9, { align: "center" });
+  } else {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, nmY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textMuted);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9.5);
+    doc.text("No name data available for analysis.", 20, nmY + 10);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGES: 3 BLANK PAGES FOR CONSULTANT NOTES / SUGGESTIONS
   // ════════════════════════════════════════════════════════════════════════
   for (let c = 1; c <= 3; c++) {
     doc.addPage();
     drawPageShell(doc);
 
     const pageData = reportData[`customPage${c}`] || {};
-    const titleText = (pageData.title || `NOTES / SUGGESTIONS`).toUpperCase();
     const contentText = pageData.content || "";
 
     doc.setFillColor(...goldPrimary);
@@ -1433,9 +1684,8 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`NOTES / SUGGESTIONS`, 14, 27);
-    
-    // Beautiful clean white area for handmade notes
+    doc.text("NOTES / SUGGESTIONS", 14, 27);
+
     doc.setFillColor(255, 254, 249);
     doc.setDrawColor(...goldPrimary);
     doc.setLineWidth(0.2);
@@ -1451,7 +1701,7 @@ export const generatePDF = async (clientData) => {
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // PAGE 12: FINAL THANK YOU & DISCLAIMER PAGE
+  // PAGE: FINAL THANK YOU & DISCLAIMER PAGE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
   drawPageShell(doc, true);

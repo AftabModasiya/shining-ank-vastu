@@ -1638,3 +1638,243 @@ export const generateReport = (name, dob, gender) => {
 };
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE COMPATIBILITY CHECK — Strict Planetary Matrix Logic (Client Spec)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COMPOUND_RATING = {
+  // "Good" compounds (highly auspicious in Chaldean)
+  good: [1, 3, 5, 6, 9, 10, 14, 15, 19, 21, 23, 24, 27, 28, 33, 37, 41, 46, 50, 55, 64, 69],
+  // "Average" compounds
+  average: [2, 7, 11, 16, 20, 25, 26, 31, 32, 38, 43, 47, 51, 52, 56, 60, 65],
+  // "Bad" compounds
+  bad: [4, 8, 13, 17, 18, 22, 26, 29, 30, 35, 36, 39, 40, 44, 48, 49, 53, 54],
+};
+
+const getCompoundRating = (compound) => {
+  if (COMPOUND_RATING.good.includes(compound)) return { label: 'Very Good', stars: '★★★★★' };
+  if (COMPOUND_RATING.bad.includes(compound))  return { label: 'Bad',       stars: '★☆☆☆☆' };
+  return { label: 'Average', stars: '★★★☆☆' };
+};
+
+const getRelationLabel = (status) => {
+  if (status === 'friend')  return 'Good Friend';
+  if (status === 'enemy')   return 'Non-Friend';
+  return 'Neutral';
+};
+
+// Returns best common friendly numbers between driver and conductor
+const getBestMobileNumbers = (mulank, bhagyank) => {
+  const m = COMPATIBILITY_TABLE[mulank]?.friends || [];
+  const b = COMPATIBILITY_TABLE[bhagyank]?.friends || [];
+  const common = [...new Set([...m, ...b])].filter(n => m.includes(n) && b.includes(n));
+  return common.length > 0 ? common : [...new Set([...m, ...b])].slice(0, 4);
+};
+
+// Returns digits that should be avoided in the mobile number
+const getDigitsToAvoid = (mulank, bhagyank) => {
+  const me = COMPATIBILITY_TABLE[mulank]?.nonFriends || [];
+  const be = COMPATIBILITY_TABLE[bhagyank]?.nonFriends || [];
+  return [...new Set([...me, ...be])];
+};
+
+export const getMobileCompatibilityCheck = (phone, mulank, bhagyank) => {
+  if (!phone || phone.trim() === '' || phone === '-') {
+    return { isValid: false };
+  }
+
+  let digits = phone.replace(/\D/g, '');
+  if (digits.length > 10) digits = digits.slice(-10);
+  if (digits.length === 0) return { isValid: false };
+
+  const totalSum   = digits.split('').reduce((s, d) => s + parseInt(d, 10), 0);
+  const singleDigit = reduceToSingle(totalSum);
+
+  const mCompat = getCompatibility(singleDigit, mulank);
+  const bCompat = getCompatibility(singleDigit, bhagyank);
+
+  const mLabel = getRelationLabel(mCompat.status);
+  const bLabel = getRelationLabel(bCompat.status);
+
+  // Main compatibility sentence
+  const compatSentence = `Sum of number is ${singleDigit} which is ${mLabel} with Driver ${mulank} and ${bLabel} with Conductor ${bhagyank}.`;
+
+  // Compound rating
+  const cRating = getCompoundRating(totalSum);
+  const compoundSentence = `Your number Combination Count is ${totalSum} which is ${cRating.label} and rating is ${cRating.stars}.`;
+
+  // Overall status
+  const bothFriends = mCompat.status === 'friend' && bCompat.status === 'friend';
+  const anyEnemy    = mCompat.status === 'enemy'  || bCompat.status === 'enemy';
+  let overallStatus = 'Neutral';
+  if (bothFriends)      overallStatus = 'Highly Compatible / Super Lucky ✓';
+  else if (anyEnemy)    overallStatus = 'Incompatible / Avoid';
+  else if (mCompat.status === 'friend' || bCompat.status === 'friend') overallStatus = 'Partially Compatible / Good';
+
+  // Good to have
+  const bestNums   = getBestMobileNumbers(mulank, bhagyank);
+  const avoidDigits = getDigitsToAvoid(mulank, bhagyank);
+  const goodToHave  = `Try to have number sum in between ${bestNums.join(', ')}.`;
+  const avoidSentence = avoidDigits.length > 0
+    ? `It is recommended that the number does not include the digits ${avoidDigits.join(' or ')}.`
+    : 'No specific digits to avoid based on your planetary matrix.';
+
+  // Impact on life & work
+  const VIBRATION_IMPACT = {
+    1: 'This mobile number radiates strong Sun energy, enhancing your leadership authority and incoming business calls from high-status connections. Social standing improves noticeably.',
+    2: 'This number vibrates with Moon energy, attracting emotional and nurturing clientele. Ideal for counselors and relationship-driven businesses, though it may slow decisive business closures.',
+    3: 'Jupiter\'s frequency here brings expansion, referrals, and knowledge-based networking. Incoming calls often bring opportunity, but guard against over-commitment.',
+    4: 'Rahu\'s frequency creates an unconventional energy; calls may bring disruptive or unexpected leads. Maintain discipline in how you respond to business inquiries.',
+    5: 'Mercury\'s versatile energy makes this number highly active for trade, marketing, and negotiations. Excellent for entrepreneurs and sales-driven professionals.',
+    6: 'Venus frequency attracts luxury clientele, family businesses, and creative industries. Incoming calls are often from trusted relationships and repeat customers.',
+    7: 'Ketu\'s introspective energy attracts a niche, spiritually aligned clientele. Less volume, but higher quality and depth in business interactions.',
+    8: 'Saturn\'s dense energy can attract heavy-duty corporate clients and authority figures. Business growth is steady but requires patience; avoid impulsive decisions on calls.',
+    9: 'Mars energy makes this number highly active and competitive. High call volume, fast-paced energy, and strong incoming leads from dynamic and ambitious contacts.',
+  };
+  const impactLine = VIBRATION_IMPACT[singleDigit] || 'This number carries a balanced vibration that supports steady communication and professional interactions.';
+
+  return {
+    isValid: true,
+    phone: digits,
+    totalSum,
+    singleDigit,
+    compatSentence,
+    compoundSentence,
+    overallStatus,
+    goodToHave,
+    avoidSentence,
+    impactLine,
+    driverRelation:    mLabel,
+    conductorRelation: bLabel,
+    compoundRating:    cRating,
+    bestNumbers:       bestNums,
+    avoidDigits,
+    isCompatible: bothFriends || (!anyEnemy && (mCompat.status === 'friend' || bCompat.status === 'friend')),
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAME NUMEROLOGY CHECK — Strict Planetary Matrix Logic (Client Spec)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Chaldean map (same as calcChaldeanName but standalone for sub-name calc)
+const CHALDEAN_STRICT = {
+  A:1, I:1, J:1, Q:1, Y:1,
+  B:2, K:2, R:2,
+  C:3, G:3, L:3, S:3,
+  D:4, M:4, T:4,
+  E:5, H:5, N:5, X:5,
+  U:6, V:6, W:6,
+  O:7, Z:7,
+  F:8, P:8
+};
+
+const chaldeanOf = (str) => {
+  const letters = str.toUpperCase().replace(/[^A-Z]/g, '').split('');
+  return letters.reduce((s, c) => s + (CHALDEAN_STRICT[c] || 0), 0);
+};
+
+const compoundAndSingle = (str) => {
+  const compound = chaldeanOf(str);
+  return { compound, single: reduceToSingle(compound) };
+};
+
+export const getNameNumerologyCheck = (name, mulank, bhagyank) => {
+  if (!name || name.trim() === '') {
+    return { isValid: false };
+  }
+
+  // Split into first name and last name
+  const parts       = name.trim().split(/\s+/);
+  const firstName   = parts[0] || '';
+  const lastName    = parts.slice(1).join(' ') || '';
+
+  const fn = compoundAndSingle(firstName);
+  const ln = lastName ? compoundAndSingle(lastName) : null;
+  const full = compoundAndSingle(name);
+
+  // ── First Name Analysis ──────────────────────────────────────────────────
+  const fnNot48      = fn.single !== 4 && fn.single !== 8;
+  const fnMCompat    = getCompatibility(fn.single, mulank);
+  const fnBCompat    = getCompatibility(fn.single, bhagyank);
+  const fnMLabel     = getRelationLabel(fnMCompat.status);
+  const fnBLabel     = getRelationLabel(fnBCompat.status);
+  const fnCRating    = getCompoundRating(fn.compound);
+
+  const firstNameCard = {
+    name:         firstName,
+    compound:     fn.compound,
+    single:       fn.single,
+    not48Check:   fnNot48,
+    compatLine:   `Sum of First Name number is ${fn.single} which is ${fnMLabel} with Driver ${mulank} and ${fnBLabel} with Conductor ${bhagyank}.`,
+    compoundLine: `First Name Combination Count is ${fn.compound} which is ${fnCRating.label} and rating is ${fnCRating.stars}.`,
+    driverStatus:    fnMCompat.status,
+    conductorStatus: fnBCompat.status,
+    overallGood: fnNot48 && (fnMCompat.status !== 'enemy') && (fnBCompat.status !== 'enemy'),
+  };
+
+  // ── Last Name Analysis ────────────────────────────────────────────────────
+  let lastNameCard = null;
+  if (ln) {
+    const lnNot48   = ln.single !== 4 && ln.single !== 8;
+    const lnMCompat = getCompatibility(ln.single, mulank);
+    const lnBCompat = getCompatibility(ln.single, bhagyank);
+    const lnMLabel  = getRelationLabel(lnMCompat.status);
+    const lnBLabel  = getRelationLabel(lnBCompat.status);
+    const lnCRating = getCompoundRating(ln.compound);
+    lastNameCard = {
+      name:         lastName,
+      compound:     ln.compound,
+      single:       ln.single,
+      not48Check:   lnNot48,
+      compatLine:   `Sum of Last Name number is ${ln.single} which is ${lnMLabel} with Driver ${mulank} and ${lnBLabel} with Conductor ${bhagyank}.`,
+      compoundLine: `Last Name Combination Count is ${ln.compound} which is ${lnCRating.label} and rating is ${lnCRating.stars}.`,
+      driverStatus:    lnMCompat.status,
+      conductorStatus: lnBCompat.status,
+      overallGood: lnNot48 && (lnMCompat.status !== 'enemy') && (lnBCompat.status !== 'enemy'),
+    };
+  }
+
+  // ── Full Name Analysis ────────────────────────────────────────────────────
+  const fullNot48     = full.single !== 4 && full.single !== 8;
+  const fullMCompat   = getCompatibility(full.single, mulank);
+  const fullBCompat   = getCompatibility(full.single, bhagyank);
+  const fullMLabel    = getRelationLabel(fullMCompat.status);
+  const fullBLabel    = getRelationLabel(fullBCompat.status);
+  const fullTargetOk  = [1, 3, 5, 6].includes(full.single);
+  const fullCRating   = getCompoundRating(full.compound);
+
+  const fullNameCard = {
+    name:          name,
+    compound:      full.compound,
+    single:        full.single,
+    not48Check:    fullNot48,
+    compatLine:    `Sum of Full Name number is ${full.single} which is ${fullMLabel} with Driver ${mulank} and ${fullBLabel} with Conductor ${bhagyank}.`,
+    targetLine:    fullTargetOk
+      ? `Full Name Count is ${full.single} which is in the ideal range (1, 3, 5 or 6). ✓`
+      : `Full Name Count should be 1, 3, 5 or 6. Currently it is ${full.single}.`,
+    compoundLine:  `Full Name Combination Count is ${full.compound} — rating is ${fullCRating.stars} (${fullCRating.label}).`,
+    targetOk:      fullTargetOk,
+    driverStatus:  fullMCompat.status,
+    conductorStatus: fullBCompat.status,
+    overallGood:   fullNot48 && fullTargetOk && (fullMCompat.status !== 'enemy') && (fullBCompat.status !== 'enemy'),
+  };
+
+  // ── Final Status ─────────────────────────────────────────────────────────
+  const isBalanced = firstNameCard.overallGood && fullNameCard.overallGood;
+  const finalStatus = isBalanced ? 'Name Balanced ✓' : 'Name Not Balanced ✗';
+  const finalStatusGood = isBalanced;
+
+  return {
+    isValid: true,
+    firstName,
+    lastName,
+    fullName: name,
+    firstNameCard,
+    lastNameCard,
+    fullNameCard,
+    finalStatus,
+    finalStatusGood,
+  };
+};
+
