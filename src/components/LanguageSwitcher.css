@@ -1,0 +1,87 @@
+/* ── Language Switcher — shared across all pages ────────────────────────── */
+
+.ls-wrapper {
+  position: relative;
+}
+
+/* Trigger button */
+.ls-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid rgba(232, 213, 191, 0.8);
+  color: #8c6f58;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+.ls-btn:hover {
+  background: rgba(181, 130, 10, 0.06);
+  border-color: #b5820a;
+  color: #b5820a;
+}
+
+.ls-label {
+  min-width: 20px;
+  text-align: center;
+}
+
+.ls-chevron {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.ls-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.ls-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fffef9;
+  border: 1px solid rgba(232, 213, 191, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(181, 130, 10, 0.14);
+  min-width: 168px;
+  z-index: 2000;
+  overflow: hidden;
+  animation: ls-appear 0.15s ease-out;
+}
+
+@keyframes ls-appear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Individual option */
+.ls-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 11px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: #5a4230;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: 'Inter', sans-serif;
+  gap: 8px;
+}
+.ls-option:hover {
+  background: rgba(181, 130, 10, 0.05);
+  color: #b5820a;
+}
+.ls-option--active {
+  background: rgba(181, 130, 10, 0.09);
+  color: #b5820a;
+  font-weight: 600;
+}

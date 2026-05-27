@@ -42,12 +42,176 @@ const loadImage = (src) => {
   });
 };
 
-export const generatePDF = async (clientData) => {
+const fetchFontAsBase64 = async (url) => {
+  try {
+    const cached = localStorage.getItem(url);
+    if (cached) return cached;
+  } catch (e) {}
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result.split(',')[1];
+      try {
+        localStorage.setItem(url, base64);
+      } catch (e) {}
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+export const generatePDF = async (clientData, language = 'en') => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4'
   });
+
+  // Translation helper
+  const isHi = language === 'hi';
+  const t = (en, hi) => isHi ? hi : en;
+
+  const getPlanetTranslation = (planetName) => {
+    const planetMap = {
+      "Sun": "सूर्य (Sun)", "Moon": "चंद्र (Moon)", "Jupiter": "गुरु (Jupiter)", 
+      "Rahu": "राहु (Rahu)", "Mercury": "बुध (Mercury)", "Venus": "शुक्र (Venus)", 
+      "Ketu": "केतु (Ketu)", "Saturn": "शनि (Saturn)", "Mars": "मंगल (Mars)"
+    };
+    return planetMap[planetName] || planetName;
+  };
+
+  const translatePlaneName = (key) => {
+    const names = {
+      mental: t("Mental Plane (4-9-2)", "मानसिक तल (4-9-2)"),
+      emotional: t("Emotional/Heart Plane (3-5-7)", "भावनात्मक/हृदय तल (3-5-7)"),
+      practical: t("Practical Plane (8-1-6)", "व्यावहारिक तल (8-1-6)"),
+      left: t("Thought Plane (4-3-8)", "विचार तल (4-3-8)"),
+      middle: t("Will Plane (9-5-1)", "इच्छा/संकल्प तल (9-5-1)"),
+      right: t("Action Plane (2-7-6)", "कर्म/क्रिया तल (2-7-6)")
+    };
+    return names[key] || key;
+  };
+
+  const getPlaneInterpretation = (plane) => {
+    if (!isHi) return plane.interpretation;
+    
+    const key = plane.key;
+    const isActive = plane.isActive;
+    const isInactive = plane.isInactive;
+    const presentStr = plane.present.slice().sort((a, b) => a - b).join(",");
+    
+    if (isActive) {
+      const activeMap = {
+        mental: "आपका दिमाग बहुत तेज है। आपके पास असाधारण विश्लेषणात्मक क्षमता, योजना कौशल और शैक्षणिक योग्यता है। तीनों ऊर्जाएं (राहु, मंगल, चंद्रमा) बौद्धिक महारत के लिए मिलकर काम करती हैं।",
+        emotional: "आप अत्यधिक विकसित भावनात्मक और आध्यात्मिक स्वभाव के स्वामी हैं। मजबूत करुणा, गहरी अंतर्दृष्टि, आध्यात्मिक झुकाव और संतुलित आंतरिक दुनिया के साथ उत्कृष्ट संचार।",
+        practical: "आप भौतिक दुनिया में एक स्वाभाविक उपलब्धि हासिल करने वाले हैं। शनि का अनुशासन (8), सूर्य का नेतृत्व (1), और शुक्र का सामंजस्य (6) मिलकर उत्कृष्ट वास्तविक दुनिया की सफलता और धन निर्माण लाते हैं।",
+        left: "आपकी विचार-से-क्रिया की पाइपलाइन पूरी तरह से सक्रिय है। विचार (3-गुरु) संरचना (4-राहु) द्वारा जमीनी बनते हैं और दृढ़ता (8-शनि) के साथ निष्पादित होते हैं।",
+        middle: "आप असाधारण इच्छाशक्ति और दृढ़ संकल्प के स्वामी हैं। मंगल का उत्साह (9), बुध की अनुकूलनशीलता (5), और सूर्य का आत्मविश्वास (1) उद्देश्यपूर्ण कार्रवाई और सफलता का मार्ग प्रशस्त करते हैं।",
+        right: "आपकी भावनात्मक और आध्यात्मिक संवेदनशीलता पूरी तरह से जागृत है। चंद्रमा का अंतर्ज्ञान (2), केतु की आध्यात्मिकता (7), और शुक्र का प्रेम (6) एक सहानुभूतिपूर्ण और आध्यात्मिक रूप से जुड़े व्यक्तित्व का निर्माण करते हैं।"
+      };
+      return activeMap[key] || plane.interpretation;
+    }
+    
+    if (isInactive) {
+      const inactiveMap = {
+        mental: "मानसिक तल (4-9-2) पूरी तरह से अनुपस्थित है। आपको एकाग्रता, स्मृति, शैक्षणिक प्रदर्शन और रणनीतिक सोच में कठिनाई हो सकती है। शिक्षा के उपायों और ध्यान पर ध्यान दें।",
+        emotional: "भावनात्मक तल (3-5-7) पूरी तरह से अनुपस्थित है। यह भावनाओं को व्यक्त करने में कठिनाई, दबी हुई भावनाओं, आध्यात्मिक अलगाव और रचनात्मक संचार में चुनौतियों को दर्शाता है।",
+        practical: "व्यावहारिक तल (8-1-6) पूरी तरह से अनुपस्थित है। भौतिक दुनिया की उपलब्धियों के लिए दोगुने प्रयास की आवश्यकता हो सकती है। वित्तीय अनुशासन और करियर वृद्धि के लिए सक्रिय उपायों की आवश्यकता है।",
+        left: "बायाँ स्तंभ / विचार तल (4-3-8) अनुपस्थित है। सोचने और योजना बनाने की क्षमताओं में विकास की आवश्यकता है। आप विचारों को उत्पादक कार्यों में बदलने में संघर्ष कर सकते हैं।",
+        middle: "मध्य स्तंभ / इच्छाशक्ति तल (9-5-1) अनुपस्थित है। इच्छाशक्ति और आत्मविश्वास का निर्माण मुख्य फोकस क्षेत्र हैं। आत्मविश्वास और दृढ़ता से जुड़ी चुनौतियां आ सकती हैं।",
+        right: "दायाँ स्तंभ / संवेदनशीलता तल (2-7-6) अनुपस्थित है। संवेदनशीलता और भावनात्मक संबंधों में संतुलन की आवश्यकता है। दूसरों के साथ तालमेल बिठाने में अधिक प्रयास करें।"
+      };
+      return inactiveMap[key] || plane.interpretation;
+    }
+    
+    // Partial translations
+    const partialMap = {
+      mental: {
+        "4,2": "मजबूत भौतिक सोच और भावनात्मक संवेदनशीलता मौजूद है, लेकिन रणनीतिक आक्रामकता (अंक 9 missing) कमजोर है। आप योजना अच्छी बनाते हैं लेकिन संघर्षों से बच सकते हैं।",
+        "9,2": "तीक्ष्ण अंतर्ज्ञान और भावनात्मक बुद्धिमत्ता है, लेकिन व्यावहारिक निष्पादन और स्थिरता (अंक 4 missing) कमजोर है।",
+        "4,9": "मजबूत ड्राइव के साथ उत्कृष्ट रणनीतिकार हैं, लेकिन लोगों को समझने और भावनात्मक संवेदनशीलता (अंक 2 missing) कम है।",
+        "4": "केवल व्यावहारिक-भौतिक मानसिकता सक्रिय है। आप संरचना और प्रणालियों के संदर्भ में सोचते हैं लेकिन भावनात्मक गहराई की कमी है।",
+        "9": "मानसिक तल की केवल मंगल ऊर्जा सक्रिय है। मजबूत ड्राइव और महत्वाकांक्षा है लेकिन योजना बनाने और भावनात्मक जागरूकता में संघर्ष होता है।",
+        "2": "केवल चंद्र ऊर्जा सक्रिय है। भावनात्मक रूप से बुद्धिमान हैं लेकिन बड़े लक्ष्यों के लिए आवश्यक बौद्धिक आक्रामकता और योजना कौशल की कमी है।"
+      },
+      emotional: {
+        "3,7": "आध्यात्मिक और संचारी संतुलन मौजूद है, लेकिन निर्णय लेने और अनुकूलनशीलता (अंक 5 missing) में भ्रम पैदा हो सकता है।",
+        "5,7": "बुध और केतु सक्रिय हैं — अनुकूलनशील और आध्यात्मिक, लेकिन ज्ञान, शिक्षण क्षमता और वित्तीय भाग्य (अंक 3 missing) की कमी है।",
+        "3,5": "अभिव्यंजक और गतिशील संचार (गुरु + बुध) मौजूद है, लेकिन आध्यात्मिक गहराई और आत्मनिरीक्षण (अंक 7 missing) कमजोर है।",
+        "3": "केवल गुरु ऊर्जा सक्रिय है। आप अभिव्यंजक और दार्शनिक हैं लेकिन केतु के आध्यात्मिक अलगाव और अनुकूलनशीलता की कमी है।",
+        "5": "केवल Mercury ऊर्जा सक्रिय है। तेज-तर्रार हैं लेकिन गुरु के ज्ञान और केतु के शांत आत्मनिरीक्षण के बिना भावनात्मक अस्थिरता आ सकती है।",
+        "7": "केवल केतु ऊर्जा सक्रिय है। आप गहराई से आध्यात्मिक हैं लेकिन इस आंतरिक ज्ञान को बाहरी दुनिया में संप्रेषित करने या अनुकूलित करने में संघर्ष करते हैं।"
+      },
+      practical: {
+        "1,6": "मजबूत नेतृत्व और व्यक्तिगत आकर्षण है, लेकिन धैर्य, अनुशासन और दीर्घकालिक दृढ़ता (अंक 8 missing) कमजोर है।",
+        "8,6": "अनुशासित और कलात्मक हैं, लेकिन आत्मविश्वास, अधिकार और आत्म-जोर (अंक 1 missing) कमजोर है।",
+        "8,1": "शक्तिशाली अनुशासन और नेतृत्व है, लेकिन रिश्तों, विलासिता और सौंदर्य बोध (अंक 6 missing) की कमी है।",
+        "8": "Saturn's discipline is active. You work hard but lack leadership confidence (1) and relationship skills (6) for full success.",
+        "1": "Sun's leadership is active. Natural leader but lacks Saturn's perseverance and Venus's charm and relationship skills.",
+        "6": "Venus's harmony is active. Creative and relationship-oriented but lacks drive (1) and discipline (8) for material success."
+      },
+      left: {
+        "4,8": "व्यवस्थित और दृढ़ हैं, लेकिन आशावाद, ज्ञान और रचनात्मक विचार (अंक 3 missing) कमजोर है।",
+        "3,8": "रचनात्मक और दृढ़ हैं, लेकिन संगठनात्मक क्षमता और स्थिरता (अंक 4 missing) कमजोर है।",
+        "3,4": "आदर्शवादी और व्यवस्थित हैं, लेकिन सहनशक्ति और भौतिक अभिव्यक्ति (अंक 8 missing) कमजोर है।",
+        "4": "केवल राहु की संगठनात्मक ऊर्जा सक्रिय है — व्यवस्थित लेकिन पूर्ण परिणामों के लिए पर्याप्त रचनात्मक या दृढ़ नहीं।",
+        "3": "केवल गुरु की रचनात्मकता सक्रिय है — विचारों से भरे हुए लेकिन उन्हें फल देने के लिए संरचना और अनुशासन की कमी है।",
+        "8": "केवल शनि की दृढ़ता सक्रिय है — मेहनती लेकिन रचनात्मक विचारों या संरचनात्मक योजनाओं के बिना प्रयास गलत दिशा में जा सकता है।"
+      },
+      middle: {
+        "9,1": "मजबूत ड्राइव और नेतृत्व है, लेकिन बदलती परिस्थितियों में लचीलेपन और अनुकूलनशीलता (अंक 5 missing) की कमी है।",
+        "5,1": "अनुकूलनशील और आश्वस्त हैं, लेकिन प्रतिस्पर्धी ड्राइव और मुखरता (अंक 9 missing) कमजोर है।",
+        "9,5": "गतिशील और अनुकूलनशील हैं, लेकिन आत्मविश्वास और अधिकार (अंक 1 missing) कमजोर है।",
+        "9": "केवल मंगल सक्रिय है — अत्यधिक प्रेरित लेकिन बुध और सूर्य के बिना अनुकूलनशीलता और आत्म-दिशा में संघर्ष करते हैं।",
+        "5": "केवल बुध सक्रिय है — अत्यधिक अनुकूलनशील और संचारी, लेकिन साहसिक नेतृत्व के लिए आवश्यक ड्राइव और आत्मविश्वास की कमी है।",
+        "1": "केवल सूर्य सक्रिय है — पहचान में आश्वस्त हैं लेकिन लचीली सफलता के लिए आवश्यक ड्राइव और अनुकूलनशीलता की कमी है।"
+      },
+      right: {
+        "2,6": "भावनेशनल रूप से देखभाल करने वाले और सामंजस्यपूर्ण हैं, लेकिन आध्यात्मिक गहराई और आत्मनिरीक्षण (अंक 7 missing) कमजोर है।",
+        "7,6": "आध्यात्मिक और कलात्मक हैं, लेकिन भावनात्मक तालमेल और लोगों को समझने की कला (अंक 2 missing) कमजोर है।",
+        "2,7": "अंतर्ज्ञानी और आध्यात्मिक हैं, लेकिन प्रेम जीवन, कलात्मक अभिव्यक्ति और घरेलू सद्भाव (अंक 6 missing) कमजोर है।",
+        "2": "केवल चंद्र सक्रिय है — भावनात्मक रूप से संवेदनशील और सहज, लेकिन आध्यात्मिक गहराई और कलात्मक अभिव्यक्ति की कमी है।",
+        "7": "केवल केतु सक्रिय है — आध्यात्मिक रूप से झुके हुए लेकिन भावनात्मक गर्मजोशी और संबंध सद्भाव से कटे हुए।",
+        "6": "केवल शुक्र सक्रिय है — स्नेही और कलात्मक, लेकिन अच्छी संवेदनशीलता के लिए आवश्यक अंतर्ज्ञान (2) और आध्यात्मिक गहराई (7) की कमी है।"
+      }
+    };
+    
+    const planePartials = partialMap[key] || {};
+    return planePartials[presentStr] || plane.interpretation;
+  };
+
+  // Custom font loading for proper Hindi/Devanagari rendering
+  try {
+    const fontRegular = await fetchFontAsBase64("https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Regular.ttf");
+    const fontBold = await fetchFontAsBase64("https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Bold.ttf");
+
+    if (fontRegular && fontBold) {
+      doc.addFileToVFS("Poppins-Regular.ttf", fontRegular);
+      doc.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+      doc.addFileToVFS("Poppins-Bold.ttf", fontBold);
+      doc.addFont("Poppins-Bold.ttf", "Poppins", "bold");
+
+      const originalSetFont = doc.setFont;
+      doc.setFont = function(fontName, fontStyle, fontWeight) {
+        let resolvedFont = fontName;
+        if (fontName === 'helvetica' || fontName === 'Helvetica') {
+          resolvedFont = 'Poppins';
+        }
+        let resolvedStyle = fontStyle;
+        if (fontStyle === 'italic') {
+          resolvedStyle = 'normal';
+        } else if (fontStyle === 'bolditalic') {
+          resolvedStyle = 'bold';
+        }
+        return originalSetFont.call(doc, resolvedFont, resolvedStyle, fontWeight);
+      };
+    }
+  } catch (err) {
+    console.warn("Failed to load Poppins fonts dynamically, falling back to Helvetica:", err);
+  }
 
 
   
@@ -283,12 +447,12 @@ export const generatePDF = async (clientData) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(26, 58, 46); // Shining Ank Vastu brand dark green/teal
-    doc.text("Shining Ank Vastu - M : 9913961553", pWidth / 2, pHeight - 13, { align: "center" });
+    doc.text(t("Shining Ank Vastu - M : 9913961553", "शाइनिंग अंक वास्तु - मो : 9913961553"), pWidth / 2, pHeight - 13, { align: "center" });
 
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7.5);
     doc.setTextColor(...textMuted);
-    doc.text("Align Your Numbers, Transform Your Life", pWidth / 2, pHeight - 9, { align: "center" });
+    doc.text(t("Align Your Numbers, Transform Your Life", "अपने अंकों को संरेखित करें, अपने जीवन को बदलें"), pWidth / 2, pHeight - 9, { align: "center" });
   };
 
   // ════════════════════════════════════════════════════════════════════════
@@ -329,26 +493,26 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("REPORT PREPARED FOR:", textX, 88);
+  doc.text(t("REPORT PREPARED FOR:", "रिपोर्ट तैयार की गई:"), textX, 88);
 
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(16);
-  doc.text(clientData.name || "Client Name", textX, 98);
+  doc.text(clientData.name || t("Client Name", "ग्राहक का नाम"), textX, 98);
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`DATE OF BIRTH: ${formattedDob}`, textX, 110);
+  doc.text(`${t("DATE OF BIRTH", "जन्म तिथि")}: ${formattedDob}`, textX, 110);
 
   // Prepared by block
   doc.setTextColor(...goldPrimary);
   doc.setFontSize(12);
-  doc.text("Prepared by:", textX, 130);
+  doc.text(t("Prepared by:", "तैयारकर्ता:"), textX, 130);
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(13);
-  doc.text("Mr. Veren Misstry", textX, 136);
+  doc.text(t("Mr. Veren Misstry", "श्री वेरेन मिस्त्री"), textX, 136);
   doc.setFontSize(11);
-  doc.text("Numerologist", textX, 141);
+  doc.text(t("Numerologist", "अंकशास्त्री"), textX, 141);
 
   // Brand Name & Contact removed from right column to avoid duplication
 
@@ -356,11 +520,11 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13.5);
-  doc.text("Crown Lifepath Report", 55.5, 168, { align: "center" });
+  doc.text(t("Crown Lifepath Report", "क्राउन लाइफपाथ रिपोर्ट"), 55.5, 168, { align: "center" });
 
   doc.setTextColor(0, 128, 0); // Proper green
   doc.setFontSize(11);
-  doc.text(`Report Date: ${reportDate}`, 55.5, 174, { align: "center" });
+  doc.text(`${t("Report Date", "रिपोर्ट की तारीख")}: ${reportDate}`, 55.5, 174, { align: "center" });
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
@@ -374,7 +538,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("BIRTH CHART OVERVIEW", 14, 27);
+  doc.text(t("BIRTH CHART OVERVIEW", "जन्म कुंडली अवलोकन"), 14, 27);
 
   // Use full grid (with Mulank/Bhagyank/Kua) for PDF too
   const loShuGrid = calculateLoShuGrid(rawDob, [mulank, bhagyank, kuaNum]);
@@ -424,15 +588,15 @@ export const generatePDF = async (clientData) => {
   const repeats = getRepeatedNumbers(loShuGrid);
   const repeatsStr = repeats.length > 0 
     ? repeats.map(r => `${r.num} (${r.strength})`).join(", ") 
-    : "None";
+    : t("None", "कोई नहीं");
 
   const arrows = getArrows(loShuGrid);
   const posArrowsStr = arrows.positive.length > 0 
     ? arrows.positive.map(a => a.split(" (")[0]).join(", ") 
-    : "None";
+    : t("None", "कोई नहीं");
   const negArrowsStr = arrows.negative.length > 0 
     ? arrows.negative.map(a => a.split(" (")[0]).join(", ") 
-    : "None";
+    : t("None", "कोई नहीं");
 
   // Calculate wrapped lines and height dynamically to prevent overflow
   const getLineHeight = (val, labelOffset) => {
@@ -441,8 +605,8 @@ export const generatePDF = async (clientData) => {
   };
 
   let totalTextHeight = 14; // start offset + title padding
-  totalTextHeight += getLineHeight(presentNums || "None", 26);
-  totalTextHeight += getLineHeight(missingNums || "None", 26);
+  totalTextHeight += getLineHeight(presentNums || t("None", "कोई नहीं"), 26);
+  totalTextHeight += getLineHeight(missingNums || t("None", "कोई नहीं"), 26);
   totalTextHeight += getLineHeight(repeatsStr, 28);
   totalTextHeight += getLineHeight(posArrowsStr, 25);
   totalTextHeight += getLineHeight(negArrowsStr, 26);
@@ -460,7 +624,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
-  doc.text("GRID HIGHLIGHTS", sideX + 6, gridStartY + 8);
+  doc.text(t("GRID HIGHLIGHTS", "ग्रिड मुख्य बिंदु"), sideX + 6, gridStartY + 8);
 
   let currY = gridStartY + 14;
   const drawLine = (label, val, labelOffset) => {
@@ -475,20 +639,20 @@ export const generatePDF = async (clientData) => {
     currY += (lines.length * 4.5) + 3.5;
   };
 
-  drawLine("Present Numbers: ", presentNums || "None", 26);
-  drawLine("Missing Numbers: ", missingNums || "None", 26);
-  drawLine("Repeated Numbers: ", repeatsStr, 28);
-  drawLine("Positive Arrows: ", posArrowsStr, 25);
-  drawLine("Negative Arrows: ", negArrowsStr, 26);
+  drawLine(t("Present Numbers: ", "उपस्थित अंक: "), presentNums || t("None", "कोई नहीं"), 26);
+  drawLine(t("Missing Numbers: ", "लापता अंक: "), missingNums || t("None", "कोई नहीं"), 26);
+  drawLine(t("Repeated Numbers: ", "दोहराए गए अंक: "), repeatsStr, 28);
+  drawLine(t("Positive Arrows: ", "सकारात्मक तीर: "), posArrowsStr, 25);
+  drawLine(t("Negative Arrows: ", "नकारात्मक तीर: "), negArrowsStr, 26);
   
   // Kua Vastu direction (Issue 7 fix: use getKuaVastuData for correct direction)
   const kuaVastuInfo = getKuaVastuData(kuaNum);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...textDark);
   doc.setFontSize(8.2);
-  doc.text("Kua Details: ", sideX + 6, currY);
+  doc.text(t("Kua Details: ", "कुआ विवरण: "), sideX + 6, currY);
   doc.setFont("helvetica", "bold");
-  doc.text(`${kuaNum} (Direction: ${kuaVastuInfo.direction})`, sideX + 24, currY);
+  doc.text(`${kuaNum} (${t("Direction", "दिशा")}: ${kuaVastuInfo.direction})`, sideX + 24, currY);
 
   // Section 2: Core Personality Insights
   const coreY = gridStartY + sideCardHeight + 15;
@@ -497,7 +661,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("CORE PERSONALITY INSIGHTS", 14, coreY + 7);
+  doc.text(t("CORE PERSONALITY INSIGHTS", "मूल व्यक्तित्व अंतर्दृष्टि"), 14, coreY + 7);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, coreY + 16, pageWidth - 30, 48, 3, 3, "F");
@@ -508,10 +672,10 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`Analysis for ${clientData.name || "Native"}:`, 20, coreY + 24);
+  doc.text(`${t("Analysis for", "विश्लेषण")}: ${clientData.name || t("Native", "जातक")}:`, 20, coreY + 24);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  const pText = reportData.personalityAnalysis?.content || "You are highly intuitive, emotionally rich, and creative. The balance of your cosmic grid suggests a strong potential to convert dreams into practical reality. You easily gain respect from peers and maintain high spiritual insights.";
+  const pText = reportData.personalityAnalysis?.content || t("You are highly intuitive, emotionally rich, and creative. The balance of your cosmic grid suggests a strong potential to convert dreams into practical reality. You easily gain respect from peers and maintain high spiritual insights.", "आप अत्यधिक सहज, भावनात्मक रूप से समृद्ध और रचनात्मक हैं। आपके ब्रह्मांडीय ग्रिड का संतुलन सपनों को व्यावहारिक वास्तविकता में बदलने की एक मजबूत क्षमता का सुझाव देता है। आप आसानी से साथियों से सम्मान प्राप्त करते हैं और उच्च आध्यात्मिक अंतर्दृष्टि बनाए रखते हैं।");
   const pLines = doc.splitTextToSize(pText, pageWidth - 42);
   doc.text(pLines, 20, coreY + 31);
 
@@ -549,16 +713,16 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Mulank", 57.5, 68, { align: "center" });
+  doc.text(t("Mulank", "मूलांक"), 57.5, 68, { align: "center" });
   doc.setFont("helvetica", "italic");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...goldPrimary);
-  doc.text(`Planet: ${mulankTraits.planet || "Sun"}`, 20, 78);
+  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(mulankTraits.planet || "Sun") : (mulankTraits.planet || "Sun")}`, 20, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...textDark);
-  const mulLines = doc.splitTextToSize(mulankTraits.desc || "Represents leadership qualities, innovation, independent thought process, and primary life focus.", 76);
+  const mulLines = doc.splitTextToSize(mulankTraits.desc || t("Represents leadership qualities, innovation, independent thought process, and primary life focus.", "नेतृत्व गुण, नवाचार, स्वतंत्र विचार प्रक्रिया और प्राथमिक जीवन फोकस का प्रतिनिधित्व करता है।"), 76);
   doc.text(mulLines, 20, 84);
 
   // Bhagyank Box (Right Column) — all DOB digits
@@ -577,15 +741,15 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Bhagyank", pageWidth - 57.5, 68, { align: "center" });
+  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 57.5, 68, { align: "center" });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...goldPrimary);
-  doc.text(`Planet: ${bhagyankTraits.planet || "Moon"}`, pageWidth - 95, 78);
+  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(bhagyankTraits.planet || "Moon") : (bhagyankTraits.planet || "Moon")}`, pageWidth - 95, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...textDark);
-  const bhagLines = doc.splitTextToSize(bhagyankTraits.desc || "Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", 76);
+  const bhagLines = doc.splitTextToSize(bhagyankTraits.desc || t("Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", "गतिशील कार्रवाई, संबंध प्रबंधन का प्रतिनिधित्व करता है, और यह दर्शाता है कि आपकी आंतरिक क्षमता कैसे ठोस कार्यों में बदलती है।"), 76);
   doc.text(bhagLines, pageWidth - 95, 84);
 
   // ── Kua Number box (below the two main boxes, centered) ──────────────
@@ -599,7 +763,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text(`KUA NUMBER: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
+  doc.text(`${t("KUA NUMBER", "कुआ नंबर")}: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
 
   // Section 4: Hidden Influences of Yogas (Dynamic — all 6 planes with partial logic)
   const yogY = 136;
@@ -608,19 +772,20 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("SECRET POWER OF LO SHU PLANES", 14, yogY + 7);
+  doc.text(t("SECRET POWER OF LO SHU PLANES", "लो शु तल की गुप्त शक्ति"), 14, yogY + 7);
 
   // Show first 4 planes on Page 3 (3 horizontal + first vertical)
   const pagePlanes = hiddenInfluences.slice(0, 4);
   let planeY = yogY + 16;
   pagePlanes.forEach(plane => {
-    const statusLabel = plane.isActive ? "FULLY ACTIVE" : plane.isInactive ? "ABSENT" : "PARTIAL";
+    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
     const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
     const borderWidth = plane.isActive ? 0.4 : 0.15;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
+    const planeInterp = getPlaneInterpretation(plane);
+    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
     const cardHeight = 8 + interpLines.length * 5;
 
     doc.setFillColor(...bgColor);
@@ -632,7 +797,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text(`${plane.name} — ${statusLabel}`, 20, planeY + 5.5);
+    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, planeY + 5.5);
 
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
@@ -648,13 +813,12 @@ export const generatePDF = async (clientData) => {
   doc.addPage();
   drawPageShell(doc);
 
-  // Section 5
   doc.setFillColor(...goldPrimary);
   doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("EFFECT OF REPEATING NUMBERS", 14, 27);
+  doc.text(t("EFFECT OF REPEATING NUMBERS", "दोहराए गए अंकों का प्रभाव"), 14, 27);
 
   let repY = 36;
   const repeated = reportData.repeatedNumbersAnalysis || [];
@@ -664,7 +828,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
-    doc.text("No numbers are repeated in your Date of Birth. This brings a very balanced and single-frequency energy vibration to your planes.", 20, repY + 10);
+    doc.text(t("No numbers are repeated in your Date of Birth. This brings a very balanced and single-frequency energy vibration to your planes.", "आपकी जन्म तिथि में कोई भी अंक दोहराया नहीं गया है। यह आपके तलों में एक बहुत ही संतुलित और एकल-आवृत्ति ऊर्जा कंपन लाता है।"), 20, repY + 10);
     repY += 22;
   } else {
     repeated.forEach(item => {
@@ -677,12 +841,12 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(`Number ${item.num} repeated ${item.count} times:`, 20, repY + 5);
+      doc.text(`${t("Number", "अंक")} ${item.num} ${t("repeated", "दोहराया गया")} ${item.count} ${t("times:", "बार:")}`, 20, repY + 5);
 
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.text(item.influence || "Enhances the qualities of this number significantly.", 20, repY + 9);
+      doc.text(item.influence || t("Enhances the qualities of this number significantly.", "इस संख्या के गुणों को महत्वपूर्ण रूप से बढ़ाता है।"), 20, repY + 9);
       repY += 15.5;
     });
   }
@@ -693,7 +857,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("EFFECTS OF MISSING NUMBERS & PERSONALIZED REMEDIES", 14, repY + 11);
+  doc.text(t("EFFECTS OF MISSING NUMBERS & PERSONALIZED REMEDIES", "लापता अंक और व्यक्तिगत उपाय"), 14, repY + 11);
 
   let remY = repY + 20;
   const missingArr = getMissingNumbers(loShuGrid);
@@ -705,7 +869,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
-    doc.text("Congratulations! Your Lo Shu Grid contains no missing numbers. You have a highly cohesive primary energy spectrum.", 20, remY + 10);
+    doc.text(t("Congratulations! Your Lo Shu Grid contains no missing numbers. You have a highly cohesive primary energy spectrum.", "बधाई हो! आपके लो शु ग्रिड में कोई भी लापता अंक नहीं है। आपके पास एक अत्यधिक सुसंगत प्राथमिक ऊर्जा स्पेक्ट्रम है।"), 20, remY + 10);
   } else {
     missingArr.forEach(num => {
       const remInfo = getMissingNumberRemedyData(num);
@@ -755,7 +919,7 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
-      doc.text(`Missing Number ${num} (${remInfo.planet})`, 20, remY + 6.5);
+      doc.text(`${t("Missing Number", "लापता अंक")} ${num} (${isHi ? getPlanetTranslation(remInfo.planet) : remInfo.planet})`, 20, remY + 6.5);
 
       let textY = remY + 11.5;
 
@@ -763,7 +927,7 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(197, 34, 31); // Reddish text for effect heading
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8.5);
-      doc.text("EFFECT:", 20, textY);
+      doc.text(t("EFFECT:", "प्रभाव:"), 20, textY);
       textY += 4.2;
 
       doc.setTextColor(...textDark);
@@ -779,7 +943,7 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(19, 115, 51); // Greenish text for remedies heading
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8.5);
-      doc.text("REMEDIES:", 20, textY);
+      doc.text(t("REMEDIES:", "उपाय:"), 20, textY);
       textY += 4.2;
 
       doc.setTextColor(...textDark);
@@ -806,7 +970,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("PROFESSIONAL & CAREER OUTLOOK", 14, 27);
+  doc.text(t("PROFESSIONAL & CAREER OUTLOOK", "व्यावसायिक एवं करियर दृष्टिकोण"), 14, 27);
 
   // 1. Compatibility Matrix
   let careerY = 36;
@@ -819,11 +983,23 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text(`Combination ${mulank}-${bhagyank} Connection: ${careerData.compatibilityStatus}`, 20, careerY + 6);
+  // Translate compatibility status
+  const getCompatStatusTranslation = (status) => {
+    const statusMap = {
+      "Highly Compatible": "उच्च संगत",
+      "Compatible": "संगत",
+      "Neutral": "तटस्थ",
+      "Challenging": "चुनौतीपूर्ण",
+      "Non-Friendly": "गैर-अनुकूल",
+      "Friendly": "अनुकूल"
+    };
+    return statusMap[status] || status;
+  };
+  doc.text(`${t("Combination", "संयोजन")} ${mulank}-${bhagyank} ${t("Connection", "संबंध")}: ${isHi ? getCompatStatusTranslation(careerData.compatibilityStatus) : careerData.compatibilityStatus}`, 20, careerY + 6);
   
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  const esotericLines = doc.splitTextToSize(`Esoteric Insight: ${careerData.esotericReason}`, pageWidth - 42);
+  const esotericLines = doc.splitTextToSize(`${t("Esoteric Insight", "रहस्यमय अंतर्दृष्टि")}: ${careerData.esotericReason}`, pageWidth - 42);
   doc.text(esotericLines, 20, careerY + 11);
   
   careerY += 26;
@@ -840,7 +1016,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("Impact on Workstyle", 20, careerY + 5.5);
+  doc.text(t("Impact on Workstyle", "कार्यशैली पर प्रभाव"), 20, careerY + 5.5);
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
@@ -852,7 +1028,7 @@ export const generatePDF = async (clientData) => {
   // 3. Suitable Careers
   let careersH = 8;
   const suitableWrapped = careerData.topCareers.map((c, idx) => {
-    const lines = doc.splitTextToSize(`Field ${idx + 1}: ${c.field} - ${c.explanation}`, pageWidth - 46);
+    const lines = doc.splitTextToSize(`${t("Field", "क्षेत्र")} ${idx + 1}: ${c.field} - ${c.explanation}`, pageWidth - 46);
     careersH += lines.length * 4.5 + 2;
     return lines;
   });
@@ -866,7 +1042,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("Top 3 Recommended Career Fields", 20, careerY + 5.5);
+  doc.text(t("Top 3 Recommended Career Fields", "शीर्ष 3 अनुशंसित करियर क्षेत्र"), 20, careerY + 5.5);
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
@@ -896,7 +1072,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(197, 34, 31);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("Careers to Avoid (Strict Warning)", 20, careerY + 5.5);
+  doc.text(t("Careers to Avoid (Strict Warning)", "इन करियर से बचें (कड़ी चेतावनी)"), 20, careerY + 5.5);
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
@@ -922,7 +1098,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(176, 96, 0);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("Golden Professional Remedy", 20, careerY + 5.5);
+  doc.text(t("Golden Professional Remedy", "स्वर्णिम व्यावसायिक उपाय"), 20, careerY + 5.5);
 
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
@@ -950,7 +1126,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("NAME NUMBER COMPATIBILITY ANALYSIS", 14, sec9StartY + 7);
+  doc.text(t("NAME NUMBER COMPATIBILITY ANALYSIS", "नाम अंक संगतता विश्लेषण"), 14, sec9StartY + 7);
 
   const sec9CardStartY = sec9StartY + 16;
 
@@ -963,7 +1139,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text(`Current Name Vibrations: ${clientData.name || "Native"} (Chaldean Root: ${nameCompatData.nameNumber})`, 20, sec9CardStartY + 7);
+  doc.text(`${t("Current Name Vibrations", "वर्तमान नाम कंपन")}: ${clientData.name || t("Native", "जातक")} (${t("Chaldean Root", "चाल्डियन मूल")}: ${nameCompatData.nameNumber})`, 20, sec9CardStartY + 7);
 
   // Divider line inside name card
   doc.setDrawColor(200, 210, 240);
@@ -981,7 +1157,7 @@ export const generatePDF = async (clientData) => {
   const statusY = currentTextY + 5;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...goldPrimary);
-  doc.text(`Name Number Compatibility Status: ${nameCompatData.status}`, 20, statusY);
+  doc.text(`${t("Name Number Compatibility Status", "नाम अंक संगतता स्थिति")}: ${isHi ? getCompatStatusTranslation(nameCompatData.status) : nameCompatData.status}`, 20, statusY);
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 6: MOBILE COMPATIBILITY & 5-YEAR FUTURE PREDICTIONS
@@ -995,14 +1171,14 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("MOBILE NUMBER COMPATIBILITY INSIGHTS", 14, 27);
+  doc.text(t("MOBILE NUMBER COMPATIBILITY INSIGHTS", "मोबाइल नंबर संगतता अंतर्दृष्टि"), 14, 27);
 
   // 1. Pre-calculate line wraps and heights to compute container height
   const descWidth = pageWidth - 66; // 144mm width
   const vibLines = mobileData.isValid ? doc.splitTextToSize(mobileData.vibrationMeaning, descWidth) : [];
   const compLines = mobileData.isValid ? doc.splitTextToSize(mobileData.compatibilityDescription, descWidth) : [];
   const zeroLines = mobileData.isValid ? doc.splitTextToSize(mobileData.zeroAnalysis, descWidth) : [];
-  const lastFourText = mobileData.isValid ? `[${mobileData.lastFourDigits}] sum to ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}` : "";
+  const lastFourText = mobileData.isValid ? (isHi ? `[${mobileData.lastFourDigits}] योग ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}` : `[${mobileData.lastFourDigits}] sum to ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}`) : "";
   const lastFourLines = mobileData.isValid ? doc.splitTextToSize(lastFourText, descWidth) : [];
 
   let cardH = 30; // default height if invalid
@@ -1024,7 +1200,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text(`Mobile Number: ${phone} (Sum: ${mobileData.totalSum} | Root: ${mobileData.singleDigit})`, 20, 42);
+  doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone} (${t("Sum", "योग")}: ${mobileData.totalSum} | ${t("Root", "मूलांक")}: ${mobileData.singleDigit})`, 20, 42);
 
   // Draw a horizontal divider line below title
   doc.setDrawColor(232, 213, 191);
@@ -1038,7 +1214,7 @@ export const generatePDF = async (clientData) => {
     // 1. Vibration
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...goldPrimary);
-    doc.text("VIBRATION:", 20, contentY);
+    doc.text(t("VIBRATION:", "कंपन:"), 20, contentY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...textDark);
     doc.text(vibLines, 48, contentY);
@@ -1047,7 +1223,7 @@ export const generatePDF = async (clientData) => {
     // 2. Compatibility
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...goldPrimary);
-    doc.text("COMPATIBILITY:", 20, contentY);
+    doc.text(t("COMPATIBILITY:", "संगतता:"), 20, contentY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...textDark);
     doc.text(compLines, 48, contentY);
@@ -1056,7 +1232,7 @@ export const generatePDF = async (clientData) => {
     // 3. Vastu Flow
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...goldPrimary);
-    doc.text("VASTU FLOW:", 20, contentY);
+    doc.text(t("VASTU FLOW:", "वास्तु प्रवाह:"), 20, contentY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...textDark);
     doc.text(zeroLines, 48, contentY);
@@ -1065,14 +1241,14 @@ export const generatePDF = async (clientData) => {
     // 4. Last 4 Digits
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...goldPrimary);
-    doc.text("LAST 4 DIGITS:", 20, contentY);
+    doc.text(t("LAST 4 DIGITS:", "अंतिम 4 अंक:"), 20, contentY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...textDark);
     doc.text(lastFourLines, 48, contentY);
   } else {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...textMuted);
-    doc.text("No mobile number has been provided for this client profile.", 20, 52);
+    doc.text(t("No mobile number has been provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, 52);
   }
 
   // Section 11: 5-Year Future Predictions (Dynamic Personal Year per calendar year)
@@ -1083,7 +1259,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("5-YEAR PERSONAL YEAR FORECAST", 14, sec11StartY + 7);
+  doc.text(t("5-YEAR PERSONAL YEAR FORECAST", "5-वर्षीय व्यक्तिगत वर्ष पूर्वानुमान"), 14, sec11StartY + 7);
 
   let yrY = sec11StartY + 16;
   fiveYearPredictions.forEach(pred => {
@@ -1131,13 +1307,13 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", 14, 27);
+  doc.text(t("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", "चाल्डियन अंक संगतता विश्लेषण"), 14, 27);
 
   const ca = compatibilityAnalysis;
   const compatBg = ca.overallStatus === "friend"  ? [234, 248, 240] :
                    ca.overallStatus === "enemy"   ? [253, 234, 234] : [254, 249, 231];
-  const compatLabel = ca.overallStatus === "friend"  ? "HIGHLY COMPATIBLE ✓" :
-                      ca.overallStatus === "enemy"   ? "CHALLENGING — REMEDY RECOMMENDED" : "NEUTRAL";
+  const compatLabel = ca.overallStatus === "friend"  ? t("HIGHLY COMPATIBLE ✓", "उच्च संगत ✓") :
+                      ca.overallStatus === "enemy"   ? t("CHALLENGING — REMEDY RECOMMENDED", "चुनौतीपूर्ण — उपाय अनुशंसित") : t("NEUTRAL", "तटस्थ");
   const compatLabelColor = ca.overallStatus === "friend"  ? [0, 128, 0] :
                            ca.overallStatus === "enemy"   ? [200, 50, 50] : [...goldPrimary];
 
@@ -1155,16 +1331,16 @@ export const generatePDF = async (clientData) => {
   doc.text(String(mulank), 42.5, 50, { align: "center" });
   doc.setTextColor(...textDark);
   doc.setFontSize(8.5);
-  doc.text(`Mulank`, 42.5, 60, { align: "center" });
+  doc.text(t("Mulank", "मूलांक"), 42.5, 60, { align: "center" });
   doc.setFontSize(7.5);
   doc.setTextColor(...textMuted);
-  doc.text(ca.mulankPlanet, 42.5, 65, { align: "center" });
+  doc.text(isHi ? getPlanetTranslation(ca.mulankPlanet) : ca.mulankPlanet, 42.5, 65, { align: "center" });
 
   // "vs" connector
   doc.setTextColor(...goldPrimary);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("vs", pageWidth / 2, 56, { align: "center" });
+  doc.text(t("vs", "बनाम"), pageWidth / 2, 56, { align: "center" });
 
   // Bhagyank box
   doc.setFillColor(254, 249, 231);
@@ -1180,10 +1356,10 @@ export const generatePDF = async (clientData) => {
   doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
   doc.setTextColor(...textDark);
   doc.setFontSize(8.5);
-  doc.text(`Bhagyank`, pageWidth - 42.5, 60, { align: "center" });
+  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 42.5, 60, { align: "center" });
   doc.setFontSize(7.5);
   doc.setTextColor(...textMuted);
-  doc.text(ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
+  doc.text(isHi ? getPlanetTranslation(ca.bhagyankPlanet) : ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
 
   // Compatibility status badge
   doc.setFillColor(...compatBg);
@@ -1224,15 +1400,16 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("HIDDEN INFLUENCE — VERTICAL PLANES", 14, remPlaneY + 7);
+  doc.text(t("HIDDEN INFLUENCE — VERTICAL PLANES", "गुप्त प्रभाव — लंबवत तल"), 14, remPlaneY + 7);
   remPlaneY += 14;
 
   hiddenInfluences.slice(4).forEach(plane => {
-    const statusLabel = plane.isActive ? "FULLY ACTIVE" : plane.isInactive ? "ABSENT" : "PARTIAL";
+    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
     const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    const interpLines = doc.splitTextToSize(plane.interpretation, pageWidth - 42);
+    const planeInterp = getPlaneInterpretation(plane);
+    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
     const cardH = 8 + interpLines.length * 5;
 
     doc.setFillColor(...bgColor);
@@ -1244,7 +1421,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text(`${plane.name} — ${statusLabel}`, 20, remPlaneY + 5.5);
+    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, remPlaneY + 5.5);
 
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "normal");
@@ -1260,12 +1437,10 @@ export const generatePDF = async (clientData) => {
   doc.addPage();
   drawPageShell(doc);
 
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text(`PERSONAL YEAR ${personalYearNum} — DETAILED ANALYSIS`, 14, 27);
+  doc.text(`${t("PERSONAL YEAR", "व्यक्तिगत वर्ष")} ${personalYearNum} — ${t("DETAILED ANALYSIS", "विस्तृत विश्लेषण")}`, 14, 27);
 
   // Year badge
   doc.setFillColor(234, 248, 240);
@@ -1290,10 +1465,10 @@ export const generatePDF = async (clientData) => {
 
   // 4 life area cards
   const lifeAreas = [
-    { label: "HEALTH",       text: personalYearInfo.health,       bg: [253, 234, 234] },
-    { label: "FINANCE",      text: personalYearInfo.finance,      bg: [234, 248, 240] },
-    { label: "CAREER",       text: personalYearInfo.career,       bg: [234, 238, 252] },
-    { label: "RELATIONSHIP", text: personalYearInfo.relationship, bg: [254, 249, 231] }
+    { label: t("HEALTH", "स्वास्थ्य"),       text: personalYearInfo.health,       bg: [253, 234, 234] },
+    { label: t("FINANCE", "वित्त"),      text: personalYearInfo.finance,      bg: [234, 248, 240] },
+    { label: t("CAREER", "करियर"),       text: personalYearInfo.career,       bg: [234, 238, 252] },
+    { label: t("RELATIONSHIP", "संबंध"), text: personalYearInfo.relationship, bg: [254, 249, 231] }
   ];
 
   let lifeY = 62;
@@ -1333,16 +1508,69 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("LUCKY ELEMENTS", 14, 27);
+  doc.text(t("LUCKY ELEMENTS", "भाग्यशाली कारक"), 14, 27);
+
+  // Helper translation maps
+  const getLuckyColorTranslation = (color) => {
+    const map = {
+      "Red": "लाल",
+      "Yellow": "पीला",
+      "Green": "हरा",
+      "Blue": "नीला",
+      "White": "सफेद",
+      "Black": "काला",
+      "Pink": "गुलाबी",
+      "Orange": "नारंगी",
+      "Gold": "सुनहरा",
+      "Silver": "चांदी",
+      "Grey": "स्लेटी",
+      "Brown": "भूरा",
+      "Sky Blue": "आसमानी नीला",
+      "Light Yellow": "हल्का पीला",
+      "Dark Blue": "गहरा नीला",
+      "Royal Blue": "शाही नीला",
+      "Light Green": "हल्का हरा"
+    };
+    return map[color] || color;
+  };
+
+  const getLuckyDirectionTranslation = (dir) => {
+    const map = {
+      "North": "उत्तर",
+      "South": "दक्षिण",
+      "East": "पूर्व",
+      "West": "पश्चिम",
+      "North-East": "उत्तर-पूर्व (ईशान)",
+      "North-West": "उत्तर-पश्चिम (वायव्य)",
+      "South-East": "दक्षिण-पूर्व (आग्नेय)",
+      "South-West": "दक्षिण-पश्चिम (नैऋत्य)",
+      "Northeast": "उत्तर-पूर्व (ईशान)",
+      "Northwest": "उत्तर-पश्चिम (वायव्य)",
+      "Southeast": "दक्षिण-पूर्व (आग्नेय)",
+      "Southwest": "दक्षिण-पश्चिम (नैऋत्य)"
+    };
+    return map[dir] || dir;
+  };
+
+  const getLuckyElementTranslation = (elem) => {
+    const map = {
+      "Water": "जल",
+      "Fire": "अग्नि",
+      "Earth": "पृथ्वी",
+      "Metal": "धातु",
+      "Wood": "लकड़ी (काष्ठ)"
+    };
+    return map[elem] || elem;
+  };
 
   const luckyElements = [
-    { label: "Lucky Number",       value: `${luckyData.luckyNumber} (Life Path)`,   color: [181, 130, 10] },
-    { label: "Lucky Dates",        value: luckyData.luckyDates,                      color: [0, 150, 100] },
-    { label: "Challenging Dates",  value: luckyData.unluckyDates,                    color: [229, 62, 62] },
-    { label: "Lucky Color",        value: luckyData.luckyColor,                      color: [181, 130, 10] },
-    { label: "Challenging Color",  value: luckyData.unluckyColor,                    color: [61, 44, 30] },
-    { label: "Lucky Direction",    value: luckyData.luckyDirection,                  color: [0, 150, 100] },
-    { label: "Core Element",       value: `${luckyData.element} (${luckyData.planetEnergy})`, color: [105, 80, 180] },
+    { label: t("Lucky Number", "भाग्यशाली अंक"),       value: `${luckyData.luckyNumber} (${t("Life Path", "जीवन पथ")})`,   color: [181, 130, 10] },
+    { label: t("Lucky Dates", "भाग्यशाली तिथियां"),        value: luckyData.luckyDates,                      color: [0, 150, 100] },
+    { label: t("Challenging Dates", "चुनौतीपूर्ण तिथियां"),  value: luckyData.unluckyDates,                    color: [229, 62, 62] },
+    { label: t("Lucky Color", "भाग्यशाली रंग"),        value: isHi ? getLuckyColorTranslation(luckyData.luckyColor) : luckyData.luckyColor,                      color: [181, 130, 10] },
+    { label: t("Challenging Color", "चुनौतीपूर्ण रंग"),  value: isHi ? getLuckyColorTranslation(luckyData.unluckyColor) : luckyData.unluckyColor,                    color: [61, 44, 30] },
+    { label: t("Lucky Direction", "भाग्यशाली दिशा"),    value: isHi ? getLuckyDirectionTranslation(luckyData.luckyDirection) : luckyData.luckyDirection,                  color: [0, 150, 100] },
+    { label: t("Core Element", "मूल तत्व"),       value: `${isHi ? getLuckyElementTranslation(luckyData.element) : luckyData.element} (${isHi ? getPlanetTranslation(luckyData.planetEnergy) : luckyData.planetEnergy})`, color: [105, 80, 180] },
   ];
 
   const colWidth = (pageWidth - 40) / 3;
@@ -1387,7 +1615,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("SIGNATURE STYLE FOR SUCCESS", 14, luckyGridEndY + 7);
+  doc.text(t("SIGNATURE STYLE FOR SUCCESS", "सफलता के लिए हस्ताक्षर शैली"), 14, luckyGridEndY + 7);
 
   const sigBoxY = luckyGridEndY + 14;  // 4mm below header bottom (header is 10mm)
   doc.setFillColor(255, 254, 249);
@@ -1399,14 +1627,14 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Prosperity Signature Rules:", 20, sigBoxY + 8);
+  doc.text(t("Prosperity Signature Rules:", "समृद्धि हस्ताक्षर नियम:"), 20, sigBoxY + 8);
 
   const sigRules = [
-    "• Sign at a continuous rising angle of approximately 45 degrees.",
-    "• Never put a line cutting through any letters of your name.",
-    "• Always end your signature with a forward and rising stroke.",
-    "• Use two parallel underlines below the signature with a rising ending.",
-    "• Ensure the first alphabet of your name is larger and clearly readable."
+    t("• Sign at a continuous rising angle of approximately 45 degrees.", "• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।"),
+    t("• Never put a line cutting through any letters of your name.", "• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।"),
+    t("• Always end your signature with a forward and rising stroke.", "• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।"),
+    t("• Use two parallel underlines below the signature with a rising ending.", "• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।"),
+    t("• Ensure the first alphabet of your name is larger and clearly readable.", "• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।")
   ];
 
   doc.setFont("helvetica", "normal");
@@ -1429,7 +1657,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("REMEDIES", 14, 27);
+  doc.text(t("REMEDIES", "उपाय"), 14, 27);
 
   doc.setFillColor(255, 254, 249);
   doc.roundedRect(15, 36, pageWidth - 30, 52, 3, 3, "F");
@@ -1443,13 +1671,13 @@ export const generatePDF = async (clientData) => {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  const yantraText = "The Lo Shu Grid is considered a divine representation of the universe. Drawing the grid numbers on high-quality copper or keeping a personalized copper Lo Shu Yantra in your home's north or east sector balances missing planetary energies. Chant planetary mantras daily to amplify success grids.";
+  const yantraText = t("The Lo Shu Grid is considered a divine representation of the universe. Drawing the grid numbers on high-quality copper or keeping a personalized copper Lo Shu Yantra in your home's north or east sector balances missing planetary energies. Chant planetary mantras daily to amplify success grids.", "लो शु ग्रिड को ब्रह्मांड का एक दिव्य प्रतिनिधित्व माना जाता है। ग्रिड के अंकों को उच्च गुणवत्ता वाले तांबे पर बनाना या अपने घर के उत्तर या पूर्व क्षेत्र में एक व्यक्तिगत तांबे का लो शु यंत्र रखना लापता ग्रहीय ऊर्जा को संतुलित करता है। सफलता के ग्रिड को बढ़ाने के लिए प्रतिदिन ग्रहीय मंत्रों का जाप करें।");
   const yantraLines = doc.splitTextToSize(yantraText, pageWidth - 42);
   doc.text(yantraLines, 20, 51);
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...goldPrimary);
-  doc.text("Yantra Direction placement: North / East living sector", 20, 80);
+  doc.text(t("Yantra Direction placement: North / East living sector", "यंत्र दिशा स्थान: उत्तर / पूर्व लिविंग क्षेत्र"), 20, 80);
 
   // // Section 16: Bracelet & Energy Remedies
   // doc.setFillColor(...goldPrimary);
@@ -1491,7 +1719,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("FOREIGN SETTLEMENT PREDICTION", 14, 27);
+  doc.text(t("FOREIGN SETTLEMENT PREDICTION", "विदेश यात्रा और निवास पूर्वानुमान"), 14, 27);
 
   // Probability header card
   doc.setFillColor(232, 244, 253);
@@ -1503,12 +1731,12 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(13, 60, 94);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text(`Probability Score: ${foreignSettlement.probabilityScore}%`, 20, 42);
+  doc.text(`${t("Probability Score", "संभावना स्कोर")}: ${foreignSettlement.probabilityScore}%`, 20, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
-  doc.text(`Present: ${foreignSettlement.presentNums.join(', ')}`, 20, 50);
-  doc.text(`Missing: ${foreignSettlement.missingNums.join(', ') || 'None'}`, pageWidth / 2, 50);
+  doc.text(`${t("Present", "मौजूद अंक")}: ${foreignSettlement.presentNums.join(', ')}`, 20, 50);
+  doc.text(`${t("Missing", "लापता अंक")}: ${foreignSettlement.missingNums.length > 0 ? foreignSettlement.missingNums.join(', ') : t("None", "कोई नहीं")}`, pageWidth / 2, 50);
 
   let fsY = 62;
 
@@ -1521,7 +1749,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("FOREIGN SETTLEMENT PREDICTIONS", 20, fsY + 6);
+  doc.text(t("FOREIGN SETTLEMENT PREDICTIONS", "विदेश यात्रा के पूर्वानुमान"), 20, fsY + 6);
 
   const coreColor = foreignSettlement.coreGood ? [19, 115, 51] : [197, 34, 31];
   doc.setFillColor(...coreColor);
@@ -1529,7 +1757,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  const coreLines = doc.splitTextToSize(`${foreignSettlement.coreGood ? 'Match' : 'Alert'}: ${foreignSettlement.coreResult}`, pageWidth - 50);
+  const coreLines = doc.splitTextToSize(`${foreignSettlement.coreGood ? t("Match", "अनुकूल") : t("Alert", "चेतावनी")}: ${foreignSettlement.coreResult}`, pageWidth - 50);
   doc.text(coreLines, 26, fsY + 18);
   fsY += 32;
 
@@ -1544,7 +1772,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(138, 69, 0);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text("PLANETARY FRICTION", 20, fsY + 6);
+    doc.text(t("PLANETARY FRICTION", "ग्रहीय घर्षण"), 20, fsY + 6);
     let fline = fsY + 13;
     foreignSettlement.frictionLines.forEach(line => {
       doc.setFillColor(197, 34, 31);
@@ -1570,7 +1798,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(26, 58, 110);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("PLANETARY ALIGNMENT", 20, fsY + 6);
+  doc.text(t("PLANETARY ALIGNMENT", "ग्रहीय संरेखण"), 20, fsY + 6);
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
@@ -1587,7 +1815,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("LOVE vs ARRANGED MARRIAGE PREDICTION", 14, 27);
+  doc.text(t("LOVE vs ARRANGED MARRIAGE PREDICTION", "प्रेम बनाम तय विवाह पूर्वानुमान"), 14, 27);
 
   let mrY = 36;
 
@@ -1606,7 +1834,7 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(marriageType.dominant === 'Love' ? 14 : 12);
   doc.text(`${marriageType.lovePct}%`, 15 + boxW / 2, mrY + 12, { align: "center" });
   doc.setFontSize(8.5);
-  doc.text("Love Marriage", 15 + boxW / 2, mrY + 22, { align: "center" });
+  doc.text(t("Love Marriage", "प्रेम विवाह"), 15 + boxW / 2, mrY + 22, { align: "center" });
 
   // Arranged box
   const arrBg  = marriageType.dominant === 'Arranged' ? [187, 222, 251] : [232, 244, 253];
@@ -1621,7 +1849,7 @@ export const generatePDF = async (clientData) => {
   doc.setFontSize(marriageType.dominant === 'Arranged' ? 14 : 12);
   doc.text(`${marriageType.arrangePct}%`, 21 + boxW + boxW / 2, mrY + 12, { align: "center" });
   doc.setFontSize(8.5);
-  doc.text("Arranged Marriage", 21 + boxW + boxW / 2, mrY + 22, { align: "center" });
+  doc.text(t("Arranged Marriage", "तय विवाह"), 21 + boxW + boxW / 2, mrY + 22, { align: "center" });
   mrY += 34;
 
   // Highlight banner
@@ -1646,7 +1874,7 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...goldPrimary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("COMMENTS & JUSTIFICATION", 20, mrY + 6);
+  doc.text(t("COMMENTS & JUSTIFICATION", "टिप्पणियाँ और औचित्य"), 20, mrY + 6);
   let cmY = mrY + 13;
   marriageType.comments.forEach(c => {
     const isMissing = c.includes('MISSING');
@@ -1672,7 +1900,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("MATCH MAKING COMPATIBILITY", 14, 27);
+    doc.text(t("MATCH MAKING COMPATIBILITY", "कुंडली मिलान संगतता"), 14, 27);
 
     // Rating header
     doc.setFillColor(255, 228, 240);
@@ -1689,7 +1917,7 @@ export const generatePDF = async (clientData) => {
     doc.text(`${mmResult.ratingLabel}  |  Total: ${mmResult.totalPercentage}%`, 20, 51);
     doc.setFontSize(10);
     // Draw stars as text using standard chars
-    const starText = `${'*'.repeat(mmResult.stars)}${'o'.repeat(5 - mmResult.stars)}  (${mmResult.stars}/5 Stars)`;
+    const starText = `${'*'.repeat(mmResult.stars)}${'o'.repeat(5 - mmResult.stars)}  (${mmResult.stars}/5 ${t("Stars", "सितारे")})`;
     doc.text(starText, pageWidth - 20, 51, { align: "right" });
 
     let mmY = 64;
@@ -1704,7 +1932,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text("HIGHLIGHTS", 20, mmY + 6);
+    doc.text(t("HIGHLIGHTS", "मुख्य विशेषताएं"), 20, mmY + 6);
     let hlY = mmY + 13;
     mmResult.highlights.forEach(h => {
       doc.setFillColor(...goldPrimary);
@@ -1728,7 +1956,7 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(46, 125, 50);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
-      doc.text("SHARABLE NUMBER PAIRS", 20, mmY + 6);
+      doc.text(t("SHARABLE NUMBER PAIRS", "साझा करने योग्य संख्या जोड़े"), 20, mmY + 6);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.text(mmResult.sharedPairs.map(p => p.pair).join('   '), 20, mmY + 14);
@@ -1746,7 +1974,7 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
-      doc.text("COMPATIBILITY INSIGHTS", 20, mmY + 6);
+      doc.text(t("COMPATIBILITY INSIGHTS", "संगतता अंतर्दृष्टि"), 20, mmY + 6);
       let blY = mmY + 13;
       mmResult.boostLogs.forEach(log => {
         doc.setFillColor(19, 115, 51);
@@ -1772,9 +2000,133 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("MOBILE NUMBER ANALYSIS", 14, 27);
+  doc.text(t("MOBILE NUMBER ANALYSIS", "मोबाइल नंबर विश्लेषण"), 14, 27);
 
   let mbY = 36;
+
+  // Helpers for final pages translations
+  const translateMobileBullet = (bullet) => {
+    if (!isHi) return bullet;
+
+    if (bullet.includes("mobile number compound total is")) {
+      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
+      if (match) {
+        const [_, compound, single, planet] = match;
+        const cleanPlanet = planet.split(" (")[0];
+        const tPlanet = getPlanetTranslation(cleanPlanet);
+        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
+      }
+    }
+
+    if (bullet.includes("with your Driver")) {
+      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
+      if (match) {
+        const [_, single, relation, driver] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
+        const descText = relation === 'friendly' 
+          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
+          : (relation === 'non-friendly'
+             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
+             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
+        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
+      }
+    }
+
+    if (bullet.includes("with your Conductor")) {
+      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
+      if (match) {
+        const [_, relation, conductor] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
+        const descText = relation === 'friendly'
+          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
+          : (relation === 'conflicts'
+             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
+             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
+        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
+      }
+    }
+
+    if (bullet.includes("already present in your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
+      if (match) {
+        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
+      }
+    }
+    if (bullet.includes("is missing from your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
+      if (match) {
+        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
+      }
+    }
+
+    if (bullet.includes("Using this vibration regularly")) {
+      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
+    }
+    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
+      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
+    }
+    if (bullet.includes("It serves as a reliable, balanced connection")) {
+      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
+    }
+
+    if (bullet.includes("this mobile number is highly favorable")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
+    }
+    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
+      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
+    }
+    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
+    }
+
+    return bullet;
+  };
+
+  const translateNameItemText = (text) => {
+    if (!isHi) return text;
+    if (text.includes("ideal range")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
+    }
+    if (text.includes("should be 1, 3, 5 or 6")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
+    }
+
+    const isFirst = text.includes("First Name");
+    const isLast = text.includes("Last Name");
+    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
+
+    if (text.includes("Combination Count is")) {
+      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
+      if (match) {
+        const [_, compound, label, rating] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
+      }
+    }
+    if (text.includes("Combination Count is") || text.includes("rating is")) {
+      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
+      if (match) {
+        const [_, compound, rating, label] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यen');
+        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
+      }
+    }
+
+    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
+    if (compatMatch) {
+      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
+      const getLabel = (l) => {
+        if (l === 'Good Friend') return 'मित्र';
+        if (l === 'Non-Friend') return 'शत्रु';
+        return 'तटस्थ';
+      };
+      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
+    }
+
+    return text;
+  };
 
   if (mobileCheck.isValid) {
     // Header card
@@ -1787,10 +2139,10 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...textDark);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
-    doc.text(`Mobile Number: ${phone}`, 20, mbY + 7);
+    doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone}`, 20, mbY + 7);
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.text(`Mobile Total: ${mobileCheck.totalSum} (${mobileCheck.singleDigit})   |   Mulank: ${mobileCheck.mulank}   |   Bhagyank: ${mobileCheck.bhagyank}`, 20, mbY + 14);
+    doc.text(`${t("Mobile Total", "मोबाइल योग")}: ${mobileCheck.totalSum} (${mobileCheck.singleDigit})   |   ${t("Mulank", "मूलांक")}: ${mobileCheck.mulank}   |   ${t("Bhagyank", "भाग्यांक")}: ${mobileCheck.bhagyank}`, 20, mbY + 14);
 
     mbY += 28;
 
@@ -1800,7 +2152,8 @@ export const generatePDF = async (clientData) => {
     doc.setFontSize(8.2);
     let cardH = 12; // top padding + title
     mobileCheck.bullets.forEach(bullet => {
-      const lines = doc.splitTextToSize(bullet, pageWidth - 54);
+      const translated = translateMobileBullet(bullet);
+      const lines = doc.splitTextToSize(translated, pageWidth - 54);
       cardH += lines.length * 4.2 + 3.5;
     });
     cardH += 4; // bottom padding
@@ -1814,7 +2167,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...goldPrimary);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
-    doc.text("DETAILED COMPATIBILITY INSIGHTS", 20, mbY + 6);
+    doc.text(t("DETAILED COMPATIBILITY INSIGHTS", "विस्तृत संगतता अंतर्दृष्टि"), 20, mbY + 6);
 
     let bulletY = mbY + 12;
     mobileCheck.bullets.forEach(bullet => {
@@ -1825,7 +2178,8 @@ export const generatePDF = async (clientData) => {
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.2);
-      const lines = doc.splitTextToSize(bullet, pageWidth - 54);
+      const translated = translateMobileBullet(bullet);
+      const lines = doc.splitTextToSize(translated, pageWidth - 54);
       doc.text(lines, 26, bulletY + 2);
       bulletY += lines.length * 4.2 + 3.5;
     });
@@ -1846,7 +2200,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...statusFg);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
-    doc.text(`STATUS: ${mobileCheck.overallStatus}`, pageWidth / 2, mbY + 9, { align: "center" });
+    doc.text(`${t("STATUS", "स्थिति")}: ${isHi ? getCompatStatusTranslation(mobileCheck.overallStatus) : mobileCheck.overallStatus}`, pageWidth / 2, mbY + 9, { align: "center" });
 
   } else {
     doc.setFillColor(255, 254, 249);
@@ -1854,7 +2208,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...textMuted);
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9.5);
-    doc.text("No mobile number provided for this client profile.", 20, mbY + 10);
+    doc.text(t("No mobile number provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, mbY + 10);
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -1868,20 +2222,20 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("NAME NUMEROLOGY ANALYSIS", 14, 27);
+  doc.text(t("NAME NUMEROLOGY ANALYSIS", "नाम अंकज्योतिष विश्लेषण"), 14, 27);
 
   let nmY = 36;
 
   const drawNameCard = (title, cardData, isFullName = false) => {
     if (!cardData) return;
     const lineItems = [
-      { good: cardData.not48Check,     text: cleanStars(`Count should not be 4 or 8. ${cardData.not48Check ? '✓' : `Currently ${cardData.single}.`}`) },
-      { good: cardData.driverStatus !== 'enemy' && cardData.conductorStatus !== 'enemy', text: cleanStars(cardData.compatLine) },
+      { good: cardData.not48Check,     text: cleanStars(isHi ? `नाम का योग 4 या 8 नहीं होना चाहिए। ${cardData.not48Check ? '✓' : `वर्तमान में ${cardData.single} है।`}` : `Count should not be 4 or 8. ${cardData.not48Check ? '✓' : `Currently ${cardData.single}.`}`) },
+      { good: cardData.driverStatus !== 'enemy' && cardData.conductorStatus !== 'enemy', text: cleanStars(translateNameItemText(cardData.compatLine)) },
     ];
     if (isFullName) {
-      lineItems.push({ good: cardData.targetOk, text: cleanStars(cardData.targetLine) });
+      lineItems.push({ good: cardData.targetOk, text: cleanStars(translateNameItemText(cardData.targetLine)) });
     }
-    lineItems.push({ good: cardData.compoundRating?.label !== 'Bad', text: cleanStars(cardData.compoundLine) });
+    lineItems.push({ good: cardData.compoundRating?.label !== 'Bad', text: cleanStars(translateNameItemText(cardData.compoundLine)) });
 
     // Pre-calculate height
     doc.setFont("helvetica", "normal");
@@ -1913,7 +2267,7 @@ export const generatePDF = async (clientData) => {
     doc.text(title, 20, nmY + 6);
     doc.setTextColor(...textMuted);
     doc.setFontSize(8);
-    doc.text(`Compound: ${cardData.compound}   Single: ${cardData.single}`, pageWidth - 20, nmY + 6, { align: "right" });
+    doc.text(`${t("Compound", "संयुक्त")}: ${cardData.compound}   ${t("Single", "एकल")}: ${cardData.single}`, pageWidth - 20, nmY + 6, { align: "right" });
 
     let lineY = nmY + 12;
     lineItems.forEach(item => {
@@ -1933,11 +2287,11 @@ export const generatePDF = async (clientData) => {
 
   if (nameNumerologyCheck.isValid) {
     if (!nameNumerologyCheck.lastNameCard) {
-      drawNameCard(`NAME ANALYSIS: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+      drawNameCard(`${t("NAME ANALYSIS", "नाम विश्लेषण")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
     } else {
-      drawNameCard(`FIRST NAME: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
-      drawNameCard(`LAST NAME: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
-      drawNameCard(`FULL NAME: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+      drawNameCard(`${t("FIRST NAME", "प्रथम नाम")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
+      drawNameCard(`${t("LAST NAME", "अंतिम नाम")}: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
+      drawNameCard(`${t("FULL NAME", "पूर्ण नाम")}: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
     }
 
     // Final Status Banner
@@ -1958,14 +2312,15 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(...statusFg);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
-    doc.text(`STATUS: ${nameNumerologyCheck.finalStatus}`, pageWidth / 2, nmY + 9, { align: "center" });
+    const friendlyStatusTxt = nameNumerologyCheck.finalStatusGood ? t("Name Balanced ✓", "नाम संतुलित ✓") : t("Name Not Balanced ✗", "नाम संतुलित नहीं ✗");
+    doc.text(`${t("STATUS", "स्थिति")}: ${friendlyStatusTxt}`, pageWidth / 2, nmY + 9, { align: "center" });
   } else {
     doc.setFillColor(255, 254, 249);
     doc.roundedRect(15, nmY, pageWidth - 30, 16, 2, 2, "F");
     doc.setTextColor(...textMuted);
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9.5);
-    doc.text("No name data available for analysis.", 20, nmY + 10);
+    doc.text(t("No name data available for analysis.", "विश्लेषण के लिए कोई नाम डेटा उपलब्ध नहीं है।"), 20, nmY + 10);
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -1983,7 +2338,7 @@ export const generatePDF = async (clientData) => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("NOTES / SUGGESTIONS", 14, 27);
+    doc.text(t("NOTES / SUGGESTIONS", "टिप्पणियाँ / सुझाव"), 14, 27);
 
     doc.setFillColor(255, 254, 249);
     doc.setDrawColor(...goldPrimary);
@@ -2014,19 +2369,22 @@ export const generatePDF = async (clientData) => {
   doc.setTextColor(...greenText);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  doc.text("Thank You,", pageWidth / 2, 115, { align: "center" });
+  doc.text(t("Thank You,", "धन्यवाद,"), pageWidth / 2, 115, { align: "center" });
 
   // Disclaimer Title
   doc.setTextColor(...textDark);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.text("DISCLAIMER", pageWidth / 2, 155, { align: "center" });
+  doc.text(t("DISCLAIMER", "अस्वीकरण"), pageWidth / 2, 155, { align: "center" });
 
   // Disclaimer Body text
   doc.setFont("helvetica", "italic");
   doc.setFontSize(9);
   doc.setTextColor(...textDark);
-  const disclaimerText = "This report is for informational and entertainment purposes only. The findings provided are based on traditional numerological methods and should not be considered professional advice in any field, such as financial, medical, legal, or psychological. Results can be different, and any choices you make from this report are your own responsibility. Use this as a tool for self-reflection, and consult qualified professionals for significant life decisions.";
+  const disclaimerText = t(
+    "This report is for informational and entertainment purposes only. The findings provided are based on traditional numerological methods and should not be considered professional advice in any field, such as financial, medical, legal, or psychological. Results can be different, and any choices you make from this report are your own responsibility. Use this as a tool for self-reflection, and consult qualified professionals for significant life decisions.",
+    "यह रिपोर्ट केवल सूचनात्मक और मनोरंजक उद्देश्यों के लिए है। प्रदान किए गए निष्कर्ष पारंपरिक अंकज्योतिषीय तरीकों पर आधारित हैं और इन्हें किसी भी क्षेत्र, जैसे वित्तीय, चिकित्सा, कानूनी या मनोवैज्ञानिक में पेशेवर सलाह नहीं माना जाना चाहिए। परिणाम भिन्न हो सकते हैं, और इस रिपोर्ट के आधार पर आपके द्वारा लिए गए निर्णय पूरी तरह से आपकी जिम्मेदारी हैं। इसका उपयोग आत्म-चिंतन के लिए एक साधन के रूप में करें, और महत्वपूर्ण जीवन निर्णयों के लिए योग्य पेशेवरों से परामर्श लें।"
+  );
   const discLines = doc.splitTextToSize(disclaimerText, pageWidth - 36);
   doc.text(discLines, pageWidth / 2, 163, { align: "center" });
 

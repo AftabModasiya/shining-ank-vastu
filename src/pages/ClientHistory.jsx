@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, Trash2, Search, Calendar, User } from 'lucide-react';
 import { getAllClients, deleteClient } from '../services/clientService';
 import { calcMulank, calcBhagyank, getNameCompatibilityAnalysis } from '../utils/numerology';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ClientHistory.css';
 
 function ClientHistory() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,14 +98,23 @@ function ClientHistory() {
           <div className="history-header-content">
             <button className="btn btn-outline" onClick={() => navigate('/')}>
               <ArrowLeft size={20} />
-              Back to Home
+              {t.backToHome}
             </button>
             <div className="header-title">
               <User size={32} />
               <div>
-                <h1>Client History</h1>
-                <p>{clients.length} total clients</p>
+                <h1>{t.historyTitle}</h1>
+                <p>{clients.length} {t.historySubtitle}</p>
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <LanguageSwitcher />
+              <button
+                className="btn btn-outline btn-logout"
+                onClick={() => { localStorage.removeItem('isAuthenticated'); window.location.reload(); }}
+              >
+                {t.logout}
+              </button>
             </div>
           </div>
         </div>
@@ -117,7 +129,7 @@ function ClientHistory() {
               <Search size={20} />
               <input
                 type="text"
-                placeholder="Search by name, email, or phone..."
+                placeholder={t.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
@@ -129,20 +141,18 @@ function ClientHistory() {
           {loading ? (
             <div className="loading-state">
               <div className="spinner"></div>
-              <p>Loading clients...</p>
+              <p>{t.loadingClients}</p>
             </div>
           ) : filteredClients.length === 0 ? (
             <div className="empty-state">
               <User size={64} className="empty-icon" />
-              <h2>No Clients Found</h2>
+              <h2>{t.noClientsFound}</h2>
               <p>
-                {searchTerm
-                  ? 'No clients match your search criteria'
-                  : 'Start by adding your first client'}
+                {searchTerm ? t.noClientsSearch : t.noClientsEmpty}
               </p>
               {!searchTerm && (
                 <button className="btn btn-primary" onClick={() => navigate('/')}>
-                  Add First Client
+                  {t.addFirstClient}
                 </button>
               )}
             </div>
@@ -166,23 +176,25 @@ function ClientHistory() {
                   <div className="client-details">
                     {client.email && (
                       <div className="detail-item">
-                        <span className="detail-label">Email:</span>
+                        <span className="detail-label">{t.emailLabel}</span>
                         <span className="detail-value">{client.email}</span>
                       </div>
                     )}
                     {client.phone && (
                       <div className="detail-item">
-                        <span className="detail-label">Phone:</span>
+                        <span className="detail-label">{t.phoneLabel}</span>
                         <span className="detail-value">{client.phone}</span>
                       </div>
                     )}
                     <div className="detail-item">
-                      <span className="detail-label">Gender:</span>
-                      <span className="detail-value">{client.gender}</span>
+                      <span className="detail-label">{t.genderLabel}</span>
+                      <span className="detail-value" style={{ textTransform: 'capitalize' }}>
+                        {client.gender === 'female' ? t.female : (client.gender === 'male' ? t.male : client.gender)}
+                      </span>
                     </div>
                     {client.createdAt && (
                       <div className="detail-item">
-                        <span className="detail-label">Created:</span>
+                        <span className="detail-label">{t.createdLabel}</span>
                         <span className="detail-value">{formatDate(client.createdAt)}</span>
                       </div>
                     )}
@@ -192,18 +204,19 @@ function ClientHistory() {
                     const mVal = calcMulank(client.dob || '');
                     const bVal = calcBhagyank(client.dob || '');
                     const nVal = getNameCompatibilityAnalysis(client.name || '', mVal, bVal).nameNumber;
+                    const isHi = language === 'hi';
                     return (
                       <div className="client-numbers">
                         <div className="number-badge-small">
-                          <span className="badge-label">Mulank</span>
+                          <span className="badge-label">{t.rpt.mulank}</span>
                           <span className="badge-number">{mVal}</span>
                         </div>
                         <div className="number-badge-small">
-                          <span className="badge-label">Bhagyank</span>
+                          <span className="badge-label">{t.rpt.bhagyank}</span>
                           <span className="badge-number">{bVal}</span>
                         </div>
                         <div className="number-badge-small">
-                          <span className="badge-label">Name No.</span>
+                          <span className="badge-label">{isHi ? 'नाम अंक' : 'Name No.'}</span>
                           <span className="badge-number">{nVal}</span>
                         </div>
                       </div>
@@ -216,33 +229,33 @@ function ClientHistory() {
                       onClick={() => handleView(client)}
                     >
                       <Eye size={16} />
-                      View Report
+                      {t.viewReport}
                     </button>
                     <button
                       className="btn btn-danger btn-small"
                       onClick={() => setDeleteConfirm(client.id)}
                     >
                       <Trash2 size={16} />
-                      Delete
+                      {t.delete}
                     </button>
                   </div>
 
                   {/* Delete Confirmation */}
                   {deleteConfirm === client.id && (
                     <div className="delete-confirm">
-                      <p>Are you sure you want to delete this client?</p>
+                      <p>{t.deleteConfirmMsg}</p>
                       <div className="confirm-actions">
                         <button
                           className="btn btn-danger btn-small"
                           onClick={() => handleDelete(client.id)}
                         >
-                          Yes, Delete
+                          {t.confirmDelete}
                         </button>
                         <button
                           className="btn btn-outline btn-small"
                           onClick={() => setDeleteConfirm(null)}
                         >
-                          Cancel
+                          {t.cancel}
                         </button>
                       </div>
                     </div>
@@ -256,8 +269,8 @@ function ClientHistory() {
 
       {/* Footer */}
       <footer className="history-footer">
-        <p>Shining Ank Vastu - M : 9913961553</p>
-        <p>Vedic Numerology Report</p>
+        <p>{t.footer}</p>
+        <p>{t.footerSubtitle}</p>
       </footer>
     </div>
   );

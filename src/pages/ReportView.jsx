@@ -4,6 +4,8 @@ import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
 import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType } from '../utils/numerology';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
 
 const formatDateToDDMMYYYY = (dateStr) => {
@@ -59,6 +61,157 @@ function ReportView() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState(null);
   const [saving, setSaving] = useState(false);
+  const { t, language } = useLanguage();
+  const rpt = t.rpt;
+
+  const isHi = language === 'hi';
+
+  const getPlanetTranslation = (planetName) => {
+    const planetMap = {
+      "Sun": "सूर्य (Sun)", "Moon": "चंद्र (Moon)", "Jupiter": "गुरु (Jupiter)", 
+      "Rahu": "राहु (Rahu)", "Mercury": "बुध (Mercury)", "Venus": "शुक्र (Venus)", 
+      "Ketu": "केतु (Ketu)", "Saturn": "शनि (Saturn)", "Mars": "मंगल (Mars)"
+    };
+    return planetMap[planetName] || planetName;
+  };
+
+  const getCompatStatusTranslation = (status) => {
+    const statusMap = {
+      "Highly Compatible": "उच्च संगत",
+      "Compatible": "संगत",
+      "Neutral": "तटस्थ",
+      "Challenging": "चुनौतीपूर्ण",
+      "Non-Friendly": "गैर-अनुकूल",
+      "Friendly": "अनुकूल",
+      "Excellent": "उत्कृष्ट",
+      "Good": "अच्छा",
+      "Avoid": "बचें (अशुभ)"
+    };
+    return statusMap[status] || status;
+  };
+
+  const translateMobileBullet = (bullet) => {
+    if (!isHi) return bullet;
+
+    if (bullet.includes("mobile number compound total is")) {
+      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
+      if (match) {
+        const [_, compound, single, planet] = match;
+        const cleanPlanet = planet.split(" (")[0];
+        const tPlanet = getPlanetTranslation(cleanPlanet);
+        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
+      }
+    }
+
+    if (bullet.includes("with your Driver")) {
+      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
+      if (match) {
+        const [_, single, relation, driver] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
+        const descText = relation === 'friendly' 
+          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
+          : (relation === 'non-friendly'
+             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
+             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
+        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
+      }
+    }
+
+    if (bullet.includes("with your Conductor")) {
+      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
+      if (match) {
+        const [_, relation, conductor] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
+        const descText = relation === 'friendly'
+          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
+          : (relation === 'conflicts'
+             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
+             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
+        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
+      }
+    }
+
+    if (bullet.includes("already present in your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
+      if (match) {
+        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
+      }
+    }
+    if (bullet.includes("is missing from your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
+      if (match) {
+        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
+      }
+    }
+
+    if (bullet.includes("Using this vibration regularly")) {
+      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
+    }
+    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
+      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
+    }
+    if (bullet.includes("It serves as a reliable, balanced connection")) {
+      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
+    }
+
+    if (bullet.includes("this mobile number is highly favorable")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
+    }
+    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
+      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
+    }
+    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
+    }
+
+    return bullet;
+  };
+
+  const translateNameItemText = (text) => {
+    if (!isHi) return text;
+    if (text.includes("ideal range")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
+    }
+    if (text.includes("should be 1, 3, 5 or 6")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
+    }
+
+    const isFirst = text.includes("First Name");
+    const isLast = text.includes("Last Name");
+    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
+
+    if (text.includes("Combination Count is")) {
+      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
+      if (match) {
+        const [_, compound, label, rating] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
+      }
+    }
+    if (text.includes("Combination Count is") || text.includes("rating is")) {
+      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
+      if (match) {
+        const [_, compound, rating, label] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
+      }
+    }
+
+    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
+    if (compatMatch) {
+      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
+      const getLabel = (l) => {
+        if (l === 'Good Friend') return 'मित्र';
+        if (l === 'Non-Friend') return 'शत्रु';
+        return 'तटस्थ';
+      };
+      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
+    }
+
+    return text;
+  };
 
   useEffect(() => {
     if (clientData) {
@@ -93,7 +246,7 @@ function ReportView() {
 
   const handleDownloadPDF = async () => {
     try {
-      const pdf = await generatePDF(clientData);
+      const pdf = await generatePDF(clientData, language);
       pdf.save(`${clientData.name}_Numerology_Report.pdf`);
     } catch (err) {
       console.error("Failed to generate PDF:", err);
@@ -245,37 +398,39 @@ function ReportView() {
           <div className="report-header-content">
             <button className="btn btn-outline" onClick={() => navigate('/')}>
               <ArrowLeft size={18} />
-              Back to Home
+              {t.backHome}
             </button>
             <div className="header-actions">
               {!isEditing ? (
                 <>
+                  <LanguageSwitcher />
                   <button className="btn btn-secondary" onClick={handleEdit}>
-                    <Edit2 size={18} /> Edit Report
+                    <Edit2 size={18} /> {t.editReport}
                   </button>
                   <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                    <Download size={18} /> Download PDF
+                    <Download size={18} /> {t.downloadPDF}
                   </button>
                   <button
                     className="btn btn-outline btn-logout-small"
                     onClick={() => { localStorage.removeItem('isAuthenticated'); navigate('/login'); }}
                   >
-                    Logout
+                    {t.logout}
                   </button>
                 </>
               ) : (
                 <>
+                  <LanguageSwitcher />
                   <button className="btn btn-outline" onClick={handleCancel}>
-                    <X size={18} /> Cancel
+                    <X size={18} /> {t.cancel}
                   </button>
                   <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                    <Save size={18} /> {saving ? 'Saving…' : 'Save Changes'}
+                    <Save size={18} /> {saving ? t.saving : t.saveChanges}
                   </button>
                   <button
                     className="btn btn-outline btn-logout-small"
                     onClick={() => { localStorage.removeItem('isAuthenticated'); navigate('/login'); }}
                   >
-                    Logout
+                    {t.logout}
                   </button>
                 </>
               )}
@@ -305,18 +460,18 @@ function ReportView() {
             {isEditing ? (
               <div className="report-meta-edit" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginTop: '10px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Date of Birth</label>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>{rpt.dateOfBirth}</label>
                   <input type="date" name="dob" value={editedData.dob} onChange={handleInputChange} className="edit-input edit-date" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Phone Number</label>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>{rpt.phoneNumber}</label>
                   <input type="tel" name="phone" value={editedData.phone} onChange={handleInputChange} className="edit-input edit-phone" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem', width: '130px' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>Gender</label>
+                  <label style={{ fontSize: '0.75rem', color: '#1a3a2e', marginBottom: '2px', fontWeight: 'bold' }}>{rpt.gender}</label>
                   <select name="gender" value={editedData.gender} onChange={handleInputChange} className="edit-input edit-gender" style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #d4a017', background: '#fff', fontSize: '0.85rem' }}>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="male">{rpt.genderMale}</option>
+                    <option value="female">{rpt.genderFemale}</option>
                   </select>
                 </div>
               </div>
@@ -335,7 +490,7 @@ function ReportView() {
             <div className="core-divider-line"></div>
             <div className="core-divider-label">
               <span className="core-diamond">♦</span>
-              <span className="core-divider-text">Core Numbers</span>
+              <span className="core-divider-text">{rpt.coreNumbers}</span>
               <span className="core-diamond">♦</span>
             </div>
             <div className="core-divider-line"></div>
@@ -431,19 +586,18 @@ function ReportView() {
 
           {/* ── 5. LUCKY ELEMENTS ────────────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">Lucky Elements</h3>
+            <h3 className="section-title">{rpt.luckyElements}</h3>
             <div className="lucky-grid">
               {[
-                { label: 'Lucky Number', value: `${luckyData.luckyNumber} (Life Path)` },
-                // ... (header and report content)
+                { label: rpt.luckyNumber, value: `${luckyData.luckyNumber} (Life Path)` },
 
-                { label: 'Lucky Dates', value: luckyData.luckyDates },
-                { label: 'Challenging Dates', value: luckyData.unluckyDates },
-                { label: 'Lucky Color', value: luckyData.luckyColor },
-                { label: 'Challenging Color', value: luckyData.unluckyColor },
-                { label: 'Lucky Direction', value: luckyData.luckyDirection },
-                { label: 'Core Element', value: `${luckyData.element} (${luckyData.planetEnergy})` },
-                { label: 'Personal Year', value: `${personalYearNum} (${new Date().getFullYear()})` },
+                { label: rpt.luckyDates, value: luckyData.luckyDates },
+                { label: rpt.challengingDates, value: luckyData.unluckyDates },
+                { label: rpt.luckyColor, value: luckyData.luckyColor },
+                { label: rpt.challengingColor, value: luckyData.unluckyColor },
+                { label: rpt.luckyDirection, value: luckyData.luckyDirection },
+                { label: rpt.coreElement, value: `${luckyData.element} (${luckyData.planetEnergy})` },
+                { label: rpt.personalYear, value: `${personalYearNum} (${new Date().getFullYear()})` },
               ].map((item, idx) => (
                 <div key={idx} className="lucky-item">
                   <span className="lucky-label">{item.label}</span>
@@ -455,28 +609,28 @@ function ReportView() {
 
           {/* ── 5b. MOBILE ANALYSIS (Strict Planetary Matrix) ─── */}
           <section className="report-section">
-            <h3 className="section-title">📱 Mobile Number Analysis</h3>
+            <h3 className="section-title">{rpt.mobileAnalysis}</h3>
             {mobileCheck.isValid ? (
               <div className="name-compatibility-container">
 
                 {/* Inputs Info Header */}
                 <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f4f6f9, #e9ecef)', border: '1.5px solid #6c757d', marginBottom: '10px' }}>
-                  <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>MOBILE NUMBER ANALYSIS: <span className="highlight-text">{displayData.phone}</span></h4>
+                  <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>{rpt.mobileNumberAnalysis}: <span className="highlight-text">{displayData.phone}</span></h4>
                   <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mobile Total: <strong style={{ color: '#007bff' }}>{mobileCheck.totalSum} ({mobileCheck.singleDigit})</strong></span>
-                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Mulank: <strong>{mobileCheck.mulank}</strong></span>
-                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Bhagyank: <strong>{mobileCheck.bhagyank}</strong></span>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.mobileTotal}: <strong style={{ color: '#007bff' }}>{mobileCheck.totalSum} ({mobileCheck.singleDigit})</strong></span>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.mulank}: <strong>{mobileCheck.mulank}</strong></span>
+                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.bhagyank}: <strong>{mobileCheck.bhagyank}</strong></span>
                   </div>
                 </div>
 
                 {/* Analysis Bullets */}
                 <div className="name-detail-card" style={{ marginBottom: '10px' }}>
-                  <span className="detail-label">DETAILED COMPATIBILITY INSIGHTS</span>
+                  <span className="detail-label">{rpt.detailedInsights}</span>
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {mobileCheck.bullets.map((bullet, i) => (
                       <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: '1rem', color: '#495057' }}>•</span>
-                        <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{bullet}</p>
+                        <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{translateMobileBullet(bullet)}</p>
                       </div>
                     ))}
                   </div>
@@ -491,54 +645,54 @@ function ReportView() {
                   textAlign: 'center'
                 }}>
                   <strong style={{ fontSize: '1.05rem', color: mobileCheck.overallStatus === 'Friendly' ? '#155724' : mobileCheck.overallStatus === 'Non-Friendly' ? '#721c24' : '#856404' }}>
-                    STATUS: {mobileCheck.overallStatus}
+                    {rpt.status}: {isHi ? getCompatStatusTranslation(mobileCheck.overallStatus) : mobileCheck.overallStatus}
                   </strong>
                 </div>
 
               </div>
             ) : (
               <div className="empty-state-box">
-                <p>No phone number registered for this client profile. Add a phone number to generate mobile analysis.</p>
+                <p>{rpt.noPhoneMsg}</p>
               </div>
             )}
           </section>
 
           {/* ── 5c. NAME NUMEROLOGY (Strict Planetary Matrix) ─── */}
           <section className="report-section">
-            <h3 className="section-title">🔤 Name Numerology Analysis</h3>
+            <h3 className="section-title">{rpt.nameAnalysis}</h3>
             {nameNumerologyCheck.isValid ? (
               <div className="name-compatibility-container">
 
                 {!nameNumerologyCheck.lastNameCard ? (
                   /* SINGLE NAME ANALYSIS (when no last name is present) */
                   <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                    <h4 style={{ color: '#1a3a2e' }}>NAME ANALYSIS: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
+                    <h4 style={{ color: '#1a3a2e' }}>{rpt.nameAnalysisCard}: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
                     <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                      <span className="badge">Compound: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
-                      <span className="badge">Single: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
+                      <span className="badge">{rpt.compound}: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
+                      <span className="badge">{rpt.single}: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
                       <span className="badge" style={{
                         background: nameNumerologyCheck.fullNameCard.overallGood ? '#d4edda' : '#f8d7da',
                         color: nameNumerologyCheck.fullNameCard.overallGood ? '#155724' : '#721c24',
-                      }}>{nameNumerologyCheck.fullNameCard.overallGood ? '✓ Good' : '✗ Needs Attention'}</span>
+                      }}>{nameNumerologyCheck.fullNameCard.overallGood ? rpt.good : rpt.needsAttention}</span>
                     </div>
                     <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span>{nameNumerologyCheck.firstNameCard.not48Check ? '🟢' : '🔴'}</span>
                         <span style={{ fontSize: '0.88rem', color: '#444' }}>
-                          Name Count should not be 4 or 8.{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.firstNameCard.single}.`}
+                          {rpt.nameCount48}{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` ${rpt.currently} ${nameNumerologyCheck.firstNameCard.single}.`}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span>{nameNumerologyCheck.firstNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.firstNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compatLine}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.firstNameCard.compatLine)}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span>{nameNumerologyCheck.fullNameCard.targetOk ? '🟢' : '🔴'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.targetLine}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.fullNameCard.targetLine)}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span>{nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compoundLine}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.firstNameCard.compoundLine)}</span>
                       </div>
                     </div>
                   </div>
@@ -547,75 +701,75 @@ function ReportView() {
                   <>
                     {/* FIRST NAME CARD */}
                     <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                      <h4 style={{ color: '#1a3a2e' }}>FIRST NAME: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
+                      <h4 style={{ color: '#1a3a2e' }}>{rpt.firstNameCard}: <span className="highlight-text">{nameNumerologyCheck.firstNameCard.name}</span></h4>
                       <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                        <span className="badge">Compound: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
-                        <span className="badge">Single: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
+                        <span className="badge">{rpt.compound}: <strong>{nameNumerologyCheck.firstNameCard.compound}</strong></span>
+                        <span className="badge">{rpt.single}: <strong>{nameNumerologyCheck.firstNameCard.single}</strong></span>
                         <span className="badge" style={{
                           background: nameNumerologyCheck.firstNameCard.overallGood ? '#d4edda' : '#f8d7da',
                           color: nameNumerologyCheck.firstNameCard.overallGood ? '#155724' : '#721c24',
-                        }}>{nameNumerologyCheck.firstNameCard.overallGood ? '✓ Good' : '✗ Needs Attention'}</span>
+                        }}>{nameNumerologyCheck.firstNameCard.overallGood ? rpt.good : rpt.needsAttention}</span>
                       </div>
                       <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.firstNameCard.not48Check ? '🟢' : '🔴'}</span>
                           <span style={{ fontSize: '0.88rem', color: '#444' }}>
-                            First Name Count should not be 4 or 8.{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.firstNameCard.single}.`}
+                            {rpt.firstNameCount48}{nameNumerologyCheck.firstNameCard.not48Check ? ' ✓' : ` ${rpt.currently} ${nameNumerologyCheck.firstNameCard.single}.`}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.firstNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.firstNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compatLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.firstNameCard.compatLine)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.firstNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.firstNameCard.compoundLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.firstNameCard.compoundLine)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* LAST NAME CARD */}
                     <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                      <h4 style={{ color: '#1a3a2e' }}>LAST NAME: <span className="highlight-text">{nameNumerologyCheck.lastNameCard.name}</span></h4>
+                      <h4 style={{ color: '#1a3a2e' }}>{rpt.lastNameCard}: <span className="highlight-text">{nameNumerologyCheck.lastNameCard.name}</span></h4>
                       <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                        <span className="badge">Compound: <strong>{nameNumerologyCheck.lastNameCard.compound}</strong></span>
-                        <span className="badge">Single: <strong>{nameNumerologyCheck.lastNameCard.single}</strong></span>
+                        <span className="badge">{rpt.compound}: <strong>{nameNumerologyCheck.lastNameCard.compound}</strong></span>
+                        <span className="badge">{rpt.single}: <strong>{nameNumerologyCheck.lastNameCard.single}</strong></span>
                       </div>
                       <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.lastNameCard.not48Check ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>Last Name Count should not be 4 or 8.{nameNumerologyCheck.lastNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.lastNameCard.single}.`}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{rpt.lastNameCount48}{nameNumerologyCheck.lastNameCard.not48Check ? ' ✓' : ` ${rpt.currently} ${nameNumerologyCheck.lastNameCard.single}.`}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.lastNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.lastNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compatLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.lastNameCard.compatLine)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.lastNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.lastNameCard.compoundLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.lastNameCard.compoundLine)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* FULL NAME CARD */}
                     <div className="name-detail-card" style={{ display: 'block', marginBottom: '10px' }}>
-                      <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>FULL NAME ANALYSIS</span>
+                      <span className="detail-label" style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>{rpt.fullNameAnalysis}</span>
                       <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.fullNameCard.not48Check ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>Full Name Count should not be 4 or 8.{nameNumerologyCheck.fullNameCard.not48Check ? ' ✓' : ` Currently ${nameNumerologyCheck.fullNameCard.single}.`}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{rpt.fullNameCount48}{nameNumerologyCheck.fullNameCard.not48Check ? ' ✓' : ` ${rpt.currently} ${nameNumerologyCheck.fullNameCard.single}.`}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.fullNameCard.driverStatus !== 'enemy' && nameNumerologyCheck.fullNameCard.conductorStatus !== 'enemy' ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compatLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.fullNameCard.compatLine)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.fullNameCard.targetOk ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.targetLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.fullNameCard.targetLine)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span>{nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Very Good' ? '🟢' : nameNumerologyCheck.fullNameCard.compoundRating?.label === 'Bad' ? '🔴' : '🟡'}</span>
-                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{nameNumerologyCheck.fullNameCard.compoundLine}</span>
+                          <span style={{ fontSize: '0.88rem', color: '#444' }}>{translateNameItemText(nameNumerologyCheck.fullNameCard.compoundLine)}</span>
                         </div>
                       </div>
                     </div>
@@ -631,19 +785,19 @@ function ReportView() {
                   textAlign: 'center'
                 }}>
                   <strong style={{ fontSize: '1rem', color: nameNumerologyCheck.finalStatusGood ? '#155724' : '#721c24' }}>
-                    STATUS: {nameNumerologyCheck.finalStatus}
+                    {rpt.status}: {nameNumerologyCheck.finalStatusGood ? (isHi ? 'नाम संतुलित ✓' : 'Name Balanced ✓') : (isHi ? 'नाम संतुलित नहीं ✗' : 'Name Not Balanced ✗')}
                   </strong>
                 </div>
 
               </div>
             ) : (
-              <div className="empty-state-box"><p>No name available to analyze.</p></div>
+              <div className="empty-state-box"><p>{rpt.noNameMsg}</p></div>
             )}
           </section>
 
           {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
           <section className="report-section">
-            <h3 className="section-title">Chaldean Number Compatibility Analysis</h3>
+            <h3 className="section-title">{rpt.chaldeanTitle}</h3>
             <div className="name-compatibility-container">
               <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
                 <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
@@ -656,14 +810,14 @@ function ReportView() {
                     border: '1px solid currentColor'
                   }}>
                     <strong>
-                      {compatibilityAnalysis.overallStatus === 'friend' ? 'HIGHLY COMPATIBLE ✓' :
-                        compatibilityAnalysis.overallStatus === 'enemy' ? 'CHALLENGING — REMEDY RECOMMENDED' : 'NEUTRAL'}
+                      {compatibilityAnalysis.overallStatus === 'friend' ? rpt.highlyCompatible :
+                        compatibilityAnalysis.overallStatus === 'enemy' ? rpt.challenging : rpt.neutral}
                     </strong>
                   </span>
                 </div>
               </div>
               <div className="name-detail-card" style={{ display: 'block' }}>
-                <span className="detail-label">Chaldean Planetary Relationship & Remedies</span>
+                <span className="detail-label">{rpt.chaldeanRelationship}</span>
                 <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
                   {compatibilityAnalysis.description}
                 </div>
@@ -673,7 +827,7 @@ function ReportView() {
 
           {/* ── 5d. PROFESSIONAL & CAREER OUTLOOK ─────────── */}
           <section className="report-section">
-            <h3 className="section-title">💼 Professional & Career Outlook</h3>
+            <h3 className="section-title">{rpt.careerTitle}</h3>
             <div className="career-outlook-container">
               {/* Compatibility matrix block */}
               <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3f6fc, #eaf0fc)', border: '1px solid #adc1e6', marginBottom: '15px' }}>
@@ -686,27 +840,27 @@ function ReportView() {
                       careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
                     border: '1px solid currentColor'
                   }}>
-                    <strong>{careerData.compatibilityStatus} Connection</strong>
+                    <strong>{careerData.compatibilityStatus} {rpt.connection}</strong>
                   </span>
                 </div>
                 <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#444', fontStyle: 'italic' }}>
-                  <strong>Esoteric Insight:</strong> {careerData.esotericReason}
+                  <strong>{rpt.esotericInsight}:</strong> {careerData.esotericReason}
                 </p>
               </div>
 
               {/* Workstyle */}
               <div className="name-detail-card" style={{ marginBottom: '15px' }}>
-                <span className="detail-label">Impact on Workstyle</span>
+                <span className="detail-label">{rpt.workstyle}</span>
                 <p className="detail-value" style={{ lineHeight: '1.6' }}>{careerData.workstyle}</p>
               </div>
 
               {/* Suitable Careers */}
               <div className="name-detail-card" style={{ marginBottom: '15px' }}>
-                <span className="detail-label">Top 3 Most Suitable Career Fields</span>
+                <span className="detail-label">{rpt.topCareers}</span>
                 <ul className="career-fields-list" style={{ listStyle: 'none', padding: 0, margin: '10px 0 0 0' }}>
                   {careerData.topCareers.map((c, idx) => (
                     <li key={idx} style={{ marginBottom: '12px', borderLeft: '3px solid #d4a017', paddingLeft: '12px' }}>
-                      <strong style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>Field {idx + 1}: {c.field}</strong>
+                      <strong style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>{rpt.field} {idx + 1}: {c.field}</strong>
                       <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#555' }}>{c.explanation}</p>
                     </li>
                   ))}
@@ -715,7 +869,7 @@ function ReportView() {
 
               {/* Careers to Avoid */}
               <div className="name-detail-card" style={{ background: '#fff0f0', border: '1px solid #f9d5d5', marginBottom: '15px' }}>
-                <span className="detail-label" style={{ color: '#c5221f' }}>⚠️ Careers to Avoid (Strict Warning)</span>
+                <span className="detail-label" style={{ color: '#c5221f' }}>{rpt.careersToAvoid}</span>
                 <ul style={{ paddingLeft: '20px', margin: '10px 0 0 0', fontSize: '0.88rem', color: '#444', lineHeight: '1.5' }}>
                   {careerData.careersToAvoid.map((item, idx) => (
                     <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
@@ -725,7 +879,7 @@ function ReportView() {
 
               {/* Golden Remedy */}
               <div className="name-detail-card" style={{ background: '#fef9e7', border: '1px solid #f9e79f' }}>
-                <span className="detail-label" style={{ color: '#b06000' }}>✨ Golden Professional Remedy</span>
+                <span className="detail-label" style={{ color: '#b06000' }}>{rpt.goldenRemedy}</span>
                 <p className="detail-value" style={{ marginTop: '8px', lineHeight: '1.6', fontSize: '0.9rem', fontWeight: '500' }}>
                   {careerData.goldenRemedy}
                 </p>
@@ -735,7 +889,7 @@ function ReportView() {
 
           {/* ── 6. LO SHU GRID ──────────────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">🔢 LO SHU GRID ANALYSIS</h3>
+            <h3 className="section-title">{rpt.loShuTitle}</h3>
             <div className="loshu-container">
               <div className="loshu-grid">
                 {[4, 9, 2, 3, 5, 7, 8, 1, 6].map((num, idx) => {
@@ -753,7 +907,7 @@ function ReportView() {
 
               {/* Grid Highlights — computed from FULL grid (DOB + Mulank + Bhagyank + Kua) */}
               <div className="grid-interpretation">
-                <h4>Grid Highlights</h4>
+                <h4>{rpt.gridHighlights}</h4>
                 {(() => {
                   const fullGrid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
                   const presentNums = getPresentNumbers(fullGrid);
@@ -764,7 +918,7 @@ function ReportView() {
                   return (
                     <>
                       <div className="present-numbers">
-                        <p><strong>Present Numbers:</strong></p>
+                        <p><strong>{rpt.presentNumbers}:</strong></p>
                         <div className="number-tags">
                           {presentNums.map((item, idx) => (
                             <span key={idx} className="tag tag-present">
@@ -775,23 +929,23 @@ function ReportView() {
                       </div>
 
                       <div className="missing-numbers" style={{ marginTop: '12px' }}>
-                        <p><strong>Missing Numbers:</strong></p>
+                        <p><strong>{rpt.missingNumbers}:</strong></p>
                         <div className="number-tags">
                           {missingNums.length > 0 ? missingNums.map((num, idx) => (
                             <span key={idx} className="tag tag-missing">{num}</span>
                           )) : (
-                            <span className="tag tag-present">None — Complete Grid! ✓</span>
+                            <span className="tag tag-present">{rpt.completeGrid}</span>
                           )}
                         </div>
                       </div>
 
                       {repeatedNums.length > 0 && (
                         <div className="repeated-numbers" style={{ marginTop: '12px' }}>
-                          <p><strong>Repeated Numbers &amp; Strength:</strong></p>
+                          <p><strong>{rpt.repeatedNumbers}:</strong></p>
                           <div className="number-tags" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                             {repeatedNums.map((item, idx) => (
                               <span key={idx} className="tag tag-present" style={{ background: 'linear-gradient(145deg, #fdf2cc, #fde4a3)', border: '1px solid rgba(181,130,10,0.3)', color: '#8a6207' }}>
-                                Digit {item.num}: {item.strength} ({item.count}x)
+                                {rpt.digit} {item.num}: {item.strength} ({item.count}x)
                               </span>
                             ))}
                           </div>
@@ -801,7 +955,7 @@ function ReportView() {
                       <div className="arrow-analysis" style={{ marginTop: '14px', borderTop: '1px solid rgba(232,213,191,0.4)', paddingTop: '10px' }}>
                         {arrows.positive.length > 0 && (
                           <div style={{ marginBottom: '8px' }}>
-                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Positive Planes / Arrows:</strong></p>
+                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.positivePlanes}:</strong></p>
                             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                               {arrows.positive.map((arr, idx) => (
                                 <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#e6f4ea', color: '#137333', fontSize: '11px', fontWeight: 'bold' }}>
@@ -813,7 +967,7 @@ function ReportView() {
                         )}
                         {arrows.negative.length > 0 && (
                           <div>
-                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>Weaknesses / Negative Arrows:</strong></p>
+                            <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.weaknesses}:</strong></p>
                             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                               {arrows.negative.map((arr, idx) => (
                                 <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#fce8e6', color: '#c5221f', fontSize: '11px', fontWeight: 'bold' }}>
@@ -827,7 +981,7 @@ function ReportView() {
                     </>
                   );
                 })()}
-                <p className="kua-note" style={{ marginTop: '14px' }}><strong>Your Kua Number: {calculateKua(displayData.dob, displayData.gender)}</strong></p>
+                <p className="kua-note" style={{ marginTop: '14px' }}><strong>{rpt.kuaNumber}: {calculateKua(displayData.dob, displayData.gender)}</strong></p>
               </div>
             </div>
           </section>
@@ -835,24 +989,24 @@ function ReportView() {
           {/* ── 7. MISSING NUMBERS & REMEDIES ───────────── */}
           {report.missingNumbersRemedies?.length > 0 && (
             <section className="report-section">
-              <h3 className="section-title">🔴 MISSING NUMBERS &amp; REMEDIES</h3>
+              <h3 className="section-title">{rpt.missingRemediesTitle}</h3>
               <div className="remedies-list">
                 {report.missingNumbersRemedies.map((remedy, idx) => (
                   <div key={idx} className="remedy-card">
                     <div className="remedy-header">
-                      <h4>Missing Number {remedy.num} ({remedy.planet})</h4>
+                      <h4>{rpt.missingNumber} {remedy.num} ({remedy.planet})</h4>
                     </div>
                     {isEditing ? (
                       <div className="edit-remedy">
-                        <label>Effects:</label>
+                        <label>{rpt.effects}:</label>
                         <textarea value={remedy.effects} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'effects')} className="edit-textarea" />
-                        <label>Crystal Remedy:</label>
+                        <label>{rpt.crystalRemedy}:</label>
                         <input type="text" value={remedy.crystal} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'crystal')} className="edit-input" />
                       </div>
                     ) : (
                       <div className="remedy-content">
                         <div style={{ marginBottom: '12px' }}>
-                          <strong style={{ color: '#c5221f', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>EFFECT:</strong>
+                          <strong style={{ color: '#c5221f', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.effectLabel}:</strong>
                           <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
                             {(remedy.effectsList || (remedy.effects || '').split('\n')).map((e, eIdx) => {
                               const cleanText = e.replace(/^•\s*/, '').trim();
@@ -861,7 +1015,7 @@ function ReportView() {
                           </ul>
                         </div>
                         <div>
-                          <strong style={{ color: '#137333', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>REMEDIES:</strong>
+                          <strong style={{ color: '#137333', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.remediesLabel}:</strong>
                           <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
                             {(remedy.remediesList || (remedy.crystal || '').split('\n')).map((r, rIdx) => {
                               const cleanText = r.replace(/^•\s*/, '').trim();
@@ -880,11 +1034,11 @@ function ReportView() {
           {/* ── 8. REPEATED NUMBERS ─────────────────────── */}
           {report.repeatedNumbersAnalysis?.length > 0 && (
             <section className="report-section">
-              <h3 className="section-title">🔁 REPEATED NUMBERS INFLUENCE</h3>
+              <h3 className="section-title">{rpt.repeatedTitle}</h3>
               <div className="repeated-grid">
                 {report.repeatedNumbersAnalysis.map((item, idx) => (
                   <div key={idx} className="repeated-card">
-                    <h4>Number {item.num} ({item.count} times)</h4>
+                    <h4>{rpt.number} {item.num} ({item.count} {rpt.times})</h4>
                     {isEditing ? (
                       <textarea value={item.influence} onChange={(e) => handleArrayChange(e, 'report.repeatedNumbersAnalysis', idx, 'influence')} className="edit-textarea" />
                     ) : (
@@ -899,7 +1053,7 @@ function ReportView() {
           {/* ── 9. SUITABLE PROFESSIONS ──────────────────── */}
           {report.suitableProfessions?.length > 0 && (
             <section className="report-section">
-              <h3 className="section-title">💼 SUITABLE PROFESSIONS</h3>
+              <h3 className="section-title">{rpt.professionsTitle}</h3>
               <div className="professions-list">
                 {report.suitableProfessions.map((prof, idx) => (
                   <div key={idx} className="profession-item">
@@ -915,13 +1069,13 @@ function ReportView() {
           {/* ── 10. 3-YEAR FORECAST ──────────────────────── */}
           {report.futurePredictions && (
             <section className="report-section">
-              <h3 className="section-title">📅 3-YEAR PERSONAL FORECAST</h3>
+              <h3 className="section-title">{rpt.forecastTitle}</h3>
               <div className="forecast-grid">
                 {Object.keys(report.futurePredictions).map((key) => {
                   const forecast = report.futurePredictions[key];
                   return (
                     <div key={key} className="forecast-card">
-                      <h4>Year {forecast.year}</h4>
+                      <h4>{rpt.year} {forecast.year}</h4>
                       {isEditing ? (
                         <>
                           <input value={forecast.title} onChange={(e) => handleNestedArrayChange(e, 'report.futurePredictions', key, 'title')} className="edit-input-bold" />
@@ -942,7 +1096,7 @@ function ReportView() {
 
           {/* ── 11. PERSONALITY ANALYSIS ─────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">✨ Personality Analysis</h3>
+            <h3 className="section-title">{rpt.personalityTitle}</h3>
             <div className="personality-card">
               {isEditing ? (
                 <>
@@ -956,16 +1110,16 @@ function ReportView() {
                 </>
               )}
               <div className="personality-highlights">
-                <div className="highlight-item"><strong>Lucky Number:</strong> {luckyData.luckyNumber}</div>
-                <div className="highlight-item"><strong>Lucky Color:</strong> {luckyData.luckyColor}</div>
-                <div className="highlight-item"><strong>Lucky Direction:</strong> {luckyData.luckyDirection}</div>
+                <div className="highlight-item"><strong>{rpt.luckyNumberLabel}:</strong> {luckyData.luckyNumber}</div>
+                <div className="highlight-item"><strong>{rpt.luckyColorLabel}:</strong> {luckyData.luckyColor}</div>
+                <div className="highlight-item"><strong>{rpt.luckyDirectionLabel}:</strong> {luckyData.luckyDirection}</div>
               </div>
             </div>
           </section>
 
           {/* ── 12. DAILY AFFIRMATIONS ───────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">💫 Daily Affirmations</h3>
+            <h3 className="section-title">{rpt.affirmationsTitle}</h3>
             <div className="affirmations-list">
               {report.affirmations.map((affirmation, index) => (
                 <div key={index} className="affirmation-item">
@@ -980,27 +1134,27 @@ function ReportView() {
 
           {/* ── FOREIGN SETTLEMENT PREDICTION ──────────────── */}
           <section className="report-section">
-            <h3 className="section-title">✈️ Foreign Settlement Prediction</h3>
+            <h3 className="section-title">{rpt.foreignTitle}</h3>
             <div className="name-compatibility-container">
 
               {/* Header card */}
               <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #e8f4fd, #d1eaf7)', border: '1.5px solid #1a6fa8', marginBottom: '10px' }}>
                 <h4 style={{ color: '#0d3c5e' }}>
-                  Probability Score: <span className="highlight-text" style={{ fontSize: '1.3rem' }}>{foreignSettlement.probabilityScore}%</span>
+                  {rpt.probabilityScore}: <span className="highlight-text" style={{ fontSize: '1.3rem' }}>{foreignSettlement.probabilityScore}%</span>
                 </h4>
                 <div className="name-badge-row" style={{ marginTop: '6px' }}>
-                  <span className="badge" style={{ background: '#d0f0e8', color: '#0a5c3b' }}>Present: {foreignSettlement.presentNums.join(', ')}</span>
-                  <span className="badge" style={{ background: '#fde8e8', color: '#7a1a1a' }}>Missing: {foreignSettlement.missingNums.join(', ') || 'None'}</span>
+                  <span className="badge" style={{ background: '#d0f0e8', color: '#0a5c3b' }}>{rpt.present}: {foreignSettlement.presentNums.join(', ')}</span>
+                  <span className="badge" style={{ background: '#fde8e8', color: '#7a1a1a' }}>{rpt.missing}: {foreignSettlement.missingNums.join(', ') || rpt.none}</span>
                 </div>
               </div>
 
               {/* Core result */}
               <div className="name-detail-card" style={{ marginBottom: '10px' }}>
-                <span className="detail-label">FOREIGN SETTLEMENT PREDICTIONS</span>
+                <span className="detail-label">{rpt.foreignPredictions}</span>
                 <div style={{ marginTop: '10px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <span style={{ fontSize: '1.2rem' }}>{foreignSettlement.coreGood ? '🟢' : '🔴'}</span>
                   <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.6', color: '#333' }}>
-                    <strong>{foreignSettlement.coreGood ? 'Match' : 'Alert'}:</strong> {foreignSettlement.coreResult}
+                    <strong>{foreignSettlement.coreGood ? rpt.matchAlert : rpt.alert}:</strong> {foreignSettlement.coreResult}
                   </p>
                 </div>
               </div>
@@ -1008,7 +1162,7 @@ function ReportView() {
               {/* Planetary friction */}
               {foreignSettlement.frictionLines.length > 0 && (
                 <div className="name-detail-card" style={{ background: '#fff4e6', border: '1px solid #f5c07a', marginBottom: '10px' }}>
-                  <span className="detail-label" style={{ color: '#8a4500' }}>⚠️ PLANETARY FRICTION</span>
+                  <span className="detail-label" style={{ color: '#8a4500' }}>{rpt.planetaryFriction}</span>
                   <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {foreignSettlement.frictionLines.map((line, i) => (
                       <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -1022,7 +1176,7 @@ function ReportView() {
 
               {/* Planetary note */}
               <div className="name-detail-card" style={{ background: '#f0f4ff', border: '1px solid #bfd0f7' }}>
-                <span className="detail-label" style={{ color: '#1a3a6e' }}>🪐 PLANETARY ALIGNMENT</span>
+                <span className="detail-label" style={{ color: '#1a3a6e' }}>{rpt.planetaryAlignment}</span>
                 <p style={{ margin: '8px 0 0', fontSize: '0.9rem', lineHeight: '1.6', color: '#333' }}>{foreignSettlement.planetaryNote}</p>
               </div>
 
@@ -1031,7 +1185,7 @@ function ReportView() {
 
           {/* ── LOVE vs ARRANGED MARRIAGE ───────────────────── */}
           <section className="report-section">
-            <h3 className="section-title">💍 Love vs Arranged Marriage Prediction</h3>
+            <h3 className="section-title">{rpt.marriageTitle}</h3>
             <div className="name-compatibility-container">
 
               {/* Percentage row */}
@@ -1045,7 +1199,7 @@ function ReportView() {
                 }}>
                   <div style={{ fontSize: marriageType.dominant === 'Love' ? '2.2rem' : '1.8rem' }}>💗</div>
                   <div style={{ fontWeight: 700, fontSize: '1.5rem', color: '#c2185b' }}>{marriageType.lovePct}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#880e4f', marginTop: '4px', fontWeight: 600 }}>Love Marriage</div>
+                  <div style={{ fontSize: '0.85rem', color: '#880e4f', marginTop: '4px', fontWeight: 600 }}>{rpt.loveMarriage}</div>
                 </div>
                 <div style={{
                   flex: 1, minWidth: '140px', padding: '18px 14px', borderRadius: '10px', textAlign: 'center',
@@ -1056,7 +1210,7 @@ function ReportView() {
                 }}>
                   <div style={{ fontSize: marriageType.dominant === 'Arranged' ? '2.2rem' : '1.8rem' }}>💑</div>
                   <div style={{ fontWeight: 700, fontSize: '1.5rem', color: '#1565c0' }}>{marriageType.arrangePct}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#0d47a1', marginTop: '4px', fontWeight: 600 }}>Arranged Marriage</div>
+                  <div style={{ fontSize: '0.85rem', color: '#0d47a1', marginTop: '4px', fontWeight: 600 }}>{rpt.arrangedMarriage}</div>
                 </div>
               </div>
 
@@ -1067,7 +1221,7 @@ function ReportView() {
 
               {/* Comments */}
               <div className="name-detail-card">
-                <span className="detail-label">COMMENTS & JUSTIFICATION</span>
+                <span className="detail-label">{rpt.commentsJustification}</span>
                 <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {marriageType.comments.map((c, i) => (
                     <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -1083,18 +1237,18 @@ function ReportView() {
 
           {/* ── MATCH MAKING (Consultant fills two profiles in Edit mode) ── */}
           <section className="report-section">
-            <h3 className="section-title">💞 Match Making Compatibility</h3>
+            <h3 className="section-title">{rpt.matchTitle}</h3>
             {isEditing ? (
               <div className="name-detail-card" style={{ display: 'block' }}>
-                <span className="detail-label">Enter both profiles for compatibility analysis</span>
+                <span className="detail-label">{rpt.enterProfiles}</span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
                   {['male', 'female'].map(gender => (
                     <div key={gender} style={{ border: '1px solid #e8ddc4', borderRadius: '8px', padding: '12px' }}>
-                      <strong style={{ textTransform: 'capitalize', color: '#8a6207' }}>{gender} Profile</strong>
+                      <strong style={{ textTransform: 'capitalize', color: '#8a6207' }}>{gender === 'male' ? rpt.genderMale : rpt.genderFemale} {rpt.profile}</strong>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                        <input placeholder="Name" className="edit-input" name={`report.matchMaking.${gender}.name`}
+                        <input placeholder={rpt.namePlaceholder} className="edit-input" name={`report.matchMaking.${gender}.name`}
                           value={editedData?.report?.matchMaking?.[gender]?.name || ''} onChange={handleInputChange} />
-                        <input placeholder="Date of Birth (YYYY-MM-DD)" className="edit-input" name={`report.matchMaking.${gender}.dob`}
+                        <input placeholder={rpt.dobPlaceholder} className="edit-input" name={`report.matchMaking.${gender}.dob`}
                           value={editedData?.report?.matchMaking?.[gender]?.dob || ''} onChange={handleInputChange} />
                       </div>
                     </div>
@@ -1131,7 +1285,7 @@ function ReportView() {
 
                   {/* Highlights */}
                   <div className="name-detail-card" style={{ marginBottom: '10px' }}>
-                    <span className="detail-label">HIGHLIGHTS</span>
+                    <span className="detail-label">{rpt.highlights}</span>
                     <ul style={{ margin: '8px 0 0', paddingLeft: '18px', fontSize: '0.88rem', lineHeight: '1.6', color: '#444' }}>
                       {mm.highlights.map((h, i) => <li key={i}>{h}</li>)}
                     </ul>
@@ -1140,7 +1294,7 @@ function ReportView() {
                   {/* Shared pairs */}
                   {mm.sharedPairs.length > 0 && (
                     <div className="name-detail-card" style={{ background: '#f0fff4', border: '1px solid #a5d6a7', marginBottom: '10px' }}>
-                      <span className="detail-label" style={{ color: '#2e7d32' }}>🔗 SHARABLE NUMBER PAIRS</span>
+                      <span className="detail-label" style={{ color: '#2e7d32' }}>{rpt.sharableNumbers}</span>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                         {mm.sharedPairs.map((p, i) => (
                           <span key={i} style={{ background: '#e8f5e9', border: '1px solid #81c784', borderRadius: '20px', padding: '4px 14px', fontSize: '0.9rem', fontWeight: 600, color: '#1b5e20' }}>{p.pair}</span>
@@ -1151,7 +1305,7 @@ function ReportView() {
 
                   {/* Boost logs */}
                   <div className="name-detail-card">
-                    <span className="detail-label">COMPATIBILITY INSIGHTS</span>
+                    <span className="detail-label">{rpt.compatInsights}</span>
                     <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {mm.boostLogs.map((log, i) => (
                         <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -1165,58 +1319,58 @@ function ReportView() {
               );
             })() : (
               <div className="empty-state-box">
-                <p>Partner name not defined. Enter spouse name or partner details to generate Match Making analysis.</p>
+                <p>{rpt.partnerNotDefined}</p>
               </div>
             )}
           </section>
 
           {/* ── 13. CUSTOM NOTE PAGE 1 ─────────────────── */}
           <section className="report-section custom-page-section">
-            <h3 className="section-title">📝 Notes / Suggestions (Page 1)</h3>
+            <h3 className="section-title">{rpt.notesPage1}</h3>
             {isEditing ? (
-              <textarea name="report.customPage1.content" value={report.customPage1.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 1..." className="edit-textarea custom-page-textarea" />
+              <textarea name="report.customPage1.content" value={report.customPage1.content} onChange={handleInputChange} placeholder={rpt.notesPlaceholder1} className="edit-textarea custom-page-textarea" />
             ) : (
-              <p className="custom-page-content">{report.customPage1.content || 'No notes / suggestions.'}</p>
+              <p className="custom-page-content">{report.customPage1.content || rpt.noNotes}</p>
             )}
           </section>
 
           {/* ── 14. CUSTOM NOTE PAGE 2 ─────────────────── */}
           <section className="report-section custom-page-section">
-            <h3 className="section-title">📝 Notes / Suggestions (Page 2)</h3>
+            <h3 className="section-title">{rpt.notesPage2}</h3>
             {isEditing ? (
-              <textarea name="report.customPage2.content" value={report.customPage2.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 2..." className="edit-textarea custom-page-textarea" />
+              <textarea name="report.customPage2.content" value={report.customPage2.content} onChange={handleInputChange} placeholder={rpt.notesPlaceholder2} className="edit-textarea custom-page-textarea" />
             ) : (
-              <p className="custom-page-content">{report.customPage2.content || 'No notes / suggestions.'}</p>
+              <p className="custom-page-content">{report.customPage2.content || rpt.noNotes}</p>
             )}
           </section>
 
           {/* ── 15. CUSTOM NOTE PAGE 3 ─────────────────── */}
           <section className="report-section custom-page-section">
-            <h3 className="section-title">📝 Notes / Suggestions (Page 3)</h3>
+            <h3 className="section-title">{rpt.notesPage3}</h3>
             {isEditing ? (
-              <textarea name="report.customPage3.content" value={report.customPage3.content} onChange={handleInputChange} placeholder="Write notes / suggestions for page 3..." className="edit-textarea custom-page-textarea" />
+              <textarea name="report.customPage3.content" value={report.customPage3.content} onChange={handleInputChange} placeholder={rpt.notesPlaceholder3} className="edit-textarea custom-page-textarea" />
             ) : (
-              <p className="custom-page-content">{report.customPage3.content || 'No notes / suggestions.'}</p>
+              <p className="custom-page-content">{report.customPage3.content || rpt.noNotes}</p>
             )}
           </section>
 
           {/* ── 15. CONTACT INFO (edit mode only) ───────── */}
           {isEditing && (
             <section className="report-section">
-              <h3 className="section-title">📞 Contact Information</h3>
+              <h3 className="section-title">{rpt.contactInfo}</h3>
               <div className="edit-form">
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Phone</label>
+                    <label>{rpt.phoneLabel}</label>
                     <input type="tel" name="phone" value={editedData.phone} onChange={handleInputChange} className="edit-input" />
                   </div>
                   <div className="form-group">
-                    <label>Email</label>
+                    <label>{rpt.emailLabel}</label>
                     <input type="email" name="email" value={editedData.email} onChange={handleInputChange} className="edit-input" />
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Address</label>
+                  <label>{rpt.addressLabel}</label>
                   <input type="text" name="address" value={editedData.address} onChange={handleInputChange} className="edit-input" />
                 </div>
               </div>
@@ -1227,9 +1381,9 @@ function ReportView() {
 
       {/* ── Footer ───────────────────────────────────────── */}
       <footer className="report-footer">
-        <p>Shining Ank Vastu - M : 9913961553</p>
-        <p>Vedic Numerology Report</p>
-        <p>Report generated on: {(() => {
+        <p>{rpt.footerLine1}</p>
+        <p>{rpt.footerLine2}</p>
+        <p>{rpt.reportGenerated}: {(() => {
           const today = new Date();
           return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
         })()}</p>

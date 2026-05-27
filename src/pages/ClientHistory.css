@@ -80,6 +80,13 @@
   box-shadow: 0 4px 12px rgba(229, 62, 62, 0.28);
 }
 
+.btn-logout {
+  border: 1.5px solid rgba(229, 62, 62, 0.5) !important;
+  color: #e53e3e !important;
+  background: transparent;
+}
+.btn-logout:hover { background: rgba(229, 62, 62, 0.06) !important; }
+
 .btn-small { padding: 9px 16px; font-size: 13px; flex: 1; }
 
 /* ── Content ───────────────────────────────────────────── */

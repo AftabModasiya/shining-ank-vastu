@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Grid3x3, Compass, FileDown, ChevronDown, Menu, X } from 'lucide-react';
+import { FileText, Grid3x3, Compass, FileDown, Menu, X } from 'lucide-react';
 import { generateReport } from '../utils/numerology';
 import { saveClient, checkDuplicateClient } from '../services/clientService';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Home.css';
 
-// Language translations
-const translations = {
+// (Translations moved to src/context/LanguageContext.jsx)
+const _unused = {
   en: {
     title: 'Shining Ank Vastu',
     subtitle: 'Decode the cosmic numbers hidden in your name & birth — delivered as an exquisite, editable client report.',
@@ -81,8 +83,7 @@ const translations = {
 
 function Home() {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState('en');
-  const [showLangMenu, setShowLangMenu] = useState(false);
+  const { language, toggleLanguage, t } = useLanguage();
   const [showSidebar, setShowSidebar] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -102,8 +103,6 @@ function Home() {
   const [error, setError] = useState('');
   const [duplicateModal, setDuplicateModal] = useState(null); // holds existing client data if duplicate found
 
-  const t = translations[language];
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -114,11 +113,6 @@ function Home() {
   const handleQuickCalculation = () => {
     // Scroll to form
     document.getElementById('calculation-form')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const toggleLanguage = (lang) => {
-    setLanguage(lang);
-    setShowLangMenu(false);
   };
 
   const handleSubmit = async (e) => {
@@ -311,40 +305,12 @@ function Home() {
 
             {/* Desktop Navigation */}
             <div className="header-actions">
-              <div className="language-selector">
-                <button
-                  className="btn-language"
-                  onClick={() => setShowLangMenu(!showLangMenu)}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  {language === 'en' ? 'EN' : 'हिं'}
-                  <ChevronDown size={16} />
-                </button>
-                {showLangMenu && (
-                  <div className="language-menu">
-                    <button
-                      className={`lang-option ${language === 'en' ? 'active' : ''}`}
-                      onClick={() => toggleLanguage('en')}
-                    >
-                      English
-                    </button>
-                    <button
-                      className={`lang-option ${language === 'hi' ? 'active' : ''}`}
-                      onClick={() => toggleLanguage('hi')}
-                    >
-                      हिंदी (Hindi)
-                    </button>
-                  </div>
-                )}
-              </div>
+              <LanguageSwitcher />
               <button
                 className="btn btn-secondary"
                 onClick={() => navigate('/history')}
               >
-                {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
+                {t.clientHistory}
               </button>
               <button
                 className="btn btn-outline btn-logout"
@@ -353,7 +319,7 @@ function Home() {
                   window.location.reload();
                 }}
               >
-                {language === 'en' ? 'Logout' : 'लॉग आउट'}
+                {t.logout}
               </button>
             </div>
 
@@ -388,9 +354,7 @@ function Home() {
             <div className="sidebar-content">
               {/* Language Selector Section */}
               <div className="sidebar-section">
-                <span className="sidebar-section-label">
-                  {language === 'en' ? 'Select Language' : 'भाषा चुनें'}
-                </span>
+                <span className="sidebar-section-label">{t.selectLanguage}</span>
                 <div className="sidebar-lang-selector">
                   <button
                     className={`sidebar-lang-btn ${language === 'en' ? 'active' : ''}`}
@@ -416,7 +380,7 @@ function Home() {
                     navigate('/history');
                   }}
                 >
-                  {language === 'en' ? 'Client History' : 'ग्राहक इतिहास'}
+                  {t.clientHistory}
                 </button>
 
                 <button
@@ -427,7 +391,7 @@ function Home() {
                     window.location.reload();
                   }}
                 >
-                  {language === 'en' ? 'Logout' : 'लॉग आउट'}
+                  {t.logout}
                 </button>
               </div>
             </div>
