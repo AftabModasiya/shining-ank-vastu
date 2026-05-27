@@ -207,6 +207,17 @@ export const translations = {
       compatInsights: 'COMPATIBILITY INSIGHTS',
       partnerNotDefined: 'Partner name not defined. Enter spouse name or partner details to generate Match Making analysis.',
 
+      // Stock Market Compatibility
+      stockTitle: '📈 Stock Market Compatibility',
+      enterStockDetails: 'Enter Company/Stock Details for Suitability Analysis',
+      companyNameLabel: 'Company / Stock Name',
+      symbolLabel: 'Stock Symbol',
+      listingDateLabel: 'Listing Date',
+      stockDetails: 'STOCK DETAILS',
+      bestIndicatorLabel: 'BEST SCORING INDICATOR',
+      scoreLabel: 'Final Score',
+      stockNotDefined: 'Stock details not defined. Enter Company Name, Stock Symbol, and Listing Date in Edit mode to generate Stock Suitability Analysis.',
+
       // Notes
       notesPage1: '📝 Notes / Suggestions (Page 1)',
       notesPage2: '📝 Notes / Suggestions (Page 2)',
@@ -433,6 +444,17 @@ export const translations = {
       sharableNumbers: '🔗 साझा अंक जोड़े',
       compatInsights: 'संगतता अंतर्दृष्टि',
       partnerNotDefined: 'पार्टनर का नाम परिभाषित नहीं। विवाह संगतता विश्लेषण के लिए जीवनसाथी का नाम या पार्टनर विवरण दर्ज करें।',
+
+      // Stock Market Compatibility
+      stockTitle: '📈 शेयर बाजार अनुकूलता विश्लेषण',
+      enterStockDetails: 'अनुकूलता विश्लेषण के लिए कंपनी/स्टॉक का विवरण दर्ज करें',
+      companyNameLabel: 'कंपनी / स्टॉक का नाम',
+      symbolLabel: 'स्टॉक सिंबल',
+      listingDateLabel: 'सूचीबद्धता की तिथि (Listing Date)',
+      stockDetails: 'स्टॉक विवरण',
+      bestIndicatorLabel: 'सर्वश्रेष्ठ संकेतक',
+      scoreLabel: 'अंतिम स्कोर',
+      stockNotDefined: 'स्टॉक विवरण दर्ज नहीं हैं। शेयर बाजार अनुकूलता रिपोर्ट बनाने के लिए संपादन (Edit) मोड में कंपनी का नाम, स्टॉक सिंबल और सूचीकरण तिथि दर्ज करें।',
 
       // Notes
       notesPage1: '📝 नोट्स / सुझाव (पृष्ठ 1)',

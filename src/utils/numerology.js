@@ -1820,11 +1820,13 @@ const CHALDEAN_STRICT = {
 };
 
 const chaldeanOf = (str) => {
+  if (!str) return 0;
   const letters = str.toUpperCase().replace(/[^A-Z]/g, '').split('');
   return letters.reduce((s, c) => s + (CHALDEAN_STRICT[c] || 0), 0);
 };
 
 const compoundAndSingle = (str) => {
+  if (!str) return { compound: 0, single: 0 };
   const compound = chaldeanOf(str);
   return { compound, single: reduceToSingle(compound) };
 };
@@ -2190,4 +2192,287 @@ export const getMarriageType = (dob, mulank, bhagyank) => {
     presentNums,
     missingNums,
   };
+};
+
+export const getStockRelation = (base, target) => {
+  const friendlyMatrix = {
+    1: { friendly: [1,2,3,9], neutral: [5], anti: [4,6,7,8] },
+    2: { friendly: [1,2,4,6], neutral: [3,5], anti: [7,8,9] },
+    3: { friendly: [1,3,5,6,9], neutral: [2,8], anti: [4,7] },
+    4: { friendly: [2,4,6,8], neutral: [5,7], anti: [1,3,9] },
+    5: { friendly: [3,5,6], neutral: [1,4,8], anti: [2,7,9] },
+    6: { friendly: [2,3,5,6,9], neutral: [4], anti: [1,7,8] },
+    7: { friendly: [7,8], neutral: [4,5], anti: [1,2,3,6,9] },
+    8: { friendly: [4,7,8], neutral: [3,5,6], anti: [1,2,9] },
+    9: { friendly: [1,3,6,9], neutral: [2], anti: [4,5,7,8] }
+  };
+  if (base === target) return "exact";
+  const row = friendlyMatrix[base];
+  if (!row) return "anti";
+  if (row.friendly.includes(target)) return "friendly";
+  if (row.neutral.includes(target)) return "neutral";
+  return "anti";
+};
+
+export const getRelationScore = (type, isBhagyank) => {
+  if (isBhagyank) {
+    switch (type) {
+      case "exact": return 5;
+      case "friendly": return 3;
+      case "neutral": return 1;
+      default: return -4;
+    }
+  } else {
+    switch (type) {
+      case "exact": return 4;
+      case "friendly": return 2;
+      case "neutral": return 1;
+      default: return -3;
+    }
+  }
+};
+
+export const getCompoundScore = (compound) => {
+  const strongCompounds = [14, 19, 23, 24, 32, 37, 41, 46];
+  const weakCompounds = [12, 16, 18, 20, 26, 28, 29, 31, 34, 38];
+  if (strongCompounds.includes(compound)) return 2;
+  if (weakCompounds.includes(compound)) return -2;
+  return 0;
+};
+
+export const analyzeStock = (dob, companyName, symbol, listingDateStr) => {
+  const m = calcMulank(dob);
+  const b = calcBhagyank(dob);
+
+  const company = compoundAndSingle(companyName);
+  const stockSymbol = compoundAndSingle(symbol);
+
+  let listing = 0;
+  if (listingDateStr && listingDateStr !== '-') {
+    const cleanDate = listingDateStr.replace(/\D/g, '');
+    const listingSum = cleanDate.split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
+    listing = reduceToSingle(listingSum);
+  }
+
+  const candidates = [
+    {
+      label: "Company Name",
+      compound: company.compound,
+      single: company.single,
+    },
+    {
+      label: "Symbol",
+      compound: stockSymbol.compound,
+      single: stockSymbol.single,
+    }
+  ];
+
+  if (listing > 0) {
+    candidates.push({
+      label: "Listing Date",
+      compound: 0,
+      single: listing,
+    });
+  }
+
+  let bestScore = -999;
+  let best = {};
+
+  for (const item of candidates) {
+    const single = item.single;
+    const compound = item.compound;
+
+    const mulankRel = getStockRelation(single, m);
+    const bhagyankRel = getStockRelation(single, b);
+
+    let score = 0;
+    score += getRelationScore(mulankRel, false);
+    score += getRelationScore(bhagyankRel, true);
+    score += getCompoundScore(compound);
+
+    // Lo Shu support
+    let count = 0;
+    if (single > 0 && dob) {
+      const dobDigits = dob.replace(/\D/g, '');
+      count = (dobDigits.match(new RegExp(single.toString(), 'g')) || []).length;
+    }
+    if (count >= 2) {
+      score += 2;
+    } else if (count === 1) {
+      score += 1;
+    } else if (single > 0) {
+      score -= 1;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = {
+        ...item,
+        mulankRelation: mulankRel,
+        bhagyankRelation: bhagyankRel,
+        score: score,
+      };
+    }
+  }
+
+  let status;
+  if (bestScore >= 8) {
+    status = "Strongly Suitable";
+  } else if (bestScore >= 4) {
+    status = "Suitable";
+  } else if (bestScore >= 1) {
+    status = "Watchlist";
+  } else {
+    status = "Avoid";
+  }
+
+  return {
+    mulank: m,
+    bhagyank: b,
+    bestIndicator: best,
+    status: status,
+    score: bestScore,
+  };
+};
+
+export const getStockComments = (bestIndicator, mulank, bhagyank, dob, status, score, language = 'en') => {
+  const isHi = language === 'hi';
+  const single = bestIndicator.single;
+  const compound = bestIndicator.compound;
+  const mulankRel = bestIndicator.mulankRelation;
+  const bhagyankRel = bestIndicator.bhagyankRelation;
+
+  const planetEng = {
+    1: 'Sun (Surya), representing leadership, authority, and vitality',
+    2: 'Moon (Chandra), representing emotions, intuition, and adaptability',
+    3: 'Jupiter (Guru), representing growth, wisdom, and expansion',
+    4: 'Rahu, representing innovation, sudden gains, and technology',
+    5: 'Mercury (Budh), representing trade, communication, and business intelligence',
+    6: 'Venus (Shukra), representing wealth, luxury, and harmony',
+    7: 'Ketu, representing research, analysis, and intuition',
+    8: 'Saturn (Shani), representing discipline, hard work, and persistence',
+    9: 'Mars (Mangal), representing energy, courage, and action'
+  };
+
+  const planetHi = {
+    1: 'सूर्य (Sun), जो नेतृत्व, अधिकार और जीवन शक्ति का प्रतिनिधित्व करता है',
+    2: 'चंद्र (Moon), जो भावनाओं, अंतर्ज्ञान और अनुकूलनशीलता का प्रतिनिधित्व करता है',
+    3: 'गुरु (Jupiter), जो विकास, ज्ञान और विस्तार का प्रतिनिधित्व करता है',
+    4: 'राहु (Rahu), जो नवाचार, अचानक लाभ और तकनीक का प्रतिनिधित्व करता है',
+    5: 'बुध (Mercury), जो व्यापार, संचार और व्यावसायिक बुद्धिमत्ता का प्रतिनिधित्व करता है',
+    6: 'शुक्र (Venus), जो धन, विलासिता और सद्भाव का प्रतिनिधित्व करता है',
+    7: 'केतु (Ketu), जो शोध, विश्लेषण और अंतर्ज्ञान का प्रतिनिधित्व करता है',
+    8: 'शनि (Saturn), जो अनुशासन, कड़ी मेहनत और दृढ़ता का प्रतिनिधित्व करता है',
+    9: 'मंगल (Mars), जो ऊर्जा, साहस और क्रिया का प्रतिनिधित्व करता है'
+  };
+
+  // Bullet 1: Core number quality
+  const b1 = isHi
+    ? `एकल अंक योग ${single} है, जो ${planetHi[single] || 'ग्रह'} द्वारा शासित है।`
+    : `The single digit sum is ${single}, ruled by ${planetEng[single] || 'planet'}.`;
+
+  // Bullet 2: Mulank relation
+  let b2 = '';
+  if (isHi) {
+    if (mulankRel === 'exact') {
+      b2 = `यह एकल अंक आपके मूलांक ${mulank} से बिल्कुल मेल खाता है, जिससे अत्यधिक शक्तिशाली और समकालिक ऊर्जा स्थापित होती है।`;
+    } else if (mulankRel === 'friendly') {
+      b2 = `यह अंक आपके मूलांक ${mulank} के अनुकूल है, जो आपकी व्यक्तिगत मूल ऊर्जा के साथ सहज संरेखण सुनिश्चित करता है।`;
+    } else if (mulankRel === 'neutral') {
+      b2 = `यह अंक आपके मूलांक ${mulank} के साथ तटस्थ है, जो बिना किसी बड़े व्यवधान के स्थिर ऊर्जा प्रवाह प्रदान करता है।`;
+    } else {
+      b2 = `यह अंक आपके मूलांक ${mulank} के लिए गैर-अनुकूल (शत्रु) है, जिससे अचानक चुनौतियाँ या ऊर्जा घर्षण उत्पन्न हो सकता है।`;
+    }
+  } else {
+    if (mulankRel === 'exact') {
+      b2 = `This single digit is an exact match to your Driver ${mulank}, establishing a highly powerful and synchronized energy.`;
+    } else if (mulankRel === 'friendly') {
+      b2 = `This digit is friendly with your Driver ${mulank}, ensuring smooth alignment with your personal core energy.`;
+    } else if (mulankRel === 'neutral') {
+      b2 = `This digit is neutral with your Driver ${mulank}, providing a stable energy flow without major disruptions.`;
+    } else {
+      b2 = `This digit is non-friendly with your Driver ${mulank}, which may introduce sudden challenges or energy friction.`;
+    }
+  }
+
+  // Bullet 3: Bhagyank relation
+  let b3 = '';
+  if (isHi) {
+    if (bhagyankRel === 'exact') {
+      b3 = `यह अंक आपके भाग्यांक ${bhagyank} से बिल्कुल मेल खाता है, जो दीर्घकालिक निवेश के लिए मजबूत भाग्य समर्थन और समृद्धि लाता है।`;
+    } else if (bhagyankRel === 'friendly') {
+      b3 = `यह अंक आपके भाग्यांक ${bhagyank} के अनुकूल है, जो आपके भाग्य पथ और दीर्घकालिक वित्तीय विकास का समर्थन करता है।`;
+    } else if (bhagyankRel === 'neutral') {
+      b3 = `यह अंक आपके भाग्यांक ${bhagyank} के साथ तटस्थ है, जो संतुलित और स्थिर निवेश परिणाम प्रदान करता है।`;
+    } else {
+      b3 = `यह अंक आपके भाग्यांक ${bhagyank} के साथ टकराव में है, जिससे निवेश में अप्रत्याशित देरी या हानि की संभावना बन सकती है।`;
+    }
+  } else {
+    if (bhagyankRel === 'exact') {
+      b3 = `This digit is an exact match to your Conductor ${bhagyank}, bringing strong destiny support and prosperity for long-term growth.`;
+    } else if (bhagyankRel === 'friendly') {
+      b3 = `This digit is friendly with your Conductor ${bhagyank}, supporting your destiny path and long-term financial progress.`;
+    } else if (bhagyankRel === 'neutral') {
+      b3 = `This digit is neutral with your Conductor ${bhagyank}, offering balanced and stable investment outcomes.`;
+    } else {
+      b3 = `This digit conflicts with your Conductor ${bhagyank}, which can introduce delays or potential losses in investments.`;
+    }
+  }
+
+  // Bullet 4: Compound support/weakness
+  let b4 = '';
+  if (compound === 0) {
+    b4 = isHi
+      ? `चूंकि यह प्रविष्टि एक विशिष्ट सूचीकरण तिथि है, यह बिना किसी जटिल संयुक्त संख्या के सीधे एकल अंक का प्रभाव प्रदान करती है।`
+      : `Since this entry represents a listing date, it offers direct single digit energy without compound number complexity.`;
+  } else {
+    const strongCompounds = [14, 19, 23, 24, 32, 37, 41, 46];
+    const weakCompounds = [12, 16, 18, 20, 26, 28, 29, 31, 34, 38];
+    const isStrong = strongCompounds.includes(compound);
+    const isWeak = weakCompounds.includes(compound);
+
+    if (isHi) {
+      if (isStrong) {
+        b4 = `संयुक्त अंक ${compound} एक अत्यंत भाग्यशाली संख्या है, जो आपकी वित्तीय स्थिति को अतिरिक्त ग्रहीय मजबूती और अनुकूलता प्रदान करती है।`;
+      } else if (isWeak) {
+        b4 = `संयुक्त अंक ${compound} एक कमजोर/चुनौतीपूर्ण संख्या है, जिसके कारण उतार-चढ़ाव या अप्रत्याशित हानि से बचने के लिए अतिरिक्त सतर्कता आवश्यक है।`;
+      } else {
+        b4 = `संयुक्त अंक ${compound} एक औसत/मध्यम संख्या है, जो सामान्य और संतुलित प्रदर्शन प्रदान करती है।`;
+      }
+    } else {
+      if (isStrong) {
+        b4 = `The compound total ${compound} is a highly favorable number, bringing extra planetary strength and bonus luck to your finances.`;
+      } else if (isWeak) {
+        b4 = `The compound total ${compound} is a weak/caution number, demanding extra vigilance to avoid volatility or unexpected drops.`;
+      } else {
+        b4 = `The compound total ${compound} is an average/neutral number, providing steady and balanced performance.`;
+      }
+    }
+  }
+
+  // Bullet 5: Suitability statement
+  let b5 = '';
+  if (isHi) {
+    if (status === 'Strongly Suitable') {
+      b5 = `कुल मिलाकर, यह स्टॉक आपके मुख्य अंकों के साथ अत्यधिक उपयुक्त श्रेणी में है; यह भविष्य में मजबूत लाभ के लिए उत्कृष्ट है।`;
+    } else if (status === 'Suitable') {
+      b5 = `कुल मिलाकर, यह स्टॉक आपके अंकों के साथ अनुकूल है और संतुलित जोखिम के साथ निवेश के लिए उपयुक्त है।`;
+    } else if (status === 'Watchlist') {
+      b5 = `कुल मिलाकर, यह स्टॉक एक तटस्थ श्रेणी (वॉचलिस्ट) में आता है; पूरी सावधानी और उचित तकनीकी विश्लेषण के बाद ही व्यापार करें।`;
+    } else {
+      b5 = `कुल मिलाकर, मुख्य अंकों में सीधे टकराव के कारण इस स्टॉक से बचने की सलाह दी जाती है, क्योंकि यह प्रतिकूल ऊर्जा चक्र ला सकता है।`;
+    }
+  } else {
+    if (status === 'Strongly Suitable') {
+      b5 = `Overall, this stock is strongly suitable and aligns exceptionally well with your numerology profile for long-term wealth creation.`;
+    } else if (status === 'Suitable') {
+      b5 = `Overall, this stock is suitable, showing favorable planetary alignment and solid growth potential.`;
+    } else if (status === 'Watchlist') {
+      b5 = `Overall, this stock falls in the watchlist category; monitor its movements closely and trade with caution.`;
+    } else {
+      b5 = `Overall, this stock conflicts with your core numbers; it is highly recommended to avoid investing in this frequency.`;
+    }
+  }
+
+  return [b1, b2, b3, b4, b5];
 };

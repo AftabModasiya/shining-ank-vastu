@@ -23,7 +23,9 @@ import {
   getNameNumerologyCheck,
   getForeignSettlement,
   getMatchMaking,
-  getMarriageType
+  getMarriageType,
+  analyzeStock,
+  getStockComments
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -31,6 +33,19 @@ import firstp1Img from "../assets/Firstp1.png"; // This is actually the Wheel im
 import firstp2Img from "../assets/firstp2.png"; // This is actually the Lord Ganesha image
 import lastPageImg from "../assets/LastPage.png";
 import ganeshaMantraImg from "../assets/ganeshaMantra.png";
+
+const formatDateToDDMMYYYY = (dateStr) => {
+  if (!dateStr) return '';
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+  }
+  return dateStr;
+};
 
 // Helper to asynchronously load images for PDF generation
 const loadImage = (src) => {
@@ -2321,6 +2336,121 @@ export const generatePDF = async (clientData, language = 'en') => {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9.5);
     doc.text(t("No name data available for analysis.", "विश्लेषण के लिए कोई नाम डेटा उपलब्ध नहीं है।"), 20, nmY + 10);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: STOCK MARKET COMPATIBILITY
+  // ════════════════════════════════════════════════════════════════════════
+  const stockInfo = reportData.stockMarket || {};
+  if (stockInfo.companyName && stockInfo.symbol) {
+    doc.addPage();
+    drawPageShell(doc);
+
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(t("STOCK MARKET COMPATIBILITY", "शेयर बाजार अनुकूलता"), 14, 27);
+
+    // Stock details banner
+    doc.setFillColor(244, 246, 249);
+    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "F");
+    doc.setDrawColor(108, 117, 125);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "D");
+
+    doc.setTextColor(51, 51, 51);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(`${t("Company / Stock Name", "कंपनी / स्टॉक का नाम")}: ${stockInfo.companyName}`, 20, 41);
+    doc.text(`${t("Stock Symbol", "स्टॉक सिंबल")}: ${stockInfo.symbol}`, 20, 47);
+    if (stockInfo.listingDate) {
+      doc.text(`${t("Listing Date", "सूचीबद्धता की तिथि")}: ${formatDateToDDMMYYYY(stockInfo.listingDate)}`, 20, 53);
+    }
+
+    // Best Indicator Card
+    const stockAnalysis = analyzeStock(rawDob, stockInfo.companyName, stockInfo.symbol, stockInfo.listingDate || '-');
+    let smY = 64;
+
+    doc.setFillColor(255, 252, 243);
+    doc.roundedRect(15, smY, pageWidth - 30, 20, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(15, smY, pageWidth - 30, 20, 3, 3, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(t("BEST SCORING INDICATOR", "सर्वश्रेष्ठ संकेतक"), 20, smY + 6);
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text(`Source: ${stockAnalysis.bestIndicator.label}  |  Single: ${stockAnalysis.bestIndicator.single}${stockAnalysis.bestIndicator.compound > 0 ? `  |  Compound: ${stockAnalysis.bestIndicator.compound}` : ''}  |  Score: ${stockAnalysis.score}`, 20, smY + 13);
+
+    smY += 26;
+
+    // Bullet insights
+    const comments = getStockComments(
+      stockAnalysis.bestIndicator,
+      stockAnalysis.mulank,
+      stockAnalysis.bhagyank,
+      rawDob,
+      stockAnalysis.status,
+      stockAnalysis.score,
+      language
+    );
+
+    const hlH = 10 + comments.length * 8;
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, smY, pageWidth - 30, hlH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, smY, pageWidth - 30, hlH, 2, 2, "D");
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(t("DETAILED COMPATIBILITY INSIGHTS", "विस्तृत अनुकूलता अंतर्दृष्टि"), 20, smY + 6);
+
+    let hlY = smY + 13;
+    comments.forEach(h => {
+      doc.setFillColor(...goldPrimary);
+      doc.circle(21, hlY, 1.5, "F");
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const hl = doc.splitTextToSize(h, pageWidth - 52);
+      doc.text(hl, 26, hlY + 1);
+      hlY += hl.length * 4.2 + 2;
+    });
+
+    smY += hlH + 6;
+
+    // Suitability Banner
+    const getStatusColor = (status) => {
+      if (status === 'Strongly Suitable') return { bg: [212, 237, 218], border: [40, 167, 69], text: [21, 87, 36] };
+      if (status === 'Suitable') return { bg: [232, 244, 253], border: [0, 123, 255], text: [0, 64, 133] };
+      if (status === 'Watchlist') return { bg: [255, 243, 205], border: [255, 193, 7], text: [133, 100, 4] };
+      return { bg: [248, 215, 218], border: [220, 53, 105], text: [114, 28, 36] };
+    };
+
+    const colors = getStatusColor(stockAnalysis.status);
+    const tStatus = isHi ? {
+      'Strongly Suitable': 'अत्यधिक उपयुक्त',
+      'Suitable': 'उपयुक्त',
+      'Watchlist': 'वॉचलिस्ट',
+      'Avoid': 'बचें'
+    }[stockAnalysis.status] || stockAnalysis.status : stockAnalysis.status;
+
+    doc.setFillColor(...colors.bg);
+    doc.roundedRect(15, smY, pageWidth - 30, 14, 3, 3, "F");
+    doc.setDrawColor(...colors.border);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, smY, pageWidth - 30, 14, 3, 3, "D");
+    doc.setTextColor(...colors.text);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`${t("STATUS", "स्थिति")}: ${tStatus}`, pageWidth / 2, smY + 9, { align: "center" });
   }
 
   // ════════════════════════════════════════════════════════════════════════
