@@ -2512,7 +2512,7 @@ export const generatePDF = async (clientData, language = 'en') => {
         doc.setTextColor(...goldPrimary);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.2);
-        const cols = [18, 47, 72, 97, 125, 157];
+        const cols = [18, 38, 68, 102, 138, 168];
         doc.text(t('Rank', 'क्रम'), cols[0], bY + 5.5);
         doc.text(t('Date', 'तिथि'), cols[1], bY + 5.5);
         doc.text(t('Driver|Conductor', 'मूलांक|भाग्यांक'), cols[2], bY + 5.5);
@@ -2572,24 +2572,24 @@ export const generatePDF = async (clientData, language = 'en') => {
           const maxRows = Math.max(leftPanes.length, rightPanes.length);
 
           for (let i = 0; i < maxRows; i++) {
-            [[leftPanes[i], 15], [rightPanes[i], pageWidth / 2 + 3]].forEach(([entry, xOff]) => {
+            [[leftPanes[i], 15], [rightPanes[i], 108]].forEach(([entry, xOff]) => {
               if (!entry) return;
               const [, plane] = entry;
               const pLabel = isHi ? plane.labelHi : plane.label;
-              const barW = 40;
+              const barW = 30;
               const pct = plane.percentage;
               const fillW = Math.round(barW * pct / 100);
               doc.setFillColor(240, 236, 225);
-              doc.roundedRect(xOff, bY, pageWidth / 2 - 5, 7, 1, 1, 'F');
+              doc.roundedRect(xOff, bY, 87, 7, 1, 1, 'F');
               doc.setDrawColor(220, 210, 190);
               doc.setLineWidth(0.1);
-              doc.roundedRect(xOff, bY, pageWidth / 2 - 5, 7, 1, 1, 'D');
+              doc.roundedRect(xOff, bY, 87, 7, 1, 1, 'D');
               doc.setTextColor(...textDark);
               doc.setFont('helvetica', 'normal');
               doc.setFontSize(7.5);
               doc.text(pLabel + ':', xOff + 2, bY + 4.8);
               // progress bar
-              const barX = xOff + 42;
+              const barX = xOff + 44;
               doc.setFillColor(225, 218, 205);
               doc.roundedRect(barX, bY + 2, barW, 3.5, 1, 1, 'F');
               if (fillW > 0) {
