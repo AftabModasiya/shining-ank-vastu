@@ -2476,3 +2476,182 @@ export const getStockComments = (bestIndicator, mulank, bhagyank, dob, status, s
 
   return [b1, b2, b3, b4, b5];
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BABY BIRTH DATE CALCULATOR — Chaldean + Lo Shu Plane Scoring
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LO_SHU_PLANES = {
+  thought:    { numbers: [4, 3, 8], label: 'Thought Plane',    labelHi: 'विचार तल' },
+  will:       { numbers: [9, 5, 1], label: 'Will Plane',       labelHi: 'इच्छाशक्ति तल' },
+  action:     { numbers: [2, 7, 6], label: 'Action Plane',     labelHi: 'क्रिया तल' },
+  mental:     { numbers: [4, 9, 2], label: 'Mental Plane',     labelHi: 'मानसिक तल' },
+  emotional:  { numbers: [3, 5, 7], label: 'Emotional Plane',  labelHi: 'भावनात्मक तल' },
+  practical:  { numbers: [8, 1, 6], label: 'Practical Plane',  labelHi: 'व्यावहारिक तल' },
+  golden:     { numbers: [4, 5, 6], label: 'Golden Plane',     labelHi: 'स्वर्णिम तल' },
+  silver:     { numbers: [2, 5, 8], label: 'Silver Plane',     labelHi: 'रजत तल' },
+};
+
+const PLANET_FRIENDS_BIRTH = {
+  1: [1, 2, 3, 9], 2: [1, 2, 3, 4], 3: [1, 2, 3, 6, 9],
+  4: [1, 2, 4, 7, 8], 5: [1, 4, 5, 6], 6: [3, 5, 6, 9],
+  7: [1, 2, 4, 7], 8: [4, 5, 6, 7, 8], 9: [1, 3, 6, 9],
+};
+
+const getDCRelationship = (driver, conductor) => {
+  if (!driver || !conductor) return 'Neutral';
+  const friends = PLANET_FRIENDS_BIRTH[driver] || [];
+  const condFriends = PLANET_FRIENDS_BIRTH[conductor] || [];
+  if (friends.includes(conductor) || condFriends.includes(driver)) return 'Compatible';
+  if ([4, 8].includes(driver) && [4, 8].includes(conductor)) return 'Anti';
+  if (driver === conductor) return 'Compatible';
+  return 'Neutral';
+};
+
+const KARMIC_NUMBERS = [13, 14, 16, 19];
+const MASTER_NUMBERS_BIRTH = [11, 22, 33];
+
+const calcBirthCompound = (dateStr) => {
+  if (!dateStr) return { compound: 0, single: 0 };
+  const digits = dateStr.replace(/-/g, '').split('').map(Number);
+  const total = digits.reduce((a, d) => a + d, 0);
+  return { compound: total, single: reduceToSingle(total) };
+};
+
+const calcDayDriver = (dateStr) => {
+  if (!dateStr) return 0;
+  const day = parseInt(dateStr.split('-')[2] || '0', 10);
+  return reduceToSingle(day);
+};
+
+const getPlanePercentage = (presentNumbers, planeNums) => {
+  const count = planeNums.filter(n => presentNumbers.includes(n)).length;
+  if (count >= 3) return 100;
+  if (count === 2) return 66;
+  if (count === 1) return 33;
+  return 0;
+};
+
+export const analyzeSingleBirthDate = (dateStr) => {
+  if (!dateStr) return null;
+
+  const driver = calcDayDriver(dateStr);
+  const { compound: compoundConductor, single: conductor } = calcBirthCompound(dateStr);
+
+  const rawDigits = dateStr.replace(/-/g, '').split('').map(Number).filter(d => d > 0);
+  const presentNumbers = [...new Set(rawDigits)].filter(n => n >= 1 && n <= 9);
+  const allNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const missingNumbers = allNumbers.filter(n => !presentNumbers.includes(n));
+  const digitCounts = {};
+  rawDigits.forEach(d => { if (d > 0) digitCounts[d] = (digitCounts[d] || 0) + 1; });
+  const repeatedNumbers = Object.entries(digitCounts)
+    .filter(([, c]) => c > 1)
+    .map(([n]) => parseInt(n));
+
+  const gridFilled = presentNumbers.length;
+  const karmicNumber = KARMIC_NUMBERS.includes(compoundConductor) ? compoundConductor : null;
+  const masterNumber = MASTER_NUMBERS_BIRTH.includes(compoundConductor) ? compoundConductor : null;
+  const dcRelationship = getDCRelationship(driver, conductor);
+
+  const planes = {};
+  Object.entries(LO_SHU_PLANES).forEach(([key, def]) => {
+    planes[key] = {
+      label: def.label,
+      labelHi: def.labelHi,
+      numbers: def.numbers,
+      percentage: getPlanePercentage(presentNumbers, def.numbers),
+    };
+  });
+
+  let score = 0;
+  if (dcRelationship === 'Compatible') score += 20;
+  else if (dcRelationship === 'Neutral') score += 8;
+  else score -= 10;
+
+  score += gridFilled * 5;
+  score += Math.round(planes.golden.percentage * 0.15);
+  score += Math.round(planes.will.percentage * 0.08);
+  score += Math.round(planes.action.percentage * 0.08);
+  score += Math.round(planes.emotional.percentage * 0.05);
+
+  if (karmicNumber === 13 || karmicNumber === 16) score -= 10;
+  else if (karmicNumber) score -= 5;
+
+  if ((driver === 4 && conductor === 8) || (driver === 8 && conductor === 4)) score -= 15;
+
+  const boyScore = Math.min(100, Math.max(0, score
+    + Math.round(planes.will.percentage * 0.10)
+    + Math.round(planes.action.percentage * 0.10)));
+
+  const girlScore = Math.min(100, Math.max(0, score
+    + Math.round(planes.golden.percentage * 0.12)
+    + Math.round(planes.emotional.percentage * 0.08)));
+
+  const finalScore = Math.min(100, Math.max(0, score));
+  const isPerfect = finalScore >= 70;
+
+  return {
+    date: dateStr,
+    driver,
+    conductor,
+    compoundConductor,
+    dcRelationship,
+    karmicNumber,
+    masterNumber,
+    presentNumbers,
+    missingNumbers,
+    repeatedNumbers,
+    gridFilled,
+    planes,
+    score: finalScore,
+    boyScore,
+    girlScore,
+    isPerfect,
+  };
+};
+
+export const analyzeBirthDateRange = (startDateStr, endDateStr) => {
+  if (!startDateStr || !endDateStr) return [];
+  const results = [];
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  if (isNaN(start) || isNaN(end) || start > end) return [];
+
+  const current = new Date(start);
+  while (current <= end) {
+    const yyyy = current.getFullYear();
+    const mm = String(current.getMonth() + 1).padStart(2, '0');
+    const dd = String(current.getDate()).padStart(2, '0');
+    const result = analyzeSingleBirthDate(`${yyyy}-${mm}-${dd}`);
+    if (result) results.push(result);
+    current.setDate(current.getDate() + 1);
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return results;
+};
+
+export const getBirthDateGenderJustification = (analysis, gender, language = 'en') => {
+  if (!analysis) return '';
+  const isHi = language === 'hi';
+  const { date, planes } = analysis;
+  const [yyyy, mm, dd] = date.split('-');
+  const formattedDate = `${dd}-${mm}-${yyyy}`;
+
+  if (gender === 'boy') {
+    const actionPct = planes.action.percentage;
+    const willPct = planes.will.percentage;
+    if (isHi) {
+      return `${formattedDate} बेबी बॉय के लिए अत्यंत उपयुक्त है क्योंकि इसमें ${actionPct}% Action Plane और ${willPct}% Will Plane की शक्ति है — जो नेतृत्व, साहस और क्रियाशीलता सुनिश्चित करती है।`;
+    }
+    return `${formattedDate} is highly suitable for a Baby Boy because it anchors a ${actionPct}% Action Plane and strong ${willPct}% Will Plane, ensuring high leadership, courage, and execution capabilities.`;
+  } else {
+    const goldenPct = planes.golden.percentage;
+    const emotionalPct = planes.emotional.percentage;
+    if (isHi) {
+      return `${formattedDate} बेबी गर्ल के लिए असाधारण रूप से उपयुक्त है क्योंकि इसमें ${goldenPct}% Golden Plane (4,5,6) और ${emotionalPct}% Emotional Plane है — जो समृद्धि, संतुलन और सृजनात्मक विलासिता लाती है।`;
+    }
+    return `${formattedDate} is exceptionally suitable for a Baby Girl due to a ${goldenPct}% Golden Plane (4,5,6) combined with a solid ${emotionalPct}% Emotional Plane, bringing immense prosperity, balance, and creative luxury to her life.`;
+  }
+};
+

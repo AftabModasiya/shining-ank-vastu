@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification } from '../utils/numerology';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
@@ -57,6 +57,10 @@ function ReportView() {
         companyName: '',
         symbol: '',
         listingDate: ''
+      },
+      babyBirth: safeData.report.babyBirth || {
+        startDate: '',
+        endDate: ''
       }
     };
     return safeData;
@@ -66,6 +70,8 @@ function ReportView() {
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [babyGender, setBabyGender] = useState('boy');
+    const [selectedBabyDate, setSelectedBabyDate] = useState(null);
     const { t, language } = useLanguage();
     const rpt = t.rpt;
 
@@ -400,6 +406,8 @@ function ReportView() {
       symbol: '',
       listingDate: ''
     };
+
+    const babyBirthData = report?.babyBirth || { startDate: '', endDate: '' };
 
     return (
       <div className={`report-page ${isEditing ? 'is-editing' : ''}`}>
@@ -1559,6 +1567,266 @@ function ReportView() {
                   <p>{rpt.stockNotDefined}</p>
                 </div>
               )}
+            </section>
+
+            {/* ── BABY BIRTH CALCULATOR ────────────────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.babyTitle}</h3>
+
+              {/* Edit mode: date range inputs */}
+              {isEditing && (
+                <div className="name-detail-card" style={{ display: 'block', marginBottom: '14px' }}>
+                  <span className="detail-label">{rpt.babyDateRangeLabel}</span>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '12px' }}>
+                    <div className="form-group" style={{ flex: 1, minWidth: '180px' }}>
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.babyStartDate}</label>
+                      <input
+                        type="date"
+                        className="edit-input"
+                        name="report.babyBirth.startDate"
+                        value={editedData?.report?.babyBirth?.startDate || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group" style={{ flex: 1, minWidth: '180px' }}>
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.babyEndDate}</label>
+                      <input
+                        type="date"
+                        className="edit-input"
+                        name="report.babyBirth.endDate"
+                        value={editedData?.report?.babyBirth?.endDate || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Main analysis block */}
+              {(() => {
+                const startDate = isEditing
+                  ? (editedData?.report?.babyBirth?.startDate || '')
+                  : babyBirthData.startDate;
+                const endDate = isEditing
+                  ? (editedData?.report?.babyBirth?.endDate || '')
+                  : babyBirthData.endDate;
+
+                if (!startDate || !endDate) {
+                  return (
+                    <div className="empty-state-box">
+                      <p>{rpt.babyNotDefined}</p>
+                    </div>
+                  );
+                }
+
+                const allResults = analyzeBirthDateRange(startDate, endDate);
+                if (!allResults.length) {
+                  return <div className="empty-state-box"><p>{rpt.babyNotDefined}</p></div>;
+                }
+
+                // Sort by gender score
+                const sorted = [...allResults].sort((a, b) =>
+                  babyGender === 'boy' ? b.boyScore - a.boyScore : b.girlScore - a.girlScore
+                );
+
+                const perfects = allResults.filter(r => r.isPerfect);
+
+                const getScoreClass = (score) => {
+                  if (score >= 70) return 'perfect';
+                  if (score >= 50) return 'good';
+                  if (score >= 30) return 'neutral';
+                  return 'avoid';
+                };
+                const getCalCellClass = (score) => `${getScoreClass(score)}-cell`;
+                const getBarColor = (pct) => {
+                  if (pct === 100) return '#10b981';
+                  if (pct === 66) return '#3b82f6';
+                  if (pct === 33) return '#eab308';
+                  return '#e5e7eb';
+                };
+
+                const activeBaby = selectedBabyDate
+                  ? allResults.find(r => r.date === selectedBabyDate) || sorted[0]
+                  : sorted[0];
+
+                const formatDDMMYYYY = (d) => {
+                  const [y, m, day] = d.split('-');
+                  return `${day}-${m}-${y}`;
+                };
+
+                const dcEmoji = (rel) => {
+                  if (rel === 'Compatible') return rpt.babyCompatible;
+                  if (rel === 'Anti') return rpt.babyAnti;
+                  return rpt.babyNeutral;
+                };
+
+                const isHi = language === 'hi';
+
+                return (
+                  <div>
+                    {/* Gender toggle */}
+                    <div className="baby-gender-toggle">
+                      <button
+                        className={`baby-gender-btn ${babyGender === 'boy' ? 'active-boy' : ''}`}
+                        onClick={() => setBabyGender('boy')}
+                      >{rpt.babyGenderBoy}</button>
+                      <button
+                        className={`baby-gender-btn ${babyGender === 'girl' ? 'active-girl' : ''}`}
+                        onClick={() => setBabyGender('girl')}
+                      >{rpt.babyGenderGirl}</button>
+                    </div>
+
+                    {/* Summary Card */}
+                    <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '14px' }}>
+                      <h4 style={{ color: '#1a3a2e', marginBottom: '8px' }}>{rpt.babySummaryCard}</h4>
+                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.88rem', color: '#495057' }}>
+                          {rpt.babyTotalDays}: <strong style={{ color: '#d4a017' }}>{allResults.length}</strong>
+                        </span>
+                        <span style={{ fontSize: '0.88rem', color: '#495057' }}>
+                          {rpt.babyPerfectDates}: <strong style={{ color: '#10b981' }}>{perfects.length}</strong>
+                        </span>
+                        <span style={{ fontSize: '0.88rem', color: '#495057' }}>
+                          {rpt.babySelectedDates}: <strong style={{ color: '#333' }}>{formatDDMMYYYY(startDate)} → {formatDDMMYYYY(endDate)}</strong>
+                        </span>
+                      </div>
+
+                      {/* Date Pills */}
+                      <div className="baby-pills-row">
+                        {sorted.slice(0, 12).map(r => (
+                          <span
+                            key={r.date}
+                            className={`baby-pill ${getScoreClass(babyGender === 'boy' ? r.boyScore : r.girlScore)} ${selectedBabyDate === r.date || (!selectedBabyDate && r.date === sorted[0].date) ? 'selected' : ''}`}
+                            onClick={() => setSelectedBabyDate(r.date)}
+                          >
+                            {formatDDMMYYYY(r.date)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Heatmap Calendar */}
+                    <div className="name-detail-card" style={{ marginBottom: '14px' }}>
+                      <span className="detail-label" style={{ marginBottom: '8px', display: 'block' }}>
+                        {isHi ? '🗓️ कैलेंडर हीटमैप' : '🗓️ CALENDAR HEATMAP'}
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: '#8c6f58', marginBottom: '6px' }}>
+                        <span style={{ color: '#10b981', fontWeight: 700 }}>&#9632;</span> {isHi ? 'परफेक्ट (70+)' : 'Perfect (70+)'} &nbsp;
+                        <span style={{ color: '#3b82f6', fontWeight: 700 }}>&#9632;</span> {isHi ? 'अच्छा (50-69)' : 'Good (50-69)'} &nbsp;
+                        <span style={{ color: '#eab308', fontWeight: 700 }}>&#9632;</span> {isHi ? 'तटस्थ (30-49)' : 'Neutral (30-49)'} &nbsp;
+                        <span style={{ color: '#ef4444', fontWeight: 700 }}>&#9632;</span> {isHi ? 'बचें (<30)' : 'Avoid (<30)'}
+                      </div>
+                      <div className="baby-calendar">
+                        {allResults.map(r => {
+                          const gScore = babyGender === 'boy' ? r.boyScore : r.girlScore;
+                          const isSelected = selectedBabyDate === r.date || (!selectedBabyDate && r.date === sorted[0].date);
+                          const [, , dd] = r.date.split('-');
+                          return (
+                            <div
+                              key={r.date}
+                              className={`baby-cal-cell ${getCalCellClass(gScore)} ${isSelected ? 'selected-cell' : ''}`}
+                              onClick={() => setSelectedBabyDate(r.date)}
+                              title={`${formatDDMMYYYY(r.date)} — Score: ${gScore}`}
+                            >
+                              <span>{dd}</span>
+                              <span className="baby-cal-score">{gScore}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Top 5 Ranked List */}
+                    <div className="name-detail-card" style={{ marginBottom: '14px' }}>
+                      <span className="detail-label" style={{ marginBottom: '8px', display: 'block' }}>
+                        {isHi ? `शीर्ष 5 अनुशंसित तिथियाँ (${babyGender === 'boy' ? 'बॉय' : 'गर्ल'})` : `TOP 5 DATES FOR BABY ${babyGender === 'boy' ? 'BOY' : 'GIRL'}`}
+                      </span>
+                      <div className="baby-ranked-list">
+                        {sorted.slice(0, 5).map((r, idx) => {
+                          const gScore = babyGender === 'boy' ? r.boyScore : r.girlScore;
+                          const isSelected = selectedBabyDate === r.date || (!selectedBabyDate && r.date === sorted[0].date);
+                          return (
+                            <div
+                              key={r.date}
+                              className={`baby-ranked-item ${isSelected ? 'selected' : ''}`}
+                              onClick={() => setSelectedBabyDate(r.date)}
+                            >
+                              <span className="baby-rank-num">#{idx + 1}</span>
+                              <div style={{ flex: 1 }}>
+                                <div className="baby-rank-date">{formatDDMMYYYY(r.date)}</div>
+                                <div className="baby-rank-meta">
+                                  {rpt.babyDriver}: {r.driver} | {rpt.babyConductor}: {r.conductor} | DC: {dcEmoji(r.dcRelationship)}
+                                </div>
+                              </div>
+                              <span className={`baby-score-badge baby-score-${getScoreClass(gScore)}`}>
+                                {gScore}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Detailed Breakdown for selected date */}
+                    {activeBaby && (
+                      <div className="baby-breakdown-card">
+                        <div className="baby-breakdown-title">
+                          {rpt.babyDateBreakdown}: {formatDDMMYYYY(activeBaby.date)}
+                        </div>
+
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyDriver} | {rpt.babyConductor}:</span>
+                          <span className="baby-stat-val">{activeBaby.driver} | {activeBaby.conductor} (Compound: {activeBaby.compoundConductor})</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyDCRelation}:</span>
+                          <span className="baby-stat-val">{dcEmoji(activeBaby.dcRelationship)}</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyKarmic}:</span>
+                          <span className="baby-stat-val">{activeBaby.karmicNumber || rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyMaster}:</span>
+                          <span className="baby-stat-val">{activeBaby.masterNumber || rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyMissingNums}:</span>
+                          <span className="baby-stat-val">{activeBaby.missingNumbers.length ? activeBaby.missingNumbers.join(', ') : rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyRepeatedNums}:</span>
+                          <span className="baby-stat-val">{activeBaby.repeatedNumbers.length ? activeBaby.repeatedNumbers.join(', ') : rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row">
+                          <span className="baby-stat-key">{rpt.babyGridStatus}:</span>
+                          <span className="baby-stat-val">{activeBaby.gridFilled} {rpt.babyOutOf9} {activeBaby.gridFilled >= 7 ? '🟢' : activeBaby.gridFilled >= 5 ? '🟡' : '🔴'}</span>
+                        </div>
+
+                        {/* Planes Matrix */}
+                        <div className="baby-breakdown-title" style={{ marginTop: '16px' }}>{rpt.babyPlaneMatrix}</div>
+                        <div className="baby-plane-grid">
+                          {Object.entries(activeBaby.planes).map(([key, plane]) => (
+                            <div key={key} className="baby-plane-row">
+                              <span className="baby-plane-label">{isHi ? plane.labelHi : plane.label}:</span>
+                              <div className="baby-plane-bar-wrap">
+                                <div className="baby-plane-bar" style={{ width: `${plane.percentage}%`, background: getBarColor(plane.percentage) }} />
+                              </div>
+                              <span className="baby-plane-pct">{plane.percentage}%</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Gender Suitability Justification */}
+                        <div className="baby-breakdown-title" style={{ marginTop: '16px' }}>{rpt.babyGenderSuitability}</div>
+                        <div className={`baby-justification ${babyGender}`}>
+                          {getBirthDateGenderJustification(activeBaby, babyGender, language)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </section>
 
             {/* ── 13. CUSTOM NOTE PAGE 1 ─────────────────── */}

@@ -25,7 +25,9 @@ import {
   getMatchMaking,
   getMarriageType,
   analyzeStock,
-  getStockComments
+  getStockComments,
+  analyzeBirthDateRange,
+  getBirthDateGenderJustification
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -2454,9 +2456,184 @@ export const generatePDF = async (clientData, language = 'en') => {
   }
 
   // ════════════════════════════════════════════════════════════════════════
+  // PAGE: BABY BIRTH DATE CALCULATOR
+  // ════════════════════════════════════════════════════════════════════════
+  const babyBirthInfo = reportData.babyBirth || {};
+  const babyStart = babyBirthInfo.startDate || '';
+  const babyEnd   = babyBirthInfo.endDate   || '';
+
+  if (babyStart && babyEnd) {
+    const babyResults = analyzeBirthDateRange(babyStart, babyEnd);
+    if (babyResults.length > 0) {
+      // Two pages: one for boy, one for girl
+      ['boy', 'girl'].forEach(gender => {
+        doc.addPage();
+        drawPageShell(doc);
+
+        // Section header
+        doc.setFillColor(...goldPrimary);
+        doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(
+          t('BABY BIRTH DATE CALCULATOR', 'बेबी बर्थ डेट कैलकुलेटर') +
+          ' — ' +
+          (gender === 'boy' ? t('BABY BOY', 'बेबी बॉय') : t('BABY GIRL', 'बेबी गर्ल')),
+          14, 27
+        );
+
+        // Summary stats row
+        const perfects = babyResults.filter(r => r.isPerfect).length;
+        doc.setTextColor(...textDark);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        const [sy, sm, sd] = babyStart.split('-');
+        const [ey, em, ed] = babyEnd.split('-');
+        doc.text(
+          `${t('Date Range', 'तिथि सीमा')}: ${sd}-${sm}-${sy} → ${ed}-${em}-${ey}   |   ` +
+          `${t('Total Days', 'कुल दिन')}: ${babyResults.length}   |   ` +
+          `${t('Perfect Dates (Score ≥70)', 'परफेक्ट तिथियाँ (≥70)')} : ${perfects}`,
+          14, 38
+        );
+
+        // Sort by gender score
+        const sorted = [...babyResults].sort((a, b) =>
+          gender === 'boy' ? b.boyScore - a.boyScore : b.girlScore - a.girlScore
+        );
+        const top5 = sorted.slice(0, 5);
+
+        // Top-5 ranked table header
+        let bY = 45;
+        doc.setFillColor(250, 245, 235);
+        doc.roundedRect(15, bY, pageWidth - 30, 8, 1, 1, 'FD');
+        doc.setDrawColor(...goldPrimary);
+        doc.setLineWidth(0.2);
+        doc.setTextColor(...goldPrimary);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.2);
+        const cols = [18, 47, 72, 97, 125, 157];
+        doc.text(t('Rank', 'क्रम'), cols[0], bY + 5.5);
+        doc.text(t('Date', 'तिथि'), cols[1], bY + 5.5);
+        doc.text(t('Driver|Conductor', 'मूलांक|भाग्यांक'), cols[2], bY + 5.5);
+        doc.text(t('DC Relation', 'DC संबंध'), cols[3], bY + 5.5);
+        doc.text(t('Grid Filled', 'ग्रिड'), cols[4], bY + 5.5);
+        doc.text(t('Score', 'स्कोर'), cols[5], bY + 5.5);
+        bY += 9;
+
+        top5.forEach((r, idx) => {
+          const gScore = gender === 'boy' ? r.boyScore : r.girlScore;
+          const [ry, rm, rd] = r.date.split('-');
+          const fDate = `${rd}-${rm}-${ry}`;
+          const rowBg = gScore >= 70 ? [209, 250, 229] : gScore >= 50 ? [219, 234, 254] : gScore >= 30 ? [254, 249, 195] : [254, 226, 226];
+          doc.setFillColor(...rowBg);
+          doc.setDrawColor(220, 220, 210);
+          doc.setLineWidth(0.15);
+          doc.roundedRect(15, bY, pageWidth - 30, 9, 1, 1, 'FD');
+          doc.setTextColor(...textDark);
+          doc.setFont('helvetica', idx === 0 ? 'bold' : 'normal');
+          doc.setFontSize(8.2);
+          doc.text(`#${idx + 1}`, cols[0], bY + 6);
+          doc.text(fDate, cols[1], bY + 6);
+          doc.text(`${r.driver} | ${r.conductor}`, cols[2], bY + 6);
+          const dcStr = r.dcRelationship === 'Compatible' ? t('Compatible', 'संगत')
+            : r.dcRelationship === 'Anti' ? t('Anti', 'विरोधी') : t('Neutral', 'तटस्थ');
+          doc.text(dcStr, cols[3], bY + 6);
+          doc.text(`${r.gridFilled}/9`, cols[4], bY + 6);
+          doc.setTextColor(r.dcRelationship === 'Compatible' ? 21 : r.dcRelationship === 'Anti' ? 127 : 110,
+            r.dcRelationship === 'Compatible' ? 128 : r.dcRelationship === 'Anti' ? 29 : 90,
+            r.dcRelationship === 'Compatible' ? 60 : 36);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${gScore}`, cols[5], bY + 6);
+          bY += 10;
+        });
+
+        bY += 4;
+
+        // Plane Matrix for top date
+        const best = top5[0];
+        if (best) {
+          doc.setFillColor(...goldPrimary);
+          doc.roundedRect(15, bY, pageWidth - 30, 8, 2, 2, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.5);
+          doc.text(
+            t('PLANES SUMMARY — TOP DATE', 'तल सारांश — शीर्ष तिथि') +
+            `: ${best.date.split('-').reverse().join('-')}`,
+            20, bY + 5.5
+          );
+          bY += 11;
+
+          const planeEntries = Object.entries(best.planes);
+          const halfLen = Math.ceil(planeEntries.length / 2);
+          const leftPanes  = planeEntries.slice(0, halfLen);
+          const rightPanes = planeEntries.slice(halfLen);
+          const maxRows = Math.max(leftPanes.length, rightPanes.length);
+
+          for (let i = 0; i < maxRows; i++) {
+            [[leftPanes[i], 15], [rightPanes[i], pageWidth / 2 + 3]].forEach(([entry, xOff]) => {
+              if (!entry) return;
+              const [, plane] = entry;
+              const pLabel = isHi ? plane.labelHi : plane.label;
+              const barW = 40;
+              const pct = plane.percentage;
+              const fillW = Math.round(barW * pct / 100);
+              doc.setFillColor(240, 236, 225);
+              doc.roundedRect(xOff, bY, pageWidth / 2 - 5, 7, 1, 1, 'F');
+              doc.setDrawColor(220, 210, 190);
+              doc.setLineWidth(0.1);
+              doc.roundedRect(xOff, bY, pageWidth / 2 - 5, 7, 1, 1, 'D');
+              doc.setTextColor(...textDark);
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(7.5);
+              doc.text(pLabel + ':', xOff + 2, bY + 4.8);
+              // progress bar
+              const barX = xOff + 42;
+              doc.setFillColor(225, 218, 205);
+              doc.roundedRect(barX, bY + 2, barW, 3.5, 1, 1, 'F');
+              if (fillW > 0) {
+                const barColor = pct === 100 ? [16, 185, 129] : pct === 66 ? [59, 130, 246] : [234, 179, 8];
+                doc.setFillColor(...barColor);
+                doc.roundedRect(barX, bY + 2, fillW, 3.5, 1, 1, 'F');
+              }
+              doc.setTextColor(...goldPrimary);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(7.5);
+              doc.text(`${pct}%`, barX + barW + 2, bY + 4.8);
+            });
+            bY += 9;
+          }
+
+          bY += 4;
+
+          // Gender Suitability Justification
+          doc.setFillColor(gender === 'boy' ? 239 : 253, gender === 'boy' ? 246 : 242, gender === 'boy' ? 255 : 248);
+          doc.setDrawColor(gender === 'boy' ? 59 : 236, gender === 'boy' ? 130 : 72, gender === 'boy' ? 246 : 153);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(15, bY, pageWidth - 30, 6, 2, 2, 'FD');
+          doc.setTextColor(...textDark);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text(t('GENDER SUITABILITY JUSTIFICATION', 'लिंग अनुकूलता'), 20, bY + 4.5);
+          bY += 9;
+
+          const justText = getBirthDateGenderJustification(best, gender, language);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          const justLines = doc.splitTextToSize(justText, pageWidth - 36);
+          doc.setTextColor(...textDark);
+          doc.text(justLines, 18, bY);
+        }
+      });
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
   // PAGES: 3 BLANK PAGES FOR CONSULTANT NOTES / SUGGESTIONS
   // ════════════════════════════════════════════════════════════════════════
   for (let c = 1; c <= 3; c++) {
+
     doc.addPage();
     drawPageShell(doc);
 
