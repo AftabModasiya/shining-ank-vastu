@@ -264,6 +264,14 @@ export const translations = {
       babyNameMissingPriority: 'Missing Priority Numbers',
       babyNameJustification: 'Justification',
 
+      nameSpellingTitle: '✨ Name Spelling Suggestion',
+      nameSpellingDescription: 'Chaldean & Lo Shu Grid compatible name suggestions based on missing priority numbers, Driver, and Conductor.',
+      alphabetFilterLabel: 'Filter by Initial:',
+      showAll: 'All',
+      chaldeanCalculatorTitle: 'Chaldean Calculator',
+      chaldeanValueExplanation: 'Below is the mathematical value breakdown of each character in the name according to the Chaldean Numerology system.',
+      gridFulfillmentText: 'This name spelling vibration reduces to target number {target}, which successfully balances the missing grid elements.',
+
       // Notes
       notesPage1: '📝 Notes / Suggestions (Page 1)',
       notesPage2: '📝 Notes / Suggestions (Page 2)',
@@ -547,6 +555,14 @@ export const translations = {
       babyNameSelectedTarget: 'चयनित लक्षित नाम अंक',
       babyNameMissingPriority: 'लापता प्राथमिकता अंक',
       babyNameJustification: 'औचित्य',
+
+      nameSpellingTitle: '✨ नाम वर्तनी सुझाव (Name Spelling Suggestion)',
+      nameSpellingDescription: 'मिसिंग नंबर्स, मूलांक और भाग्यांक के आधार पर चैल्डियन और लो शू ग्रिड अनुकूल नाम सुझाव।',
+      alphabetFilterLabel: 'प्रारंभिक अक्षर द्वारा फ़िल्टर करें:',
+      showAll: 'सभी',
+      chaldeanCalculatorTitle: 'ચાલડિયન કેલ્ક્યુલેટર',
+      chaldeanValueExplanation: 'ચાલડિયન અંકશાસ્ત્ર પદ્ધતિ અનુસાર નામના દરેક અક્ષરનું ગણિત મૂલ્ય નીચે દર્શાવેલ છે.',
+      gridFulfillmentText: 'આ નામ સ્પેલિંગ વાઇબ્રેશન લક્ષ્યાંક અંક {target} માં રૂપાંતરિત થાય છે, જે ગ્રીડના ખૂટતા તત્વોને સફળતાપૂર્વક સંતુલિત કરે છે.',
 
       // Notes
       notesPage1: '📝 नोट्स / सुझाव (पृष्ठ 1)',

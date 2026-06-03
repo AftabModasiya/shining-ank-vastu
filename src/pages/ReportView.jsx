@@ -72,6 +72,8 @@ function ReportView() {
     const [saving, setSaving] = useState(false);
     const [babyGender, setBabyGender] = useState('boy');
     const [selectedBabyDate, setSelectedBabyDate] = useState(null);
+    const [selectedAlphabetFilter, setSelectedAlphabetFilter] = useState(null);
+    const [activeChaldeanPopupName, setActiveChaldeanPopupName] = useState(null);
     const { t, language } = useLanguage();
     const rpt = t.rpt;
 
@@ -1889,9 +1891,22 @@ function ReportView() {
                                   </thead>
                                   <tbody>
                                     {nameReport.suggestions.map((s) => (
-                                      <tr key={s.srNo} style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.3)', background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent' }}>
+                                      <tr
+                                        key={s.srNo}
+                                        onClick={() => setActiveChaldeanPopupName({ ...s, target: nameReport.bestTarget })}
+                                        style={{ 
+                                          borderBottom: '1px solid rgba(232, 213, 191, 0.3)', 
+                                          background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent',
+                                          cursor: 'pointer',
+                                          transition: 'background 0.15s'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(181, 130, 10, 0.04)'}
+                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent'}
+                                      >
                                         <td style={{ padding: '12px', color: '#8c6f58' }}>{s.srNo}</td>
-                                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>{s.name}</td>
+                                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>
+                                          <span style={{ borderBottom: '1.5px dashed rgba(181, 130, 10, 0.5)', paddingBottom: '2px' }}>{s.name}</span>
+                                        </td>
                                         <td style={{ padding: '12px', fontFamily: 'monospace', color: '#5a4230', fontSize: '0.85rem' }}>{s.calculation}</td>
                                         <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#3d2c1e' }}>{s.total}</td>
                                         <td style={{ padding: '12px', color: '#5a4230', fontSize: '0.85rem' }}>{s.meaning}</td>
@@ -1910,7 +1925,156 @@ function ReportView() {
               })()}
             </section>
 
-            {/* ── 13. CUSTOM NOTE PAGE 1 ─────────────────── */}
+            {/* ── 13. NAME SPELLING SUGGESTION ─────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.nameSpellingTitle}</h3>
+              <p style={{ color: '#8c6f58', fontSize: '0.9rem', marginBottom: '20px', marginTop: '-10px' }}>
+                {rpt.nameSpellingDescription}
+              </p>
+
+              {(() => {
+                const clientDob = displayData.dob;
+                const clientGender = (displayData.gender === 'male' || displayData.gender === 'boy') ? 'boy' : 'girl';
+                const nameReport = getNameSuggestions(clientDob, clientGender);
+                if (!nameReport) return null;
+
+                // Filter name suggestions by selected alphabet
+                const filteredSuggestions = selectedAlphabetFilter
+                  ? nameReport.suggestions.filter(s => s.name.toUpperCase().startsWith(selectedAlphabetFilter))
+                  : nameReport.suggestions;
+
+                return (
+                  <div className="baby-name-suggestions-container" style={{ marginTop: '10px' }}>
+                    <div className="baby-name-card-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                          {rpt.babyNameAnalysisTitle}
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyDriver}:</span>
+                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.driver}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyConductor}:</span>
+                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.conductor}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameMissingPriority}:</span>
+                          <span className="baby-stat-val" style={{ color: '#c05050', fontWeight: 'bold' }}>{nameReport.missingPriority.length > 0 ? nameReport.missingPriority.join(', ') : rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameSelectedTarget}:</span>
+                          <span className="baby-stat-val" style={{ color: '#b5820a', fontWeight: 'bold', fontSize: '1.05rem' }}>{nameReport.bestTarget}</span>
+                        </div>
+                      </div>
+
+                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                          {rpt.babyNameInitialsTitle}
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                          {nameReport.initials.map(letter => (
+                            <span key={letter} style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontWeight: 'bold', padding: '6px 14px', borderRadius: '8px', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(181,130,10,0.15)' }}>
+                              {letter}
+                            </span>
+                          ))}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#8c6f58', marginTop: '12px', fontStyle: 'italic' }}>
+                          {isHi ? 'भाग्यशाली नामांक ' + nameReport.bestTarget + ' के अनुकूल प्रारंभिक अक्षर' : 'Lucky starting alphabets matching Destiny Number ' + nameReport.bestTarget}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="baby-justification" style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '12px 16px', borderRadius: '0 8px 8px 0', marginBottom: '20px', fontSize: '0.92rem', lineHeight: '1.5', color: '#5a4230' }}>
+                      <strong>{rpt.babyNameJustification}:</strong> {isHi ? `लक्ष्य नामांक ${nameReport.bestTarget} को चुना गया है क्योंकि यह मूलांक ${nameReport.driver} और भाग्यांक ${nameReport.conductor} दोनों के साथ अनुकूल है, जिससे कोई भी विरोधाभास (Anti) अंक नहीं है। यह लो शू ग्रिड में अनुपस्थित प्राथमिक अंकों को संतुलित करता है।` : nameReport.justification}
+                    </div>
+
+                    {/* Filter chips */}
+                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 'bold', color: '#8c6f58' }}>{rpt.alphabetFilterLabel}</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => setSelectedAlphabetFilter(null)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            border: '1.5px solid #b5820a',
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            background: !selectedAlphabetFilter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
+                            color: !selectedAlphabetFilter ? '#fff' : '#b5820a',
+                          }}
+                        >
+                          {rpt.showAll}
+                        </button>
+                        {nameReport.initials.map(letter => (
+                          <button
+                            key={letter}
+                            onClick={() => setSelectedAlphabetFilter(letter)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              border: '1.5px solid #b5820a',
+                              fontSize: '0.8rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              background: selectedAlphabetFilter === letter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
+                              color: selectedAlphabetFilter === letter ? '#fff' : '#b5820a',
+                            }}
+                          >
+                            {letter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="baby-breakdown-title" style={{ fontSize: '1rem', color: '#b5820a', marginBottom: '12px' }}>{rpt.babyNameTableTitle} ({displayData.gender})</div>
+                    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left', background: '#fff' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSrNo}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSuggestedName}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameBreakdown}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{rpt.babyNameTotal}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameMeaning}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredSuggestions.map((s) => (
+                            <tr
+                              key={s.srNo}
+                              onClick={() => setActiveChaldeanPopupName({ ...s, target: nameReport.bestTarget })}
+                              style={{ 
+                                borderBottom: '1px solid rgba(232, 213, 191, 0.3)', 
+                                background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent',
+                                cursor: 'pointer',
+                                transition: 'background 0.15s'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(181, 130, 10, 0.04)'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent'}
+                            >
+                              <td style={{ padding: '12px', color: '#8c6f58' }}>{s.srNo}</td>
+                              <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>
+                                <span style={{ borderBottom: '1.5px dashed rgba(181, 130, 10, 0.5)', paddingBottom: '2px' }}>{s.name}</span>
+                              </td>
+                              <td style={{ padding: '12px', fontFamily: 'monospace', color: '#5a4230', fontSize: '0.85rem' }}>{s.calculation}</td>
+                              <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#3d2c1e' }}>{s.total}</td>
+                              <td style={{ padding: '12px', color: '#5a4230', fontSize: '0.85rem' }}>{s.meaning}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+            </section>
+
+            {/* ── 14. CUSTOM NOTE PAGE 1 ─────────────────── */}
             <section className="report-section custom-page-section">
               <h3 className="section-title">{rpt.notesPage1}</h3>
               {isEditing ? (
@@ -1974,6 +2138,194 @@ function ReportView() {
             return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
           })()}</p>
         </footer>
+
+        {/* Chaldean Calculator Popup Modal */}
+        {activeChaldeanPopupName && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(145deg, #ffffff, #fdfbf7)',
+              border: '2px solid #b5820a',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '480px',
+              boxShadow: '0 12px 36px rgba(181, 130, 10, 0.25)',
+              padding: '24px',
+              position: 'relative'
+            }}>
+              {/* Close Button */}
+              <button 
+                onClick={() => setActiveChaldeanPopupName(null)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.6rem',
+                  color: '#8c6f58',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  lineHeight: '1'
+                }}
+              >
+                &times;
+              </button>
+
+              {/* Title */}
+              <h3 style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: '1.8rem',
+                color: '#b5820a',
+                textAlign: 'center',
+                margin: '0 0 4px 0',
+                fontWeight: 'bold'
+              }}>
+                {activeChaldeanPopupName.name}
+              </h3>
+              
+              <p style={{
+                fontSize: '0.82rem',
+                color: '#8c6f58',
+                textAlign: 'center',
+                margin: '0 0 20px 0',
+                fontWeight: 'bold',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                {rpt.chaldeanCalculatorTitle}
+              </p>
+
+              <div style={{
+                background: 'rgba(181, 130, 10, 0.03)',
+                border: '1px solid rgba(232, 213, 191, 0.5)',
+                borderRadius: '12px',
+                padding: '18px',
+                marginBottom: '20px'
+              }}>
+                {/* Letters Breakdown Grid */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  flexWrap: 'wrap',
+                  marginBottom: '18px'
+                }}>
+                  {activeChaldeanPopupName.name.toUpperCase().split('').map((char, index) => {
+                    const letterVals = {
+                      A:1, I:1, J:1, Q:1, Y:1,
+                      B:2, K:2, R:2,
+                      C:3, G:3, L:3, S:3,
+                      D:4, M:4, T:4,
+                      E:5, H:5, N:5, X:5,
+                      U:6, V:6, W:6,
+                      O:7, Z:7,
+                      F:8, P:8
+                    };
+                    const val = letterVals[char] || 0;
+                    return (
+                      <div key={index} style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        background: '#fff',
+                        border: '1.5px solid rgba(181, 130, 10, 0.35)',
+                        borderRadius: '8px',
+                        padding: '6px 8px',
+                        minWidth: '38px',
+                        boxShadow: '0 2px 4px rgba(181, 130, 10, 0.04)'
+                      }}>
+                        <span style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#3d2c1e' }}>{char}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#b5820a', fontWeight: 'bold', borderTop: '1px solid rgba(232, 213, 191, 0.4)', marginTop: '4px', paddingTop: '2px', width: '100%', textAlign: 'center' }}>
+                          {val}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Graphic calculation */}
+                <div style={{
+                  textAlign: 'center',
+                  fontFamily: 'monospace',
+                  fontSize: '0.98rem',
+                  color: '#5a4230',
+                  marginBottom: '14px',
+                  fontWeight: 'bold'
+                }}>
+                  {activeChaldeanPopupName.calculation.split(' = ')[0]} = {activeChaldeanPopupName.calculation.split(' = ')[1]?.split(' -> ')[0]}
+                </div>
+
+                {/* Reduction */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '1.05rem',
+                  color: '#3d2c1e',
+                  fontWeight: 'bold',
+                  borderTop: '1px solid rgba(232, 213, 191, 0.4)',
+                  paddingTop: '14px'
+                }}>
+                  <span>{isHi ? 'अंतिम योग:' : 'Total:'}</span>
+                  <span style={{
+                    background: 'linear-gradient(135deg, #b5820a, #d4a326)',
+                    color: '#fff',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '1.15rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(181,130,10,0.2)'
+                  }}>
+                    {activeChaldeanPopupName.total}
+                  </span>
+                </div>
+              </div>
+
+              <p style={{
+                fontSize: '0.85rem',
+                color: '#5a4230',
+                lineHeight: '1.5',
+                textAlign: 'center',
+                margin: '0 0 20px 0'
+              }}>
+                {rpt.gridFulfillmentText.replace('{target}', activeChaldeanPopupName.target)}
+              </p>
+
+              <button 
+                onClick={() => setActiveChaldeanPopupName(null)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(135deg, #b5820a, #d4a326)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '0.95rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 3px 6px rgba(181, 130, 10, 0.2)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {isHi ? 'बंद करें' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

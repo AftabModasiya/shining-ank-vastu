@@ -2776,6 +2776,170 @@ export const generatePDF = async (clientData, language = 'en') => {
     }
   }
 
+  // ── PAGE: NAME SPELLING SUGGESTION ───────────────────
+  const clientDobForName = rawDob;
+  const clientGenderForName = (gender === 'male' || gender === 'boy') ? 'boy' : 'girl';
+  const nameReport = getNameSuggestions(clientDobForName, clientGenderForName);
+  if (nameReport) {
+    doc.addPage();
+    drawPageShell(doc);
+
+    // Page Header
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(
+      t('NAME SPELLING SUGGESTION', 'नाम वर्तनी सुझाव (Name Spelling Suggestion)'),
+      14, 27
+    );
+
+    let nY = 38;
+
+    // Core Numerology Analysis box
+    doc.setFillColor(255, 254, 249);
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, nY, 92, 33, 3, 3, 'FD');
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(t('CORE NUMEROLOGY ANALYSIS', 'मूल अंकशास्त्र विश्लेषण'), 20, nY + 6);
+
+    // Grid lines in analysis box
+    doc.setDrawColor(232, 213, 191);
+    doc.setLineWidth(0.15);
+    doc.line(20, nY + 9, 101, nY + 9);
+
+    doc.setTextColor(...textDark);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    doc.text(`${t('Driver', 'मूलांक')}:`, 20, nY + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(nameReport.driver), 70, nY + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${t('Conductor', 'भाग्यांक')}:`, 20, nY + 19);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(nameReport.conductor), 70, nY + 19);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${t('Missing Priority Numbers', 'लापता प्राथमिकता अंक')}:`, 20, nY + 24);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(192, 80, 80);
+    doc.text(nameReport.missingPriority.length > 0 ? nameReport.missingPriority.join(', ') : t('None', 'कोई नहीं'), 70, nY + 24);
+
+    doc.setTextColor(...textDark);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${t('Selected Target Name Number', 'चयनित लक्षित नाम अंक')}:`, 20, nY + 29);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...goldPrimary);
+    doc.text(String(nameReport.bestTarget), 70, nY + 29);
+
+    // Recommended Alphabets box
+    doc.setFillColor(255, 254, 249);
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(111, nY, 84, 33, 3, 3, 'FD');
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(t('RECOMMENDED ALPHABETS (INITIALS)', 'अनुशंसित प्रारंभिक अक्षर (Initials)'), 115, nY + 6);
+
+    // Draw letters
+    let xL = 118;
+    nameReport.initials.forEach(letter => {
+      doc.setFillColor(...goldPrimary);
+      doc.roundedRect(xL, nY + 11, 10, 10, 1.5, 1.5, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.text(letter, xL + 5, nY + 17.5, { align: 'center' });
+      xL += 14;
+    });
+
+    doc.setTextColor(...textDark);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    const initialComment = isHi 
+      ? `भाग्यशाली नामांक ${nameReport.bestTarget} के अनुकूल प्रारंभिक अक्षर`
+      : `Lucky starting alphabets matching Destiny Number ${nameReport.bestTarget}`;
+    doc.text(initialComment, 115, nY + 28);
+
+    nY += 39;
+
+    // Justification box
+    doc.setFillColor(240, 253, 250);
+    doc.setDrawColor(45, 212, 191);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(15, nY, pageWidth - 30, 14, 2, 2, 'FD');
+    
+    doc.setTextColor(...textDark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.2);
+    doc.text(`${t('Justification', 'औचित्य')}:`, 19, nY + 5.5);
+    
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.8);
+    const justTxt = isHi 
+      ? `लक्ष्य नामांक ${nameReport.bestTarget} को चुना गया है क्योंकि यह मूलांक ${nameReport.driver} और भाग्यांक ${nameReport.conductor} दोनों के साथ अनुकूल है, जिससे कोई भी विरोधाभास (Anti) अंक नहीं है। यह लो शू ग्रिड में अनुपस्थित प्राथमिक अंकों को संतुलित करता है।`
+      : nameReport.justification;
+    const justTxtLines = doc.splitTextToSize(justTxt, pageWidth - 38);
+    doc.text(justTxtLines, 19, nY + 9.5);
+
+    nY += 19;
+
+    // Table header
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(15, nY, pageWidth - 30, 8, 1, 1, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    
+    const tblCols = [17, 28, 56, 138, 166];
+    doc.text(t('Sr. No', 'क्र. सं.'), tblCols[0], nY + 5.5);
+    doc.text(t('Suggested Name', 'सुझाया गया नाम'), tblCols[1], nY + 5.5);
+    doc.text(t('Chaldean Letter Breakdown & Calculation', 'किल्डियन अक्षर विश्लेषण और गणना'), tblCols[2], nY + 5.5);
+    doc.text(t('Final Name Total', 'अंतिम नाम योग'), tblCols[3], nY + 5.5);
+    doc.text(t('English Meaning', 'अंग्रेजी अर्थ'), tblCols[4], nY + 5.5);
+    
+    nY += 9;
+
+    nameReport.suggestions.forEach((s) => {
+      doc.setFillColor(s.srNo % 2 === 0 ? 252 : 255, s.srNo % 2 === 0 ? 251 : 255, s.srNo % 2 === 0 ? 247 : 255);
+      doc.setDrawColor(230, 230, 220);
+      doc.setLineWidth(0.15);
+      doc.roundedRect(15, nY, pageWidth - 30, 8.5, 1, 1, 'FD');
+      
+      doc.setTextColor(...textDark);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.8);
+      doc.text(String(s.srNo), tblCols[0], nY + 5.8);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(s.name, tblCols[1], nY + 5.8);
+      
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(7.2);
+      doc.text(s.calculation, tblCols[2], nY + 5.8);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.8);
+      doc.text(String(s.total), tblCols[3] + 8, nY + 5.8);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      const mText = doc.splitTextToSize(s.meaning, pageWidth - tblCols[4] - 17);
+      doc.text(mText, tblCols[4], nY + 5.8);
+      
+      nY += 9.5;
+    });
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   // PAGES: 3 BLANK PAGES FOR CONSULTANT NOTES / SUGGESTIONS
   // ════════════════════════════════════════════════════════════════════════
