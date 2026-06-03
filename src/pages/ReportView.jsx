@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
-import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions } from '../utils/numerology';
+import { updateClient, getClientById } from '../services/clientService';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo } from '../utils/numerology';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
@@ -61,12 +61,27 @@ function ReportView() {
       babyBirth: safeData.report.babyBirth || {
         startDate: '',
         endDate: ''
+      },
+      logoAnalysis: safeData.report.logoAnalysis || {
+        companyName: '',
+        industry: '',
+        targetAudience: '',
+        market: 'national',
+        brandStyle: 'modern',
+        mainPromise: '',
+        logoType: 'combination',
+        shapeStyle: 'circle',
+        primaryColor: 'blue',
+        secondaryColor: 'gray',
+        typographyStyle: 'sans',
+        symbolismDesc: ''
       }
     };
     return safeData;
   };
 
     const [clientData, setClientData] = useState(() => getSafeClientData(location.state?.clientData || null));
+    const [loading, setLoading] = useState(!location.state?.clientData);
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -227,6 +242,27 @@ function ReportView() {
     };
 
     useEffect(() => {
+      const fetchClient = async () => {
+        if (id) {
+          if (!location.state?.clientData) {
+            setLoading(true);
+          }
+          try {
+            const res = await getClientById(id);
+            if (res.success && res.data) {
+              setClientData(getSafeClientData(res.data));
+            }
+          } catch (err) {
+            console.error("Error loading client:", err);
+          } finally {
+            setLoading(false);
+          }
+        }
+      };
+      fetchClient();
+    }, [id]);
+
+    useEffect(() => {
       if (clientData) {
         setEditedData(getSafeClientData(clientData));
       }
@@ -246,6 +282,7 @@ function ReportView() {
         if (result.success) {
           setClientData(editedData);
           setIsEditing(false);
+          navigate(location.pathname, { replace: true, state: { clientData: editedData } });
         } else {
           alert('Failed to save changes');
         }
@@ -317,6 +354,14 @@ function ReportView() {
       current[objName][key] = { ...current[objName][key], [subfield]: value };
       setEditedData(newData);
     };
+
+    if (loading) {
+      return (
+        <div className="report-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+          <div className="spinner"></div>
+        </div>
+      );
+    }
 
     if (!clientData) {
       return (
@@ -2074,7 +2119,479 @@ function ReportView() {
               })()}
             </section>
 
-            {/* ── 14. CUSTOM NOTE PAGE 1 ─────────────────── */}
+            {/* ── 14. BRAND LOGO ANALYSIS & AUDIT ─────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.logoTitle}</h3>
+              {isEditing ? (
+                <div className="name-detail-card" style={{ display: 'block' }}>
+                  <span className="detail-label">{rpt.enterLogoDetails}</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoCompanyName}</label>
+                      <input
+                        placeholder="e.g. Shining Ank Vastu"
+                        className="edit-input"
+                        name="report.logoAnalysis.companyName"
+                        value={editedData?.report?.logoAnalysis?.companyName || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoIndustry}</label>
+                      <input
+                        placeholder="e.g. Numerology & Astrology"
+                        className="edit-input"
+                        name="report.logoAnalysis.industry"
+                        value={editedData?.report?.logoAnalysis?.industry || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTargetAudience}</label>
+                      <input
+                        placeholder="e.g. Families, Business Owners"
+                        className="edit-input"
+                        name="report.logoAnalysis.targetAudience"
+                        value={editedData?.report?.logoAnalysis?.targetAudience || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoMainPromise}</label>
+                      <input
+                        placeholder="e.g. Prosperity & Harmony"
+                        className="edit-input"
+                        name="report.logoAnalysis.mainPromise"
+                        value={editedData?.report?.logoAnalysis?.mainPromise || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoMarket}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.market"
+                        value={editedData?.report?.logoAnalysis?.market || 'national'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="local">{rpt.logoMarketLocal}</option>
+                        <option value="regional">{rpt.logoMarketRegional}</option>
+                        <option value="national">{rpt.logoMarketNational}</option>
+                        <option value="global">{rpt.logoMarketGlobal}</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoBrandStyle}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.brandStyle"
+                        value={editedData?.report?.logoAnalysis?.brandStyle || 'modern'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="premium">{rpt.logoBrandStylePremium}</option>
+                        <option value="massmarket">{rpt.logoBrandStyleMassMarket}</option>
+                        <option value="spiritual">{rpt.logoBrandStyleSpiritual}</option>
+                        <option value="corporate">{rpt.logoBrandStyleCorporate}</option>
+                        <option value="modern">{rpt.logoBrandStyleModern}</option>
+                        <option value="traditional">{rpt.logoBrandStyleTraditional}</option>
+                        <option value="bold">{rpt.logoBrandStyleBold}</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypeLabel}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.logoType"
+                        value={editedData?.report?.logoAnalysis?.logoType || 'combination'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="wordmark">Wordmark</option>
+                        <option value="lettermark">Lettermark</option>
+                        <option value="monogram">Monogram</option>
+                        <option value="symbol">Symbol</option>
+                        <option value="emblem">Emblem</option>
+                        <option value="mascot">Mascot</option>
+                        <option value="abstract">Abstract Mark</option>
+                        <option value="combination">Combination Mark</option>
+                        <option value="hybrid">Hybrid</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoShapeLabel}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.shapeStyle"
+                        value={editedData?.report?.logoAnalysis?.shapeStyle || 'circle'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="circle">Circle (Circular/Curves)</option>
+                        <option value="square">Square / Rectangle</option>
+                        <option value="triangle">Triangle / Angular</option>
+                        <option value="shield">Shield</option>
+                        <option value="abstract">Abstract shape</option>
+                        <option value="lettermark">Lettermark / Initials based</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoPrimaryColorLabel}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.primaryColor"
+                        value={editedData?.report?.logoAnalysis?.primaryColor || 'blue'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="blue">Blue</option>
+                        <option value="red">Red</option>
+                        <option value="green">Green</option>
+                        <option value="gold">Gold / Yellow</option>
+                        <option value="orange">Orange</option>
+                        <option value="purple">Purple</option>
+                        <option value="black">Black</option>
+                        <option value="white">White / Gray</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSecondaryColorLabel}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.secondaryColor"
+                        value={editedData?.report?.logoAnalysis?.secondaryColor || 'gray'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="blue">Blue</option>
+                        <option value="red">Red</option>
+                        <option value="green">Green</option>
+                        <option value="gold">Gold / Yellow</option>
+                        <option value="orange">Orange</option>
+                        <option value="purple">Purple</option>
+                        <option value="black">Black</option>
+                        <option value="white">White / Gray</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypographyLabel}</label>
+                      <select
+                        className="edit-input"
+                        name="report.logoAnalysis.typographyStyle"
+                        value={editedData?.report?.logoAnalysis?.typographyStyle || 'sans'}
+                        onChange={handleInputChange}
+                        style={{ height: '38px', padding: '6px' }}
+                      >
+                        <option value="serif">Serif (Traditional/Premium)</option>
+                        <option value="sans">Sans-serif (Modern/Tech)</option>
+                        <option value="geometric">Geometric (Structured/Clean)</option>
+                        <option value="script">Script (Personal/Feminine)</option>
+                        <option value="display">Display (Bold/Creative)</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSymbolismLabel}</label>
+                      <input
+                        placeholder="e.g. An ascending arrow, a rising sun, or clean geometric lines"
+                        className="edit-input"
+                        name="report.logoAnalysis.symbolismDesc"
+                        value={editedData?.report?.logoAnalysis?.symbolismDesc || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                (() => {
+                  const logoReport = analyzeLogo(report.logoAnalysis, language);
+                  if (!logoReport) {
+                    return (
+                      <div className="empty-state-box">
+                        <p>{rpt.logoNotDefined}</p>
+                      </div>
+                    );
+                  }
+
+                  const getColorHex = (col) => {
+                    const map = {
+                      blue: '#1e40af', red: '#b91c1c', green: '#15803d', gold: '#b5820a',
+                      orange: '#c2410c', purple: '#6b21a8', black: '#111827', white: '#e5e7eb'
+                    };
+                    return map[col.toLowerCase()] || '#9ca3af';
+                  };
+
+                  return (
+                    <div className="logo-analysis-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Executive Summary Card */}
+                      <div className="logo-summary-card" style={{ background: 'rgba(255, 254, 249, 0.95)', border: '1px solid rgba(232, 213, 191, 0.8)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(181, 130, 10, 0.05)' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                          {isHi ? 'कार्यकारी सारांश' : 'EXECUTIVE SUMMARY'}
+                        </div>
+                        <p style={{ fontSize: '0.95rem', lineHeight: '1.6', color: '#3d2c1e', fontStyle: 'italic', margin: 0 }}>
+                          "{logoReport.executiveSummary}"
+                        </p>
+                      </div>
+
+                      {/* 1. Design Quality Audit Grid */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '१. दृश्य डिज़ाइन ऑडिट (12-बिंदु ढांचा)' : '1. VISUAL DESIGN AUDIT (12-POINT FRAMEWORK)'}
+                      </div>
+                      <div className="logo-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
+                            {isHi ? 'लोगो प्रकार विश्लेषण' : 'LOGO CLASSIFICATION'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
+                            {logoReport.designAudit.logoTypeInfo}
+                          </p>
+                        </div>
+                        <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
+                            {isHi ? 'आकार और ज्यामिति मनोविज्ञान' : 'SHAPE & GEOMETRY PSYCHOLOGY'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
+                            {logoReport.designAudit.shapeInfo}
+                          </p>
+                        </div>
+                        <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
+                            {isHi ? 'टाइपोग्राफी और शैली' : 'TYPOGRAPHY STYLE & FIT'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
+                            {logoReport.designAudit.typographyInfo}
+                          </p>
+                        </div>
+                        <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
+                            {isHi ? 'तकनीकी स्केलेबिलिटी और प्रिंट' : 'TECHNICAL SCALABILITY & PRINT'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
+                            {logoReport.designAudit.scalabilityInfo}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 2. Subconscious & Occult Metaphysical Layer */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '२. अवचेतन और आध्यात्मिक ऊर्जा परत' : '2. SUBCONSCIOUS & METAPHYSICAL ENERGY LAYER'}
+                      </div>
+                      <div className="logo-metaphysical-box" style={{ background: 'rgba(255, 254, 249, 0.88)', border: '1px solid rgba(232, 213, 191, 0.75)', padding: '20px', borderRadius: '12px' }}>
+                        {/* Badges */}
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                          <span style={{ background: 'linear-gradient(135deg, #3d2c1e, #5a4230)', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px' }}>
+                            {isHi ? 'तत्व:' : 'Element:'} {logoReport.psychologyLayer.occultElement.split(" (")[0]}
+                          </span>
+                          <span style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px' }}>
+                            {isHi ? 'प्रवाह:' : 'Flow:'} {logoReport.psychologyLayer.energyFlow.split(" - ")[0]}
+                          </span>
+                          <span style={{ background: '#f5efe6', color: '#8c6f58', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                            {logoReport.predictions.trustSpeed}
+                          </span>
+                        </div>
+
+                        <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#3d2c1e', lineHeight: '1.6' }}>
+                          <strong>{isHi ? 'ऊर्जा संरेखण व्याख्या:' : 'Metaphysical Balance Comment:'}</strong> {logoReport.psychologyLayer.metaphysicalBalance}
+                        </p>
+
+                        {/* Colors Side by Side */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
+                          <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(232, 213, 191, 0.4)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: getColorHex(report.logoAnalysis.primaryColor), border: '1.5px solid #fff', boxShadow: '0 2px 4px rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                            <div>
+                              <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase' }}>
+                                {isHi ? 'मुख्य रंग' : 'PRIMARY COLOR'} ({report.logoAnalysis.primaryColor})
+                              </div>
+                              <div style={{ fontSize: '0.82rem', color: '#5a4230', marginTop: '2px', lineHeight: '1.4' }}>
+                                {logoReport.designAudit.primaryColorInfo}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(232, 213, 191, 0.4)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: getColorHex(report.logoAnalysis.secondaryColor), border: '1.5px solid #fff', boxShadow: '0 2px 4px rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                            <div>
+                              <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase' }}>
+                                {isHi ? 'सहायक रंग' : 'SECONDARY COLOR'} ({report.logoAnalysis.secondaryColor})
+                              </div>
+                              <div style={{ fontSize: '0.82rem', color: '#5a4230', marginTop: '2px', lineHeight: '1.4' }}>
+                                {logoReport.designAudit.secondaryColorInfo}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Business Predictions */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '३. व्यावसायिक भविष्यवाणियाँ और प्रभाव' : '3. BUSINESS FUTURE PREDICTIONS'}
+                      </div>
+                      <div className="logo-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            {isHi ? 'मूल्य निर्धारण समर्थन' : 'PRICING POWER'}
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
+                            {logoReport.predictions.pricingSupport}
+                          </p>
+                        </div>
+                        <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            {isHi ? 'बाजार पहुंच' : 'MARKET REACH'}
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
+                            {logoReport.predictions.marketReach}
+                          </p>
+                        </div>
+                        <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            {isHi ? 'प्रथम प्रभाव संकेत' : 'FIRST IMPRESSION'}
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
+                            {logoReport.psychologyLayer.emotionalSignal}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Timeline predictions */}
+                      <div className="logo-predictions-timeline" style={{ background: 'rgba(255,254,249,0.5)', padding: '16px', borderRadius: '12px', border: '1px dashed rgba(232,213,191,0.8)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <div style={{ minWidth: '80px', padding: '3px 8px', background: '#e8d5bf', color: '#5a4230', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
+                              0 - 1 {isHi ? 'वर्ष' : 'Year'}
+                            </div>
+                            <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.shortTerm}</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <div style={{ minWidth: '80px', padding: '3px 8px', background: '#b5820a', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
+                              1 - 3 {isHi ? 'वर्ष' : 'Years'}
+                            </div>
+                            <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.midTerm}</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <div style={{ minWidth: '80px', padding: '3px 8px', background: '#3d2c1e', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
+                              3 - 7 {isHi ? 'वर्ष' : 'Years'}
+                            </div>
+                            <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.longTerm}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. Competitor Benchmark */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '४. प्रतिस्पर्धी बेंचमार्क तुलना' : '4. COMPETITIVE BENCHMARK'}
+                      </div>
+                      <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left', background: '#fff' }}>
+                          <thead>
+                            <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                              <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'ब्रांड / प्रतिस्पर्धी' : 'Brand / Competitor'}</th>
+                              <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'मुख्य ताकत' : 'Strongest Feature'}</th>
+                              <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'बड़ी कमजोरी' : 'Biggest Weakness'}</th>
+                              <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{isHi ? 'रैंक' : 'Rank'}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.2)', background: 'rgba(181, 130, 10, 0.03)' }}>
+                              <td style={{ padding: '10px', fontWeight: 'bold', color: '#b5820a' }}>{report.logoAnalysis.companyName} ({isHi ? 'आपका लोगो' : 'Your Logo'})</td>
+                              <td style={{ padding: '10px', color: '#3d2c1e' }}>{logoReport.strengths[0]}</td>
+                              <td style={{ padding: '10px', color: '#c05050' }}>{logoReport.weaknesses[0]}</td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#b5820a' }}>3</td>
+                            </tr>
+                            {logoReport.competitorBenchmark.items.map((comp) => (
+                              <tr key={comp.name} style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.2)' }}>
+                                <td style={{ padding: '10px', fontWeight: 'bold', color: '#5a4230' }}>{comp.name}</td>
+                                <td style={{ padding: '10px', color: '#5a4230' }}>{comp.strength}</td>
+                                <td style={{ padding: '10px', color: '#c05050' }}>{comp.weak}</td>
+                                <td style={{ padding: '10px', textAlign: 'center', color: '#5a4230' }}>{comp.rank === 3 ? 4 : comp.rank}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#8c6f58', fontStyle: 'italic', marginTop: '-4px' }}>
+                        {logoReport.competitorBenchmark.rankingText}
+                      </div>
+
+                      {/* 5. Strengths & Weaknesses (Two-column layout) */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#15803d', marginBottom: '10px', borderBottom: '1.5px solid #15803d', paddingBottom: '4px' }}>
+                            {isHi ? '✓ मुख्य ताकतें (Strengths)' : '✓ KEY STRENGTHS'}
+                          </div>
+                          <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {logoReport.strengths.map((str, idx) => (
+                              <li key={idx} style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{str}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#c05050', marginBottom: '10px', borderBottom: '1.5px solid #c05050', paddingBottom: '4px' }}>
+                            {isHi ? '✗ छिपे हुए दोष व जोखिम (Flaws)' : '✗ HIDDEN FLAWS & RISKS'}
+                          </div>
+                          <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {logoReport.weaknesses.map((weak, idx) => (
+                              <li key={idx} style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{weak}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* 6. Improvement Recommendations */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '५. पेशेवर सुधार सुझाव' : '5. STRATEGIC RECOMMENDATIONS'}
+                      </div>
+                      <div style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '16px', borderRadius: '0 8px 8px 0' }}>
+                        <div style={{ fontWeight: 'bold', color: '#b5820a', marginBottom: '6px', fontSize: '0.92rem' }}>
+                          {isHi ? 'अनुशंसित प्राथमिकता स्तर:' : 'Recommended Priority:'} {logoReport.recommendations.action}
+                        </div>
+                        <div style={{ fontSize: '0.88rem', color: '#5a4230', whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+                          {logoReport.recommendations.details}
+                        </div>
+                      </div>
+
+                      {/* 7. Final Scoring Matrix */}
+                      <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
+                        {isHi ? '६. समग्र लोगो स्कोर मैट्रिक्स' : '6. FINAL AUDIT SCORING MATRIX'}
+                      </div>
+                      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', padding: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                          {[
+                            { label: isHi ? 'ब्रांड अनुकूलन (Brand Fit)' : 'Brand Fit', val: logoReport.scores.brandFit },
+                            { label: isHi ? 'दृश्य स्पष्टता (Clarity)' : 'Visual Clarity', val: logoReport.scores.visualClarity },
+                            { label: isHi ? 'याद रखने की क्षमता (Memorability)' : 'Memorability', val: logoReport.scores.memorability },
+                            { label: isHi ? 'भरोसा कारक (Trust Factor)' : 'Trust Factor', val: logoReport.scores.trustFactor },
+                            { label: isHi ? 'प्रीमियम महसूस होना (Premium Feel)' : 'Premium Feel', val: logoReport.scores.premiumFeel },
+                            { label: isHi ? 'मापने की क्षमता (Scalability)' : 'Scalability', val: logoReport.scores.scalability },
+                          ].map((scoreItem) => (
+                            <div key={scoreItem.label} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: '#5a4230' }}>
+                                <span>{scoreItem.label}</span>
+                                <span>{scoreItem.val} / 10</span>
+                              </div>
+                              <div style={{ height: '8px', background: '#f3ece3', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: `${scoreItem.val * 10}%`, height: '100%', background: 'linear-gradient(90deg, #b5820a, #d4a326)', borderRadius: '4px' }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Overall Potential Block */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed rgba(232, 213, 191, 0.6)' }}>
+                          <span style={{ fontSize: '0.98rem', fontWeight: 'bold', color: '#3d2c1e' }}>
+                            {isHi ? 'समग्र सफलता क्षमता (Overall Potential)' : 'Overall Success Potential'}
+                          </span>
+                          <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#b5820a' }}>
+                            {logoReport.scores.potential} / 10
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+            </section>
+
+            {/* ── 15. CUSTOM NOTE PAGE 1 ─────────────────── */}
             <section className="report-section custom-page-section">
               <h3 className="section-title">{rpt.notesPage1}</h3>
               {isEditing ? (

@@ -243,11 +243,14 @@ All credentials are stored in `.env` file.
 5. ✅ **Missing Numbers**: Detected and remedies provided
 6. ✅ **Crystal Remedies**: Complete details for each missing number
 7. ✅ **Future Predictions**: 3-year forecast
-8. ✅ **PDF Generation**: Complete PDF with all sections
-9. ✅ **Firebase Storage**: Client data saved and retrievable
-10. ✅ **Client History**: Search, filter, edit, delete
-11. ✅ **Editable Reports**: Modify and save changes
-12. ✅ **Professional UI**: Exact color scheme and layout
+8. ✅ **Baby Birth Calculator**: Expected delivery range analysis with Lo Shu plane percentages and boy/girl date rankings
+9. ✅ **Name Spelling Suggestion**: 10-15 modern, compatible name suggestions matching target lucky numbers
+10. ✅ **Brand Logo Analysis & Audit**: 12-point framework design audit, element flow analysis, predictions, and scoring
+11. ✅ **PDF Generation**: Complete PDF with all sections (now including Baby Birth table, Name Suggestions, and Brand Logo Audit pages)
+12. ✅ **Firebase Storage**: Client data saved and retrievable
+13. ✅ **Client History**: Search, filter, edit, delete
+14. ✅ **Editable Reports**: Modify and save changes
+15. ✅ **Professional UI**: Exact color scheme and layout
 
 ## 🎨 COLOR SCHEME
 

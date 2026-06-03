@@ -3,6 +3,7 @@ import {
   addDoc,
   getDocs,
   doc,
+  getDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -12,6 +13,21 @@ import {
 import { db } from "../config/firebase";
 
 const COLLECTION_NAME = "clients";
+
+export const getClientById = async (clientId) => {
+  try {
+    const clientRef = doc(db, COLLECTION_NAME, clientId);
+    const docSnap = await getDoc(clientRef);
+    if (docSnap.exists()) {
+      return { success: true, data: { id: docSnap.id, ...docSnap.data() } };
+    } else {
+      return { success: false, error: "Document not found" };
+    }
+  } catch (error) {
+    console.error("Error fetching client:", error);
+    return { success: false, error: error.message };
+  }
+};
 
 export const saveClient = async (clientData) => {
   try {

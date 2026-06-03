@@ -2948,4 +2948,814 @@ export const getNameSuggestions = (dobStr, gender) => {
   };
 };
 
+export const analyzeLogo = (logoData, lang) => {
+  if (!logoData || !logoData.companyName) return null;
 
+  const isHi = lang === 'hi';
+
+  const companyName = logoData.companyName;
+  const industry = logoData.industry || 'Business';
+  const targetAudience = logoData.targetAudience || 'General';
+  const market = logoData.market || 'national';
+  const brandStyle = logoData.brandStyle || 'modern';
+  const mainPromise = logoData.mainPromise || 'Quality Services';
+  const logoType = logoData.logoType || 'combination';
+  const shapeStyle = logoData.shapeStyle || 'circle';
+  const primaryColor = (logoData.primaryColor || 'blue').toLowerCase();
+  const secondaryColor = (logoData.secondaryColor || 'gray').toLowerCase();
+  const typographyStyle = logoData.typographyStyle || 'sans';
+  const symbolismDesc = logoData.symbolismDesc || '';
+
+  // 1. Calculate Chaldean Numerology of the company name
+  const compCompound = chaldeanOf(companyName);
+  const compSingle = reduceToSingle(compCompound);
+
+  // Map planetary details
+  const planetMap = {
+    1: { name: 'Sun', nameHi: 'सूर्य', qualities: 'leadership, authority, and new beginnings', qualitiesHi: 'नेतृत्व, अधिकार और नई शुरुआत' },
+    2: { name: 'Moon', nameHi: 'चंद्र', qualities: 'creativity, emotional connection, and peace', qualitiesHi: 'रचनात्मकता, भावनात्मक संबंध और शांति' },
+    3: { name: 'Jupiter', nameHi: 'गुरु/बृहस्पति', qualities: 'wisdom, education, and expansion', qualitiesHi: 'ज्ञान, शिक्षा और विस्तार' },
+    4: { name: 'Rahu', nameHi: 'राहु', qualities: 'innovation, mass reach, and technology', qualitiesHi: 'नवाचार, जन-आकर्षण और प्रौद्योगिकी' },
+    5: { name: 'Mercury', nameHi: 'बुध', qualities: 'communication, trade, and business intelligence', qualitiesHi: 'संचार, व्यापार और व्यावसायिक समझ' },
+    6: { name: 'Venus', nameHi: 'शुक्र', qualities: 'luxury, art, glamour, and comfort', qualitiesHi: 'लक्जरी, कला, ग्लैमर और सुविधा' },
+    7: { name: 'Ketu', nameHi: 'केतु', qualities: 'research, intuition, and deep analysis', qualitiesHi: 'शोध, अंतर्ज्ञान और गहन विश्लेषण' },
+    8: { name: 'Saturn', nameHi: 'शनि', qualities: 'structure, organization, and long-term stability', qualitiesHi: 'संरचना, संगठन और दीर्घकालिक स्थिरता' },
+    9: { name: 'Mars', nameHi: 'मंगल', qualities: 'courage, fire energy, action, and speed', qualitiesHi: 'साहस, अग्नि ऊर्जा, कार्रवाई और गति' }
+  };
+  const planet = planetMap[compSingle] || { name: 'Mercury', nameHi: 'बुध', qualities: 'trade', qualitiesHi: 'व्यापार' };
+
+  // Check name-industry compatibility
+  let industryCompatibility = 'Neutral';
+  const normInd = industry.toLowerCase();
+  if (normInd.includes('tech') || normInd.includes('software') || normInd.includes('it') || normInd.includes('digital') || normInd.includes('app')) {
+    industryCompatibility = [1, 4, 5, 6].includes(compSingle) ? 'Friendly' : [2, 7].includes(compSingle) ? 'Anti' : 'Neutral';
+  } else if (normInd.includes('finance') || normInd.includes('bank') || normInd.includes('wealth') || normInd.includes('invest') || normInd.includes('money')) {
+    industryCompatibility = [1, 3, 5, 6].includes(compSingle) ? 'Friendly' : [8].includes(compSingle) ? 'Anti' : 'Neutral';
+  } else if (normInd.includes('vastu') || normInd.includes('astro') || normInd.includes('spiritual') || normInd.includes('numerology') || normInd.includes('occult')) {
+    industryCompatibility = [3, 7, 9].includes(compSingle) ? 'Friendly' : [4, 8].includes(compSingle) ? 'Anti' : 'Neutral';
+  } else if (normInd.includes('health') || normInd.includes('medical') || normInd.includes('care') || normInd.includes('well')) {
+    industryCompatibility = [1, 2, 3, 5, 7].includes(compSingle) ? 'Friendly' : [8, 9].includes(compSingle) ? 'Anti' : 'Neutral';
+  } else if (normInd.includes('real') || normInd.includes('construct') || normInd.includes('build') || normInd.includes('estate') || normInd.includes('prop')) {
+    industryCompatibility = [2, 4, 8, 9].includes(compSingle) ? 'Friendly' : [5].includes(compSingle) ? 'Anti' : 'Neutral';
+  } else {
+    industryCompatibility = [1, 3, 5, 6].includes(compSingle) ? 'Friendly' : 'Neutral';
+  }
+
+  // Check color compatibility with single destiny number
+  const colorCompatMap = {
+    1: ['gold', 'yellow', 'orange'],
+    2: ['white', 'green', 'blue'],
+    3: ['gold', 'yellow', 'purple'],
+    4: ['blue', 'black', 'gray'],
+    5: ['green', 'blue', 'white'],
+    6: ['gold', 'white', 'purple', 'black'],
+    7: ['green', 'white', 'gray'],
+    8: ['blue', 'black', 'gray'],
+    9: ['red', 'orange', 'gold']
+  };
+  const isColorCompatible = (colorCompatMap[compSingle] || []).includes(primaryColor);
+
+  // Scores calculations based on rules
+  let brandFit = 7.0;
+  let visualClarity = 8.0;
+  let memorability = 7.0;
+  let trustFactor = 7.0;
+  let premiumFeel = 6.0;
+  let scalability = 7.0;
+
+  if (brandStyle === 'premium') {
+    if (['gold', 'black', 'purple'].includes(primaryColor)) {
+      premiumFeel += 2.0;
+      brandFit += 1.5;
+    }
+    if (typographyStyle === 'serif') premiumFeel += 0.5;
+  } else if (brandStyle === 'spiritual') {
+    if (['orange', 'green', 'gold'].includes(primaryColor)) {
+      brandFit += 2.0;
+      trustFactor += 1.0;
+    }
+    if (shapeStyle === 'circle') trustFactor += 1.0;
+  } else if (brandStyle === 'corporate') {
+    if (['blue', 'black'].includes(primaryColor)) {
+      trustFactor += 1.5;
+      brandFit += 1.0;
+    }
+  }
+
+  if (industryCompatibility === 'Friendly') {
+    brandFit += 1.0;
+    trustFactor += 0.5;
+  } else if (industryCompatibility === 'Anti') {
+    brandFit -= 1.0;
+    trustFactor -= 1.0;
+  }
+
+  if (isColorCompatible) {
+    brandFit += 0.5;
+    trustFactor += 0.5;
+  }
+
+  if (['combination', 'wordmark'].includes(logoType)) {
+    visualClarity += 1.0;
+  } else if (logoType === 'abstract') {
+    memorability -= 1.0;
+    scalability += 1.0;
+  }
+
+  if (['shield', 'square'].includes(shapeStyle)) {
+    trustFactor += 1.0;
+  }
+
+  brandFit = Math.min(10, Math.max(3, brandFit));
+  visualClarity = Math.min(10, Math.max(3, visualClarity));
+  memorability = Math.min(10, Math.max(3, memorability));
+  trustFactor = Math.min(10, Math.max(3, trustFactor));
+  premiumFeel = Math.min(10, Math.max(3, premiumFeel));
+  scalability = Math.min(10, Math.max(3, scalability));
+  const potential = parseFloat(((brandFit + visualClarity + memorability + trustFactor + premiumFeel + scalability) / 6).toFixed(1));
+
+  // Determine brand rank based on potential / brandFit
+  let brandRank = 3;
+  if (brandFit >= 9.0) brandRank = 1;
+  else if (brandFit >= 7.8) brandRank = 2;
+  else if (brandFit >= 6.0) brandRank = 3;
+  else brandRank = 5;
+
+  const getCompetitors = (ind, lang) => {
+    const isHi = lang === 'hi';
+    const norm = (ind || '').toLowerCase();
+    let list = [];
+    if (norm.includes('tech') || norm.includes('software') || norm.includes('it') || norm.includes('digital') || norm.includes('app')) {
+      list = [
+        { name: 'ZenithTech', strength: isHi ? 'सरल शब्दचिह्न, आधुनिक तकनीक लुक' : 'Clean sans-serif wordmark, modern tech look', weak: isHi ? 'रंगों में कम विपरीतता (Contrast)' : 'Low contrast color scheme', rank: 1 },
+        { name: 'QuantumSoft', strength: isHi ? 'आकर्षक पत्रचिह्न (Lettermark), अत्यधिक स्केलेबल' : 'Sharp monogram symbol, highly scalable', weak: isHi ? 'आइकॉन में जटिल विवरण' : 'Detailed complexity inside favicon', rank: 2 },
+        { name: 'ApexDigital', strength: isHi ? 'नारंगी प्राथमिक रंग, उच्च स्मरण शक्ति' : 'Vibrant orange palette, memorable', weak: isHi ? 'पारंपरिक फोंट का गलत चयन' : 'Incorrect font weight alignment', rank: 4 },
+        { name: 'NexusIT', strength: isHi ? 'त्रिकोणीय प्रगति चिन्ह, अग्नि ऊर्जा' : 'Upward triangle symbol, strong Fire energy', weak: isHi ? 'संवेदनशील ग्राहकों के लिए आक्रामक' : 'Feels aggressive for consumer tech', rank: 5 },
+        { name: 'VectraSystems', strength: isHi ? 'वर्गाकार लोगो, स्थिर पृथ्वी ऊर्जा' : 'Square geometry, stable Earth energy', weak: isHi ? 'पारंपरिक डिज़ाइन, कम रचनात्मकता' : 'Rigid layout, low design innovation', rank: 6 }
+      ];
+    } else if (norm.includes('finance') || norm.includes('bank') || norm.includes('wealth') || norm.includes('invest') || norm.includes('money')) {
+      list = [
+        { name: 'PrimeCap', strength: isHi ? 'गहरे नीले रंगों का प्रयोग, कॉर्पोरेट भरोसा' : 'Corporate dark blue scheme, institutional trust', weak: isHi ? 'बहुत ही सामान्य डिज़ाइन' : 'Very generic concept', rank: 1 },
+        { name: 'ApexWealth', strength: isHi ? 'स्वर्ण रंग, प्रीमियम मूल्य निर्धारण' : 'Gold accents, premium value positioning', weak: isHi ? 'छोटे डिजिटल आकारों पर अस्पष्ट' : 'Poor legibility at 16x16 size', rank: 2 },
+        { name: 'SterlingTrust', strength: isHi ? 'शील्ड (ढाल) आकार, सुरक्षा का अहसास' : 'Shield visual mark, high consumer security', weak: isHi ? 'पारंपरिक फोंट, पुरानी शैली' : 'Traditional serif font feels outdated', rank: 4 },
+        { name: 'FortressCapital', strength: isHi ? 'वर्गाकार ज्यामिति, पृथ्वी तत्व' : 'Square block geometry, Earth Vastu element', weak: isHi ? 'डिजिटल मीडिया पर भारी और कठोर' : 'Rigid visual weight on mobile screens', rank: 5 },
+        { name: 'ZenithFin', strength: isHi ? 'न्यूनतम शब्दचिह्न, त्वरित पठन' : 'Minimal wordmark, high reading speed', weak: isHi ? 'कमजोर ब्रांड पहचान' : 'Weak brand symbolism, low recall', rank: 6 }
+      ];
+    } else if (norm.includes('vastu') || norm.includes('astro') || norm.includes('spiritual') || norm.includes('numerology') || norm.includes('occult')) {
+      list = [
+        { name: 'DivineAnk', strength: isHi ? 'सूर्य और कमल का प्रतीक, आध्यात्मिक' : 'Sun & Lotus symbolism, high resonance', weak: isHi ? 'कमजोर टाइपोग्राफी, सुपाठ्यता की कमी' : 'Thin script fonts, poor legibility', rank: 1 },
+        { name: 'AstroVastu Center', strength: isHi ? 'वृत्ताकार बहाव, अच्छी ऊर्जा संचार' : 'Circular layout, excellent customer flow', weak: isHi ? 'लाल रंग का अत्यधिक उपयोग, अशांत' : 'Excessive red accents, chaotic energy', rank: 2 },
+        { name: 'KarmaDestiny', strength: isHi ? 'स्वर्ण प्राथमिक रंग, सूर्य ऊर्जा' : 'Rich gold tone, premium solar energy', weak: isHi ? 'अमूर्त आकार, समझने में कठिन' : 'Abstract mark, hard to decode', rank: 4 },
+        { name: 'VedicSutra', strength: isHi ? 'स्वस्तिक/त्रिशूल का सही अंकन' : 'Swastika/Trishul geometry, traditional', weak: isHi ? 'बहुत जटिल लाइनों का उपयोग' : 'Concentric lines create visual clutter', rank: 5 },
+        { name: 'CosmicEnergy', strength: isHi ? 'लेटरमार्क शैली, आधुनिक और सुपाठ्य' : 'Initials-based layout, modern look', weak: isHi ? 'धार्मिक प्रतीक की कमी, सादा' : 'Lacks spiritual symbolism, too corporate', rank: 6 }
+      ];
+    } else if (norm.includes('health') || norm.includes('medical') || norm.includes('care') || norm.includes('well')) {
+      list = [
+        { name: 'LifeCare', strength: isHi ? 'हरे रंग का उपयोग, आरोग्य ऊर्जा' : 'Green healing color, wood energy', weak: isHi ? 'अधिक सामान्य चिकित्सा क्रॉस' : 'Standard red cross, low uniqueness', rank: 1 },
+        { name: 'AuraHealth', strength: isHi ? 'कोमल वृत्ताकार घुमाव, मित्रवत' : 'Gentle circular flow, comforting vibe', weak: isHi ? 'फीके शेड्स, डिजिटल पर अदृश्य' : 'Low-contrast shades, weak billboard performance', rank: 2 },
+        { name: 'MedVantage', strength: isHi ? 'शील्ड (ढाल) चिह्न, सुरक्षा' : 'Shield icon, high protection assurance', weak: isHi ? 'अति-आधुनिक, कम पारंपरिक जुड़ाव' : 'Hyper-modern, lacks local cultural connection', rank: 4 },
+        { name: 'ZenithMedical', strength: isHi ? 'साफ संस-सेरिफ़ वर्डमार्क, पठनीय' : 'Clean sans-serif wordmark, legible', weak: isHi ? 'त्रिकोणीय आकृतियों से आक्रामकता' : 'Triangular details feel visually sharp/aggressive', rank: 5 },
+        { name: 'EcoWell', strength: isHi ? 'पत्ती का सूक्ष्म डिज़ाइन, जैविक' : 'Leaf abstract element, organic aesthetic', weak: isHi ? 'छोटा करने पर विवरण गायब होना' : 'Cannot scale down cleanly to favicon', rank: 6 }
+      ];
+    } else if (norm.includes('real') || norm.includes('construct') || norm.includes('build') || norm.includes('estate') || norm.includes('prop')) {
+      list = [
+        { name: 'TerraHomes', strength: isHi ? 'वर्गाकार नींव, पृथ्वी तत्व' : 'Square foundation, stable Earth Vastu', weak: isHi ? 'नीरस रंगों का उपयोग, फीका' : 'Dull color palette, low excitement', rank: 1 },
+        { name: 'ApexBuilders', strength: isHi ? 'ऊर्ध्वगामी प्रगति सूचक त्रिकोण' : 'Upward triangle symbol, skyline visual', weak: isHi ? 'तीखे कोने नकारात्मक ऊर्जा पैदा करते हैं' : 'Sharp angles create Vastu arrow conflict', rank: 2 },
+        { name: 'SterlingRealty', strength: isHi ? 'स्वर्ण और काले रंगों का प्रीमियम मेल' : 'Black & Gold branding, premium vibe', weak: isHi ? 'बारीक लाइन्स पेंट पर धुंधली हो सकती हैं' : 'Thin strokes bleed in physical outdoor banners', rank: 4 },
+        { name: 'StonehengeCorp', strength: isHi ? 'पारंपरिक सेरिफ़ फोंट, इतिहास' : 'Classic serif typography, established trust', weak: isHi ? 'युवा ग्राहकों के लिए पुराना' : 'Feels outdated for millennial buyers', rank: 5 },
+        { name: 'MetroHabitats', strength: isHi ? 'पत्रचिह्न डिजाइन, आधुनिक लेआउट' : 'Lettermark logo, modern corporate style', weak: isHi ? 'कोई विशिष्ट प्रतीक नहीं' : 'No symbolic icon, hard to recall in 2s', rank: 6 }
+      ];
+    } else {
+      list = [
+        { name: 'MarketLeaders', strength: isHi ? 'साफ सुथरी कॉर्पोरेट ब्रांडिंग' : 'Clean corporate layout, solid contrast', weak: isHi ? 'बहुत ही पारंपरिक, कम नयापन' : 'Very standard, low distinctiveness', rank: 1 },
+        { name: 'ApexServices', strength: isHi ? 'संस-सेरिफ़ स्पष्टता, सुपाठ्य' : 'Sans-serif clarity, high readability', weak: isHi ? 'अमूर्त आकार समझने में कठिन' : 'Abstract mark is hard for mass segment to decode', rank: 2 },
+        { name: 'GlobalBrand', strength: isHi ? 'पत्रचिह्न (Lettermark) की स्केलेबिलिटी' : 'Lettermark scalability across apps', weak: isHi ? 'कमजोर भावनात्मक जुड़ाव' : 'Lacks emotional connection', rank: 4 },
+        { name: 'MetroGroup', strength: isHi ? 'वर्गाकार ज्यामिति, पृथ्वी तत्व' : 'Square geometry, stable structure', weak: isHi ? 'भारी बॉर्डर, असंतुलित नकारात्मक स्थान' : 'Heavy borders create unbalanced negative space', rank: 5 },
+        { name: 'NovaRetail', strength: isHi ? 'चमकीले रंग, मित्रवत शैली' : 'Bright friendly colors, mass appeal', weak: isHi ? 'स्मार्टफ़ोन स्क्रीन पर कम विपरीतता' : 'Script typography is hard to read in small sizes', rank: 6 }
+      ];
+    }
+
+    // Filter and adjust ranks based on brandRank to ensure brandRank is exclusively reserved for the user
+    const possibleRanks = [1, 2, 3, 4, 5, 6].filter(n => n !== brandRank);
+    return list.map((item, idx) => ({
+      ...item,
+      rank: possibleRanks[idx] || (idx + 1)
+    }));
+  };
+
+  const compoundMeanings = {
+    10: {
+      en: "Compound Number 10 (Wheel of Fortune) brings a vibration of rapid progress, name, fame, and self-made success.",
+      hi: "संयुक्त अंक 10 (भाग्य का पहिया) तीव्र प्रगति, नाम, प्रसिद्धि और आत्मनिर्भर सफलता का स्पंदन लाता है।"
+    },
+    11: {
+      en: "Compound Number 11 (Clashing Lion) brings a hidden warning of obstacles, dual paths, and potential partner friction.",
+      hi: "संयुक्त अंक 11 (संघर्षरत सिंह) बाधाओं, दोहरे रास्तों और संभावित व्यावसायिक साझेदार के साथ संघर्ष का संकेत देता है।"
+    },
+    12: {
+      en: "Compound Number 12 (Sacrifice/Victim) signals slow initial growth, requiring patience, discipline, and caution in signing contracts.",
+      hi: "संयुक्त अंक 12 (बलिदान/संघर्ष) धीमी शुरुआत और समझौते या अनुबंध करते समय अत्यधिक सावधानी रखने का संकेत देता है।"
+    },
+    13: {
+      en: "Compound Number 13 (Transformation) represents power, disruption, and rapid change, which can trigger sudden gains or unexpected shifts.",
+      hi: "संयुक्त अंक 13 (परिवर्तन/क्रांति) शक्ति, व्यवधान और तीव्र बदलाव का प्रतिनिधित्व करता है, जो अचानक लाभ या अप्रत्याशित बदलाव ला सकता है।"
+    },
+    14: {
+      en: "Compound Number 14 (Movement) is excellent for trade, communication, and fast-paced transactions, though speculative risks should be minimized.",
+      hi: "संयुक्त अंक 14 (गतिशीलता) व्यापार, संचार और त्वरित सौदों के लिए उत्कृष्ट है, हालांकि सट्टा जोखिमों को कम किया जाना चाहिए।"
+    },
+    15: {
+      en: "Compound Number 15 (Magnetism/Charm) is a highly fortunate number of material success, charisma, and exceptional sales attraction.",
+      hi: "संयुक्त अंक 15 (आकर्षण/जादू) भौतिक सफलता, करिश्मा और असाधारण बिक्री आकर्षण का एक अत्यधिक भाग्यशाली अंक है।"
+    },
+    16: {
+      en: "Compound Number 16 (Shattered Citadel) warns of potential sudden shifts or structural instability, recommending a strong, stable logo geometry.",
+      hi: "संयुक्त अंक 16 (गिरावट का जोखिम) संभावित अचानक उतार-चढ़ाव या संगठनात्मक अस्थिरता की चेतावनी देता है, इसके लिए मजबूत वर्गाकार आधार आवश्यक है।"
+    },
+    17: {
+      en: "Compound Number 17 (Star of the Magi) represents highly auspicious destiny, name recognition, and long-term brand equity.",
+      hi: "संयुक्त अंक 17 (बुद्धिमानों का तारा) अत्यधिक शुभ भाग्य, ब्रांड पहचान और दीर्घकालिक प्रतिष्ठा का प्रतिनिधित्व करता है।"
+    },
+    18: {
+      en: "Compound Number 18 (Material Conflict) suggests fierce market competition and internal friction, requiring calming cool colors in branding.",
+      hi: "संयुक्त अंक 18 (सामग्री संघर्ष) बाजार में कड़ी प्रतिस्पर्धा और आंतरिक मतभेदों का संकेत देता है, रीब्रांडिंग में शांत रंगों की आवश्यकता है।"
+    },
+    19: {
+      en: "Compound Number 19 (Prince of Heaven) is one of the most powerful numbers of victory, power, wealth, and supreme market dominance.",
+      hi: "संयुक्त अंक 19 (स्वर्ग का राजकुमार) विजय, शक्ति, समृद्धि और बाजार में सर्वोच्च प्रभुत्व का सबसे शक्तिशाली अंकों में से एक है।"
+    },
+    20: {
+      en: "Compound Number 20 (Awakening) calls for periodic reviews and slow strategic planning, bringing success after deep analytical preparation.",
+      hi: "संयुक्त अंक 20 (जागृति) समय-समय पर योजनाओं की समीक्षा करने और गहरी रणनीतिक योजना के बाद बड़ी सफलता प्राप्त करने का संकेत देता है।"
+    },
+    21: {
+      en: "Compound Number 21 (Crown of the Astral) represents ultimate success, cosmic protection, and victory over all competitors after initial effort.",
+      hi: "संयुक्त अंक 21 (ब्रह्मांडीय मुकुट) प्रारंभिक प्रयासों के बाद अंतिम सफलता, ईश्वरीय सुरक्षा और सभी प्रतिस्पर्धियों पर विजय को दर्शाता है।"
+    },
+    22: {
+      en: "Compound Number 22 (Master Builder) carries high responsibility, representing great potential that must be guided by practical realism, not illusions.",
+      hi: "संयुक्त अंक 22 (महान निर्माता) बड़ी जिम्मेदारी लाता है, जो भ्रम के बजाय व्यावहारिक यथार्थवाद द्वारा निर्देशित होने पर भारी सफलता देता है।"
+    },
+    23: {
+      en: "Compound Number 23 (Royal Star of the Lion) is an extremely lucky number that promises protection by superiors and rapid commercial success.",
+      hi: "संयुक्त अंक 23 (सिंह का शाही तारा) एक अत्यंत भाग्यशाली अंक है जो उच्च अधिकारियों से सहायता और तीव्र व्यावसायिक सफलता का वादा करता है।"
+    },
+    24: {
+      en: "Compound Number 24 (Partnership/Harmony) brings smooth relationships, helpful alliances, and stable growth ruled by Venus charm.",
+      hi: "संयुक्त अंक 24 (साझेदारी/सद्भाव) शुक्र की ऊर्जा से अनुकूल संबंध, मददगार गठजोड़ और स्थिर व्यावसायिक विकास लाता है।"
+    },
+    25: {
+      en: "Compound Number 25 (Observation & Analysis) rewards research, technical precision, and learning from experience, leading to victory.",
+      hi: "संयुक्त अंक 25 (निरीक्षण और विश्लेषण) अनुसंधान, तकनीकी सटीकता और अनुभव से सीखकर सफलता प्राप्त करने को बढ़ावा देता है।"
+    },
+    26: {
+      en: "Compound Number 26 (Partnership challenges) warns against temporary visual distractions and advises establishing firm legal and financial guards.",
+      hi: "संयुक्त अंक 26 (साझेदारी चुनौतियां) अस्थायी आकर्षणों के खिलाफ चेतावनी देता है और ठोस कानूनी और वित्तीय सुरक्षा स्थापित करने की सलाह देता है।"
+    },
+    27: {
+      en: "Compound Number 27 (Scepter of Command) represents authority, executive power, and leadership in the brand's industry niche.",
+      hi: "संयुक्त अंक 27 (राजदंड) ब्रांड के क्षेत्र में नेतृत्व, अधिकार और प्रबंधकीय शक्ति का प्रतिनिधित्व करता है।"
+    },
+    28: {
+      en: "Compound Number 28 (Structural Tension) indicates visual or financial volatility, requiring a highly balanced, symmetric logo design.",
+      hi: "संयुक्त अंक 28 (संरचनात्मक तनाव) वित्तीय उतार-चढ़ाव का संकेत देता है, जिसके लिए अत्यधिक संतुलित, सममित लोगो डिज़ाइन आवश्यक है।"
+    },
+    29: {
+      en: "Compound Number 29 (Interpersonal Caution) advises building robust corporate contracts and guarding against visual imitation by copycats.",
+      hi: "संयुक्त अंक 29 (पारस्परिक सावधानी) मजबूत व्यावसायिक अनुबंध बनाने और नकल करने वाले प्रतिस्पर्धियों से ब्रांड की सुरक्षा करने की सलाह देता है।"
+    },
+    30: {
+      en: "Compound Number 30 (Creative Mind) is ruled by Jupiter's intellect, indicating a focus on consulting, media, and knowledge-based services.",
+      hi: "संयुक्त अंक 30 (रचनात्मक मन) गुरु की बुद्धि द्वारा शासित है, जो मीडिया, परामर्श और ज्ञान-आधारित सेवाओं में उत्कृष्टता को दर्शाता है।"
+    },
+    31: {
+      en: "Compound Number 31 (Solitary Focus) indicates a highly unique, differentiated brand path that stands completely apart from competitors.",
+      hi: "संयुक्त अंक 31 (एकल ध्यान) एक अत्यधिक विशिष्ट, अलग ब्रांड पथ को इंगित करता है जो प्रतिस्पर्धियों से बिल्कुल अलग खड़ा होता है।"
+    },
+    32: {
+      en: "Compound Number 32 (Social Connection) brings immense popularity, excellent public relations, and friendly connection with clients.",
+      hi: "संयुक्त अंक 32 (सामाजिक संपर्क) अपार लोकप्रियता, उत्कृष्ट जनसंपर्क और ग्राहकों के साथ सहज मित्रवत संबंध लाता है।"
+    },
+    33: {
+      en: "Compound Number 33 (Master Teacher) is a highly spiritual, dual-Jupiter vibration that brings massive credibility and trust to wellness/service sectors.",
+      hi: "संयुक्त अंक 33 (मास्टर शिक्षक) स्वास्थ्य और सेवा क्षेत्रों में भारी विश्वसनीयता, ज्ञान और विश्वास लाने वाला एक पवित्र स्पंदन है।"
+    },
+    34: {
+      en: "Compound Number 34 (Slow Solidification) represents Saturn-influenced steady accumulation of assets, showing resilient endurance.",
+      hi: "संयुक्त अंक 34 (धीमा ठोस निर्माण) शनि-प्रभावित संपत्ति संचय का प्रतिनिधित्व करता है, जो व्यावसायिक संकटों में लचीलापन दर्शाता है।"
+    },
+    35: {
+      en: "Compound Number 35 (Trade Expansion) signals strong profits through volume, expansion in multiple retail areas, and popular appeal.",
+      hi: "संयुक्त अंक 35 (व्यापार विस्तार) कई खुदरा क्षेत्रों में विस्तार, बिक्री की मात्रा से मजबूत लाभ और लोकप्रिय अपील का संकेत देता है।"
+    },
+    36: {
+      en: "Compound Number 36 (Aura of Victory) is a highly positive solar and martial combination, conveying brand courage and rapid category rises.",
+      hi: "संयुक्त अंक 36 (विजय की आभा) सूर्य और मंगल का एक सकारात्मक संयोजन है, जो ब्रांड में साहस और तीव्र प्रगति का संचार करता है।"
+    },
+    37: {
+      en: "Compound Number 37 (Golden Friendship) indicates fortunate alliances, highly positive customer goodwill, and pleasant business associations.",
+      hi: "संयुक्त अंक 37 (सुनहरी मित्रता) भाग्यशाली गठजोड़, अत्यधिक सकारात्मक ग्राहक सद्भावना और सुखद व्यावसायिक संबंधों को दर्शाता है।"
+    },
+    38: {
+      en: "Compound Number 38 (Intuitive Commerce) balances Mercury business sense with Saturn discipline, ensuring a slow but highly secure trajectory.",
+      hi: "संयुक्त अंक 38 (सहज ज्ञान युक्त वाणिज्य) बुध की समझ को शनि के अनुशासन के साथ संतुलित करता है, जिससे धीमी लेकिन सुरक्षित प्रगति सुनिश्चित होती है।"
+    },
+    39: {
+      en: "Compound Number 39 (Creative Prestige) brings recognition, artistic refinement, and strong support from premium client segments.",
+      hi: "संयुक्त अंक 39 (रचनात्मक प्रतिष्ठा) समाज में सम्मान, कलात्मक परिष्कार और उच्च-स्तरीय ग्राहकों से मजबूत समर्थन लाता है।"
+    },
+    41: {
+      en: "Compound Number 41 (Digital Disruption) is ruled by Rahu and Mercury, highly auspicious for tech startups, innovation, and mass audience reach.",
+      hi: "संयुक्त अंक 41 (डिजिटल क्रांति) राहु और बुध द्वारा शासित है, जो तकनीकी स्टार्टअप, नवाचार और बड़े पैमाने पर जनता तक पहुंच के लिए अत्यधिक शुभ है।"
+    },
+    42: {
+      en: "Compound Number 42 (Harmonious Healing) is ruled by Venus and Moon, ideal for hospitality, organic wellness, and patient-centered healthcare.",
+      hi: "संयुक्त अंक 42 (सद्भावपूर्ण चिकित्सा) शुक्र और चंद्र द्वारा शासित है, जो चिकित्सा, कल्याण और आतिथ्य सत्कार के लिए सर्वोत्तम है।"
+    },
+    45: {
+      en: "Compound Number 45 (Mass Penetration) represents highly effective marketing, broad geographical expansion, and high product appeal.",
+      hi: "संयुक्त अंक 45 (जन-प्रसार) अत्यधिक प्रभावी विपणन, भौगोलिक विस्तार और जनता में उत्पाद की मजबूत लोकप्रियता को दर्शाता है।"
+    },
+    46: {
+      en: "Compound Number 46 (Royal Protection) promises safety of capital, legal success, and protection against competitive threats.",
+      hi: "संयुक्त अंक 46 (शाही सुरक्षा) पूंजी की सुरक्षा, कानूनी सफलता और प्रतिस्पर्धी खतरों से सुरक्षा का वादा करता है।"
+    },
+    51: {
+      en: "Compound Number 51 (Sudden Ascendancy) triggers rapid, aggressive expansion, name recognition, and strong market leadership.",
+      hi: "संयुक्त अंक 51 (अचानक उन्नति) तीव्र, आक्रामक विकास, नाम की पहचान और बाजार में मजबूत नेतृत्व को प्रेरित करता है।"
+    },
+    52: {
+      en: "Compound Number 52 (Strategic Adjustments) requires the brand to periodically refine its visual identity to stay relevant to changing target audiences.",
+      hi: "संयुक्त अंक 52 (रणनीतिक समायोजन) बदलती उपभोक्ता प्राथमिकताओं के अनुकूल रहने के लिए ब्रांड को समय-समय पर लोगो में सुधार करने की मांग करता है।"
+    }
+  };
+
+  const getCompoundDesc = (comp, single, isHi) => {
+    if (compoundMeanings[comp]) {
+      return isHi ? compoundMeanings[comp].hi : compoundMeanings[comp].en;
+    }
+    const fallbackMap = {
+      1: {
+        en: "Compound Number " + comp + " reduces to single digit 1 (ruled by Sun). It represents leadership, strong beginnings, and professional command.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 1 (शासित: सूर्य) बनता है। यह नेतृत्व, नई शुरुआत और व्यावसायिक शक्ति का प्रतिनिधित्व करता है।"
+      },
+      2: {
+        en: "Compound Number " + comp + " reduces to single digit 2 (ruled by Moon). It emphasizes collaboration, creativity, and customer relations.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 2 (शासित: चंद्र) बनता है। यह सहयोग, रचनात्मकता और ग्राहकों के साथ संबंधों पर जोर देता है।"
+      },
+      3: {
+        en: "Compound Number " + comp + " reduces to single digit 3 (ruled by Jupiter). It supports educational services, wealth, and commercial expansion.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 3 (शासित: गुरु) बनता है। यह शिक्षण, धन और व्यावसायिक विस्तार का समर्थन करता है।"
+      },
+      4: {
+        en: "Compound Number " + comp + " reduces to single digit 4 (ruled by Rahu). It brings disruptive ideas, tech alignment, and mass visibility.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 4 (शासित: राहु) बनता है। यह क्रांतिकारी विचार, तकनीक और व्यापक दृश्यता लाता है।"
+      },
+      5: {
+        en: "Compound Number " + comp + " reduces to single digit 5 (ruled by Mercury). It governs commerce, trade speed, calculations, and fast growth.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 5 (शासित: बुध) बनता है। यह वाणिज्य, व्यापारिक गति, गणना और तीव्र विकास को नियंत्रित करता है।"
+      },
+      6: {
+        en: "Compound Number " + comp + " reduces to single digit 6 (ruled by Venus). It is excellent for luxury branding, design appeal, and comfort products.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 6 (शासित: शुक्र) बनता है। यह लक्जरी ब्रांडिंग, कलात्मक आकर्षण और सौंदर्य उत्पादों के लिए सर्वोत्तम है।"
+      },
+      7: {
+        en: "Compound Number " + comp + " reduces to single digit 7 (ruled by Ketu). It indicates research focus, intuition, and deep domain knowledge.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 7 (शासित: केतु) बनता है। यह गहन शोध, अंतर्ज्ञान और विशेषज्ञ ज्ञान को इंगित करता है।"
+      },
+      8: {
+        en: "Compound Number " + comp + " reduces to single digit 8 (ruled by Saturn). It represents material structure, manufacturing, and steady organization.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 8 (शासित: शनि) बनता है। यह ठोस संरचना, विनिर्माण और व्यवस्थित कार्यप्रणाली को दर्शाता है।"
+      },
+      9: {
+        en: "Compound Number " + comp + " reduces to single digit 9 (ruled by Mars). It drives courage, rapid action, physical safety, and competitive fire.",
+        hi: "संयुक्त अंक " + comp + " घटकर एकल अंक 9 (शासित: मंगल) बनता है। यह साहस, तीव्र कार्रवाई, सुरक्षा और प्रतिस्पर्धी ऊर्जा को बढ़ावा देता है।"
+      }
+    };
+    const fallbackObj = fallbackMap[single] || fallbackMap[5];
+    return isHi ? fallbackObj.hi : fallbackObj.en;
+  };
+
+  const nameDestinyDesc = getCompoundDesc(compCompound, compSingle, isHi);
+
+  // Vastu Directions and Elements based on Shapes
+  let shapeDescEn = '';
+  let shapeDescHi = '';
+  let elementEnergy = '';
+  let flowDesc = '';
+  let directionVastuEn = '';
+  let directionVastuHi = '';
+
+  if (shapeStyle === 'circle') {
+    shapeDescEn = "The circular curves represent unity, flow, and the Water element. In Vastu, Water energy rules the North direction, which stimulates new client acquisition. This is excellent for " + companyName + "'s promise of '" + mainPromise + "'.";
+    shapeDescHi = "वृत्ताकार घुमाव एकता, निरंतर प्रवाह और जल तत्व का प्रतिनिधित्व करते हैं। वास्तु में, जल ऊर्जा उत्तर दिशा (North) को नियंत्रित करती है, जो नए ग्राहकों को आकर्षित करने में सहायक है। यह " + companyName + " के '" + mainPromise + "' के वादे के लिए सर्वोत्तम है।";
+    elementEnergy = isHi ? 'जल तत्व (Water Energy)' : 'Water Energy';
+    flowDesc = isHi ? 'वृत्ताकार एवं प्रवाहमयी (Circular & Flowing) - ऊर्जा का निरंतर चक्र।' : 'Circular & Flowing - Continuous cycle of energy.';
+    directionVastuEn = 'North (Water)';
+    directionVastuHi = 'उत्तर (जल तत्व)';
+  } else if (shapeStyle === 'square') {
+    shapeDescEn = "The square structure represents grounding, stability, and the Earth element. Earth energy rules the Southwest, promoting capital safety and customer trust for " + companyName + ".";
+    shapeDescHi = "वर्गाकार संरचना स्थिरता, ठोस आधार और पृथ्वी तत्व का प्रतिनिधित्व करती है। पृथ्वी ऊर्जा दक्षिण-पश्चिम (Southwest) दिशा को नियंत्रित करती, जो " + companyName + " के लिए पूंजी सुरक्षा और ग्राहक विश्वास को बढ़ावा देती है।";
+    elementEnergy = isHi ? 'पृथ्वी तत्व (Earth Energy)' : 'Earth Energy';
+    flowDesc = isHi ? 'स्थिर एवं सुरक्षित (Grounded & Stable) - चार कोनों की सुरक्षा।' : 'Grounded & Stable - Security of four corners.';
+    directionVastuEn = 'Southwest (Earth)';
+    directionVastuHi = 'दक्षिण-पश्चिम (पृथ्वी तत्व)';
+  } else if (shapeStyle === 'triangle') {
+    shapeDescEn = "The upward triangle represents ambition, power, and the Fire element. Fire rules the Southeast, stimulating cash flow and rapid progress for " + companyName + ". However, this sharp angle can sometimes signal instability.";
+    shapeDescHi = "त्रिकोण महत्वाकांक्षा, नेतृत्व और अग्नि तत्व का प्रतिनिधित्व करता है। अग्नि ऊर्जा दक्षिण-पूर्व (Southeast) दिशा को नियंत्रित करती है, जो " + companyName + " के लिए त्वरित प्रगति और नकदी प्रवाह को बढ़ाती है।";
+    elementEnergy = isHi ? 'अग्नि तत्व (Fire Energy)' : 'Fire Energy';
+    flowDesc = isHi ? 'ऊर्ध्वगामी प्रगति (Ascending Flow) - तेजी से बढ़ने वाली ऊर्जा।' : 'Ascending Flow - Fast-paced vertical energy growth.';
+    directionVastuEn = 'Southeast (Fire)';
+    directionVastuHi = 'दक्षिण-पूर्व (अग्नि तत्व)';
+  } else if (shapeStyle === 'shield') {
+    shapeDescEn = "The shield geometry combines Earth and Metal elements, ruling the West and Southwest directions. It creates an institutional feeling of safety, protecting " + companyName + " against market risks.";
+    shapeDescHi = "शील्ड ज्यामिति पृथ्वी और धातु तत्वों को जोड़ती है, जो पश्चिम और दक्षिण-पश्चिम दिशाओं को नियंत्रित करती है। यह सुरक्षा की संस्थागत भावना पैदा करती है, जो " + companyName + " को बाजार के जोखिमों से बचाती है।";
+    elementEnergy = isHi ? 'पृथ्वी एवं धातु तत्व (Earth & Metal)' : 'Earth & Metal Energy';
+    flowDesc = isHi ? 'सुरक्षात्मक और केंद्रित (Protective & Centered).' : 'Protective & Centered flow.';
+    directionVastuEn = 'West / Southwest';
+    directionVastuHi = 'पश्चिम / दक्षिण-पश्चिम';
+  } else if (shapeStyle === 'abstract') {
+    shapeDescEn = "An abstract mark channels Air/Space energy, ruling the East and Northeast. It represents innovative, modern thinking for " + companyName + ", but requires consistent marketing to build solid semantic association.";
+    shapeDescHi = "एक अमूर्त आकार वायु/आकाश तत्व से संबंधित है, जो पूर्व और उत्तर-पूर्व दिशाओं को नियंत्रित करता है। यह " + companyName + " के लिए आधुनिक सोच को दर्शाता है, लेकिन ब्रांड पहचान बनाने के लिए विपणन की आवश्यकता होती है।";
+    elementEnergy = isHi ? 'वायु / आकाश तत्व (Air/Space Energy)' : 'Air/Space Energy';
+    flowDesc = isHi ? 'अपरंपरागत प्रवाह (Fluid & Creative).' : 'Fluid & Creative flow.';
+    directionVastuEn = 'East / Northeast';
+    directionVastuHi = 'पूर्व / उत्तर-पूर्व';
+  } else {
+    shapeDescEn = "The initials-based lettermark focuses on the Metal element, ruling the West direction. It represents organizational precision, profits, and executive clarity for " + companyName + ".";
+    shapeDescHi = "अक्षरों पर आधारित लेटरमार्क धातु तत्व पर ध्यान केंद्रित करता है, जो पश्चिम (West) दिशा को नियंत्रित करता है। यह " + companyName + " के लिए संगठनात्मक सटीकता, लाभ और स्पष्टता का प्रतिनिधित्व करता है।";
+    elementEnergy = isHi ? 'धातु तत्व (Metal Energy)' : 'Metal Energy';
+    flowDesc = isHi ? 'केंद्रित रैखिक प्रवाह (Focused Linear Flow).' : 'Focused Linear Flow.';
+    directionVastuEn = 'West (Metal)';
+    directionVastuHi = 'पश्चिम (धातु तत्व)';
+  }
+
+  // Color Clash Analysis
+  let colorClashEn = "";
+  let colorClashHi = "";
+  let hasColorClash = false;
+
+  const isRed = ['red', 'orange'].includes(primaryColor) || ['red', 'orange'].includes(secondaryColor);
+  const isBlueOrBlack = ['blue', 'black'].includes(primaryColor) || ['blue', 'black'].includes(secondaryColor);
+  const isYellowOrGold = ['gold', 'yellow'].includes(primaryColor) || ['gold', 'yellow'].includes(secondaryColor);
+
+  if (isRed && isBlueOrBlack) {
+    hasColorClash = true;
+    colorClashEn = "CRITICAL COLOR CLASH: Direct collision between Fire (Red/Orange) and Water (Blue/Black) elements. This layout triggers subconscious cognitive friction and can cause sudden business disputes, cash volatility, and customer trust leakage.";
+    colorClashHi = "गंभीर रंग दोष: अग्नि (लाल/नारंगी) और जल (नीला/काला) तत्वों के बीच सीधा टकराव। यह डिज़ाइन ग्राहकों के अवचेतन में भ्रम पैदा करता है और अचानक व्यावसायिक विवादों, नकदी के उतार-चढ़ाव और ग्राहकों के विश्वास में कमी का कारण बन सकता है।";
+  } else if (isYellowOrGold && isBlueOrBlack) {
+    hasColorClash = true;
+    colorClashEn = "ELEMENT CLASH: Earth (Gold/Yellow) adjacent to Water (Blue/Black). In Vastu, Earth blocks Water. This represents obstacles in the North (opportunities sector), resulting in slow client acquisition or delayed payments.";
+    colorClashHi = "तत्व दोष: पृथ्वी (स्वर्ण/पीला) और जल (नीला/काला) का संयोजन। वास्तु में, पृथ्वी जल के मार्ग को अवरुद्ध करती है। यह उत्तर दिशा (अवसरों) में बाधाओं को दर्शाता है, जिससे नए ग्राहकों की कमी या भुगतान में देरी हो सकती है।";
+  } else if (isRed && isYellowOrGold) {
+    colorClashEn = "ELEMENTAL SUPPORT: Fire (Red/Orange) feeds Earth (Gold/Yellow). This is a highly supportive Vastu interaction, translating to steady financial conversion and strong visual appeal.";
+    colorClashHi = "तत्व सहयोग: अग्नि (लाल/नारंगी) पृथ्वी (स्वर्ण/पीला) को ऊर्जा देती है। यह एक अत्यधिक सहायक वास्तु संयोजन है, जो स्थिर वित्तीय लाभ और मजबूत दृश्य अपील प्रदान करता है।";
+  } else {
+    colorClashEn = "The combination of " + primaryColor + " and " + secondaryColor + " represents a stable, non-conflicting visual palette. It ensures smooth sensory assimilation and matches modern professional expectations.";
+    colorClashHi = primaryColor + " और " + secondaryColor + " का संयोजन एक स्थिर, बिना किसी तत्व दोष का दृश्य पैलेट प्रस्तुत करता है। यह ग्राहकों को आकर्षित करने और व्यावसायिक प्रतिष्ठा बनाने के लिए अनुकूल है।";
+  }
+
+  // Shape-Industry Clash Analysis
+  let shapeIndustryClashEn = "";
+  let shapeIndustryClashHi = "";
+  let hasShapeClash = false;
+
+  if (shapeStyle === 'triangle' && (normInd.includes('finance') || normInd.includes('bank') || normInd.includes('wealth') || normInd.includes('invest'))) {
+    hasShapeClash = true;
+    shapeIndustryClashEn = "SHAPE INDUSTRY CLASH: The sharp upward triangle (Fire element) is highly volatile for the Finance/Wealth sector. While Fire stimulates speed, it evaporates liquid cash, causing financial instability or high overhead costs.";
+    shapeIndustryClashHi = "आकृति-उद्योग दोष: त्रिकोण (अग्नि तत्व) वित्तीय क्षेत्र के लिए अत्यधिक अस्थिर है। हालांकि अग्नि गति प्रदान करती है, लेकिन यह तरल धन को वाष्पित (नष्ट) करती है, जिससे वित्तीय अस्थिरता या उच्च खर्च होते हैं।";
+  } else if (shapeStyle === 'circle' && (normInd.includes('real') || normInd.includes('construct') || normInd.includes('build') || normInd.includes('estate'))) {
+    hasShapeClash = true;
+    shapeIndustryClashEn = "SHAPE INDUSTRY CHALLENGE: A circular shape (Water element) is unfavorable for Real Estate/Construction, which requires stable Earth (Square) or Metal (Shield) energy. Water can erode foundations, leading to project delays or property disputes.";
+    shapeIndustryClashHi = "आकृति-उद्योग चुनौती: वृत्ताकार आकृति (जल तत्व) रियल एस्टेट/निर्माण के लिए प्रतिकूल है, जिसके लिए ठोस पृथ्वी (वर्गाकार) या धातु (शील्ड) ऊर्जा की आवश्यकता होती है। जल नींव को कमजोर कर सकता है, जिससे देरी या भूमि विवाद हो सकते हैं।";
+  } else if (shapeStyle === 'square' && (normInd.includes('tech') || normInd.includes('software') || normInd.includes('digital') || normInd.includes('app'))) {
+    shapeIndustryClashEn = "SHAPE INDUSTRY MATRIX: The square (Earth element) represents solid structure, which is safe but can slow down the high-speed adaptability and mass scale required by tech businesses.";
+    shapeIndustryClashHi = "आकृति-उद्योग मैट्रिक्स: वर्ग (पृथ्वी तत्व) एक मजबूत संरचना का प्रतिनिधित्व करता है, जो सुरक्षित है लेकिन तकनीक व्यवसायों के लिए आवश्यक तीव्र अनुकूलन क्षमता और जन-प्रसार की गति को धीमा कर सकता है।";
+  } else if (shapeStyle === 'square' && (normInd.includes('real') || normInd.includes('construct') || normInd.includes('estate'))) {
+    shapeIndustryClashEn = "PERFECT SHAPE-INDUSTRY MATCH: The square (Earth element) rules the Southwest direction, providing the ultimate stability, grounding, and physical safety required for Construction and Real Estate.";
+    shapeIndustryClashHi = "सर्वोत्तम आकृति-उद्योग मिलान: वर्ग (पृथ्वी तत्व) दक्षिण-पश्चिम दिशा को नियंत्रित करता है, जो निर्माण और रियल एस्टेट के लिए आवश्यक पूर्ण स्थिरता, नींव और सुरक्षा प्रदान करता है।";
+  } else {
+    shapeIndustryClashEn = "The " + shapeStyle + " shape provides a suitable geometric anchor, complementing the " + industry + " industry dynamics without major elemental resistance.";
+    shapeIndustryClashHi = shapeStyle + " आकृति एक उपयुक्त ज्यामितीय आधार प्रदान करती है, जो बिना किसी तत्व दोष के " + industry + " उद्योग की गतिविधियों का समर्थन करती है।";
+  }
+
+  // Color Decoding
+  const colorMeanings = {
+    blue: {
+      en: 'Blue represents trust, Saturn/Jupiter energy, and corporate stability. It stimulates calm communication and professional loyalty.',
+      hi: 'नीला रंग विश्वास, शनि/गुरु की ऊर्जा और कॉर्पोरेट स्थिरता का प्रतिनिधित्व करता है। यह शांत संचार और व्यावसायिक निष्ठा को बढ़ावा देता है।'
+    },
+    red: {
+      en: 'Red channels Mars/Fire energy, representing action, courage, and urgent appeal. It triggers quick decision-making but can increase anxiety.',
+      hi: 'लाल रंग मंगल/अग्नि की ऊर्जा को दर्शाता है, जो कार्रवाई, साहस और तात्कालिकता का प्रतिनिधित्व करता है। यह त्वरित निर्णयों को प्रेरित करता है।'
+    },
+    green: {
+      en: 'Green channels Mercury/Wood energy, representing growth, organic health, and financial abundance. Ideal for wealth and growth.',
+      hi: 'हरा रंग बुध/लकड़ी की ऊर्जा को दर्शाता है, जो विकास, स्वास्थ्य और वित्तीय प्रचुरता का प्रतिनिधित्व करता है। यह धन संचय के लिए अनुकूल है।'
+    },
+    gold: {
+      en: 'Gold channels Sun/Jupiter energy, representing prestige, purity, luxury, and high trust. It supports premium value positioning.',
+      hi: 'स्वर्ण रंग सूर्य/गुरु की ऊर्जा को दर्शाता है, जो प्रतिष्ठा, शुद्धता, विलासिता और उच्च विश्वास का प्रतिनिधित्व करता है। यह प्रीमियम ब्रांडों के लिए सर्वोत्तम है।'
+    },
+    orange: {
+      en: 'Orange represents creative warmth, friendliness, and auspicious Sun/Mars energy. It is approachable and energetic.',
+      hi: 'नारंगी रंग रचनात्मकता, मित्रता और शुभ सूर्य/मंगल की ऊर्जा को दर्शाता है। यह सुलभ और ऊर्जावान प्रभाव प्रदान करता है।'
+    },
+    purple: {
+      en: 'Purple represents luxury, wisdom, and Jupiter/Saturn exclusivity. It communicates a high-value niche status.',
+      hi: 'बैंगनी रंग विलासिता, ज्ञान और गुरु/शनि की विशिष्टता को दर्शाता है। यह उच्च मूल्य वाले आला दर्जे का प्रतिनिधित्व करता है।'
+    },
+    black: {
+      en: 'Black represents power, modern sophistication, and Saturn authority. It provides high contrast but needs friendly accents.',
+      hi: 'काला रंग शक्ति, आधुनिकता और शनि के अधिकार को दर्शाता है। यह मजबूत विपरीतता (Contrast) प्रदान करता है, लेकिन इसे संतुलित रखना चाहिए।'
+    },
+    white: {
+      en: 'White/Gray represents clean neutrality, Venus/Moon energy, and modern tech clarity. It acts as an excellent negative space driver.',
+      hi: 'सफेद/धूसर रंग तटस्थता, शुक्र/चंद्र की ऊर्जा और स्वच्छ तकनीक का प्रतिनिधित्व करते हैं। यह खाली स्थान (Negative Space) को संतुलित करता है।'
+    }
+  };
+
+  const pColorMeaning = colorMeanings[primaryColor] || {
+    en: primaryColor + " establishes a distinct category visibility, matching the brand personality.",
+    hi: primaryColor + " रंग ब्रांड के व्यक्तित्व के अनुकूल एक विशिष्ट पहचान स्थापित करता है।"
+  };
+  const sColorMeaning = colorMeanings[secondaryColor] || {
+    en: secondaryColor + " provides supportive contrast and balances visual hierarchy.",
+    hi: secondaryColor + " रंग सहायक रंग के रूप में दृश्य विपरीतता और पदानुक्रम को संतुलित करता है।"
+  };
+
+  const primaryColorDescEn = pColorMeaning.en + " " + (isColorCompatible ? "This color is highly compatible with " + companyName + "'s Destiny Number " + compSingle + "." : "This color is neutral to the brand Destiny Number " + compSingle + ".");
+  const primaryColorDescHi = pColorMeaning.hi + " " + (isColorCompatible ? "यह रंग " + companyName + " के भाग्य अंक " + compSingle + " के साथ अत्यधिक अनुकूल है।" : "यह रंग ब्रांड के भाग्य अंक " + compSingle + " के साथ तटस्थ है।");
+
+  const secondaryColorDescEn = sColorMeaning.en + " The contrast ratio between " + primaryColor + " and " + secondaryColor + " is calculated as " + (['black', 'white'].includes(primaryColor) || ['black', 'white'].includes(secondaryColor) ? 'Excellent' : 'Moderate') + ", supporting digital reading.";
+  const secondaryColorDescHi = sColorMeaning.hi + " " + primaryColor + " और " + secondaryColor + " के बीच का कंट्रास्ट अनुपात " + (['black', 'white'].includes(primaryColor) || ['black', 'white'].includes(secondaryColor) ? 'उत्कृष्ट' : 'सामान्य') + " है, जो पढ़ने में आसान है।";
+
+  // Typography
+  let typoDescEn = '';
+  let typoDescHi = '';
+  if (typographyStyle === 'serif') {
+    typoDescEn = "Serif typeface communicates heritage, prestige, and trust. For " + companyName + ", it conveys establishment and matches traditional values. recommended letter spacing is 4-6%.";
+    typoDescHi = "सेरिफ़ फ़ॉन्ट शैली विरासत, प्रतिष्ठा और गहरे विश्वास का संचार करती है। " + companyName + " के लिए, यह पारंपरिक मूल्यों को मजबूत करती है। अक्षरों के बीच की दूरी 4-6% रखने की सलाह दी जाती है।";
+  } else if (typographyStyle === 'sans') {
+    typoDescEn = "Sans-serif typeface conveys modern simplicity, technology, and efficiency. It renders cleanly at small digital scales. Spacing: 5-8%.";
+    typoDescHi = "संस-सेरिफ़ फ़ॉन्ट आधुनिक सरलता, दक्षता और नई तकनीक को दर्शाता है। यह डिजिटल मीडिया पर बहुत साफ दिखाई देता है। स्पेसिंग: 5-8%।";
+  } else if (typographyStyle === 'geometric') {
+    typoDescEn = "Geometric font conveys engineering precision, discipline, and absolute structure. Best for technical and financial domains. Spacing: 6-10%.";
+    typoDescHi = "ज्यामितीय फ़ॉन्ट इंजीनियरिंग सटीकता, अनुशासन और पूर्ण संरचना को दर्शाता है। तकनीकी और वित्तीय क्षेत्रों के लिए सर्वोत्तम। स्पेसिंग: 6-10%।";
+  } else if (typographyStyle === 'script') {
+    typoDescEn = "Script style represents hand-crafted personalization and elegant sophistication. It offers a warm personal touch but may face readability risks. Spacing: Tight (1-3%).";
+    typoDescHi = "स्क्रिप्ट शैली हाथ से लिखे व्यक्तिगत स्पर्श और लालित्य को दर्शाती है। यह गर्मजोशी प्रदान करती है, लेकिन छोटे आकार में इसे पढ़ना मुश्किल हो सकता है। स्पेसिंग: 1-3%।";
+  } else {
+    typoDescEn = "Display typography projects a unique creative presence, maximizing distinctiveness. Kerning must be carefully configured to prevent overlapping letter stems. Spacing: 5-7%.";
+    typoDescHi = "डिस्प्ले टाइपोग्राफी एक अनोखा रचनात्मक प्रभाव छोड़ती है। प्रतिस्पर्धियों से अलग दिखने के लिए यह बढ़िया है, बशर्ते कि अक्षरों की दूरी संतुलित हो। स्पेसिंग: 5-7%।";
+  }
+
+  // Symbolism
+  const symbolismDescEn = symbolismDesc 
+    ? "The central icon depicting '" + symbolismDesc + "' is a strong visual anchor. The direct symbol connects with " + targetAudience + ", while the hidden meaning indicates the brand's core mission: " + mainPromise + "."
+    : "The logo relies strictly on typography. The absence of a graphical icon shifts the entire communication weight onto the letters. We suggest adding a minor symbolic dot or line to anchor the Vastu energy flow.";
+  const symbolismDescHi = symbolismDesc
+    ? "केंद्रीय प्रतीक '" + symbolismDesc + "' एक मजबूत विजुअल एंकर के रूप में कार्य करता है। यह सीधे '" + targetAudience + "' से जुड़ता है, जबकि इसका गुप्त अर्थ ब्रांड के मूल मिशन '" + mainPromise + "' को दर्शाता है।"
+    : "लोगो पूरी तरह से टाइपोग्राफी पर आधारित है। एक विशिष्ट ग्राफिक प्रतीक की कमी संचार के पूरे भार को अक्षरों पर डाल देती है। वास्तु ऊर्जा प्रवाह को संतुलित करने के लिए एक छोटा बिंदु या रेखा जोड़ने का सुझाव दिया जाता है।";
+
+  // Simplicity
+  const simplicityDescEn = ['wordmark', 'lettermark'].includes(logoType)
+    ? "Classified as a " + logoType + ". It relies entirely on typography and text styling. Excellent simplicity score. The clean reliance allows the brain to register and recall the brand name in under 1.8 seconds."
+    : "Classified as a " + logoType + ". It combines a graphic icon with a wordmark. Moderate complexity. Combining the symbol with letters takes 2.5 to 3.2 seconds for cognitive capture.";
+  const simplicityDescHi = ['wordmark', 'lettermark'].includes(logoType)
+    ? (logoType === 'wordmark' ? 'वर्डमार्क' : 'लेटरमार्क') + " के रूप में वर्गीकृत। यह पूरी तरह से टाइपोग्राफी और टेक्स्ट स्टाइल पर निर्भर करता है। सरलता का उत्कृष्ट स्कोर, जो उपभोक्ता के मस्तिष्क को 1.8 सेकंड के भीतर ब्रांड दर्ज करने की अनुमति देता है।"
+    : logoType + " के रूप में वर्गीकृत। यह ग्राफिक आइकन को वर्डमार्क के साथ जोड़ता है। सामान्य जटिलता, जो ब्रांड को दर्ज होने में 2.5 से 3.2 सेकंड का समय लेती है।";
+
+  // Scalability
+  const scalabilityDescEn = ['lettermark', 'monogram'].includes(logoType)
+    ? "Highly scalable. The clean initials layout performs exceptionally on a 16x16 px favicon, app icons, and giant billboards alike."
+    : "The complex " + logoType + " structure performs well on billboard signage but requires a simplified isolated icon variant for 16x16 px favicon and app-icon layouts.";
+  const scalabilityDescHi = ['lettermark', 'monogram'].includes(logoType)
+    ? "अत्यधिक स्केलेबल। अक्षरों का साफ विन्यास 16x16 पिक्सेल फेविकॉन, मोबाइल ऐप आइकन और विशाल होर्डिंग्स पर समान रूप से उत्कृष्ट प्रदर्शन करता है।"
+    : "जटिल " + logoType + " संरचना होर्डिंग पर अच्छी लगती है, लेकिन 16x16 पिक्सेल फेविकॉन और ऐप आइकन लेआउट के लिए एक सरल और अलग किए गए प्रतीक संस्करण की आवश्यकता होती है।";
+
+  const competitorsList = getCompetitors(industry, lang);
+  const distinctivenessDescEn = "Against competitors like " + competitorsList[0].name + " and " + competitorsList[1].name + ", " + companyName + "'s '" + logoType + "' format combined with '" + shapeStyle + "' geometry positions it in the " + (brandStyle === 'premium' ? 'upper premium' : 'approachable mass') + " tier. It achieves a 3rd rank in Category Differentiation index.";
+  const distinctivenessDescHi = competitorsList[0].name + " और " + competitorsList[1].name + " जैसे प्रतिस्पर्धियों के खिलाफ, " + companyName + " का '" + logoType + "' प्रारूप और '" + shapeStyle + "' ज्यामिति इसे " + (brandStyle === 'premium' ? 'उच्च प्रीमियम' : 'सुलभ जन-बाजार') + " श्रेणी में स्थापित करती है। इसे श्रेणी विभेदन सूचकांक में तीसरा स्थान प्राप्त है।";
+
+  const balanceDescEn = shapeStyle === 'circle' || shapeStyle === 'square'
+    ? "Symmetrical balance is highly achieved due to the regular '" + shapeStyle + "' geometry. The mathematical spacing follows a balanced visual grid, ensuring no single element dominates the negative space."
+    : "Asymmetrical or dynamic balance. The '" + shapeStyle + "' geometry requires careful grid alignment (ideally utilizing the 1:1.618 golden ratio) to prevent a tilted visual weight.";
+  const balanceDescHi = shapeStyle === 'circle' || shapeStyle === 'square'
+    ? "नियमित '" + shapeStyle + "' ज्यामिति के कारण सममितीय संतुलन (Symmetrical Balance) अच्छी तरह प्राप्त होता है। गणितीय रिक्ति एक संतुलित दृश्य ग्रिड का अनुसरण करती है, जिससे कोई भी तत्व हावी नहीं होता।"
+    : "असममितीय या गतिशील संतुलन। झुके हुए दृश्य भार से बचने के लिए '" + shapeStyle + "' ज्यामिति को ग्रिड एलाइनमेंट (आदर्श रूप से 1:1.618 स्वर्ण अनुपात का उपयोग करके) की आवश्यकता होती है।";
+
+  // Emotional Signal
+  const emotionalDescEn = "The emotional tone communicates " + (brandStyle === 'premium' ? 'exclusivity, status, and premium quality' : brandStyle === 'spiritual' ? 'peace, wisdom, and inner harmony' : 'corporate stability, trust, and professional efficiency') + ", targeting the '" + targetAudience + "' segment.";
+  const emotionalDescHi = "लोगो का भावनात्मक स्वर '" + targetAudience + "' लक्षित समूह के लिए " + (brandStyle === 'premium' ? 'विशिष्टता, अधिकार और प्रीमियम गुणवत्ता' : brandStyle === 'spiritual' ? 'शांति, ज्ञान और आंतरिक सद्भाव' : 'स्थिरता, विश्वास और कॉर्पोरेट दक्षता') + " का संचार करता है।";
+
+  // Metaphysical Layer
+  const metaphysicalBalanceEn = "The logo's primary energy flows through the " + elementEnergy + ". Vastu energy flow points toward the " + directionVastuEn + " sector of the brand, which matches the goal of " + mainPromise + ". Brand name destiny number " + compSingle + " (" + planet.name + ") adds spiritual backing. " + nameDestinyDesc;
+  const metaphysicalBalanceHi = "लोगो की मुख्य ऊर्जा " + elementEnergy + " के माध्यम से प्रवाहित होती है। वास्तु ऊर्जा प्रवाह " + directionVastuHi + " दिशा की ओर लक्षित है, जो '" + mainPromise + "' के उद्देश्य से मेल खाता है। ब्रांड नाम भाग्य अंक " + compSingle + " (" + planet.planetMap + ") आध्यात्मिक शक्ति प्रदान करता है। " + nameDestinyDesc;
+
+  // Predictions
+  const predictionsEn = {
+    trustSpeed: trustFactor >= 8.0 ? 'Accelerated Trust Builder (High conversion speed)' : 'Moderate Trust Builder (Steady reputation growth)',
+    marketReach: "Optimized for " + (market === 'global' ? 'international expansion and global audience scaling' : market === 'national' ? 'pan-India market penetration, appealing across diverse states' : 'focused local and regional market capture, building dense consumer relations') + ".",
+    pricingSupport: "The visual cues " + (brandStyle === 'premium' ? 'strongly support higher price margins, enabling premium category positioning' : 'enable high-volume sales, signaling cost-effective reliability') + ".",
+    shortTerm: "Short-term (0-1 Year): The logo's visual contrast ensures immediate visibility in " + market + " digital ads, facilitating rapid lead generation and brand awareness.",
+    midTerm: "Medium-term (1-3 Years): The Destiny Number " + compSingle + " energy builds stable brand equity, generating consistent repeat business and growing customer loyalty.",
+    longTerm: "Long-term (3-7 Years): Serves as a solid intangible corporate asset. The Vastu-aligned " + shapeStyle + " geometry supports capital retention, requiring only minor modernization after 5 years."
+  };
+
+  const predictionsHi = {
+    trustSpeed: trustFactor >= 8.0 ? 'त्वरित विश्वास निर्माता (तेज ग्राहक रूपांतरण)' : 'सकारात्मक विश्वास निर्माता (स्थिर प्रतिष्ठा विकास)',
+    marketReach: "यह लोगो " + (market === 'global' ? 'अंतरराष्ट्रीय विस्तार और वैश्विक दर्शकों के पैमाने के लिए उपयुक्त है' : market === 'national' ? 'अखिल भारतीय बाजार में पैठ बनाने और विभिन्न राज्यों में अपील करने में सक्षम है' : 'स्थानीय और क्षेत्रीय बाजार में मजबूत पकड़ और सघन उपभोक्ता संबंध बनाने में मदद करता है') + ".",
+    pricingSupport: "लोगो का डिज़ाइन " + (brandStyle === 'premium' ? 'उच्च मूल्य मार्जिन (Premium Pricing) का पुरजोर समर्थन करता है' : 'बिक्री की मात्रा (High Volume Sales) बढ़ाने में मदद करता है और विश्वसनीयता दर्शाता है') + ".",
+    shortTerm: "अल्पकालिक (0-1 वर्ष): लोगो की उच्च दृश्य विपरीतता " + market + " विज्ञापनों में तत्काल पहचान सुनिश्चित करती है, जिससे लीड उत्पन्न करने में मदद मिलेगी।",
+    midTerm: "मध्यम अवधि (1-3 वर्ष): भाग्य अंक " + compSingle + " की ऊर्जा एक स्थिर ब्रांड इक्विटी बनाती है, जिससे बार-बार आने वाले ग्राहक और व्यावसायिक स्थिरता बढ़ती है।",
+    longTerm: "दीर्घकालिक (3-7 वर्ष): यह व्यवसाय की एक मूल्यवान अमूर्त संपत्ति के रूप में कार्य करता है। वास्तु-संरेखित " + shapeStyle + " ज्यामिति पूंजी प्रतिधारण और निरंतर व्यापार वृद्धि का समर्थन करती है।"
+  };
+
+  // Generate Strengths Pool
+  const strengthsPoolEn = [];
+  const strengthsPoolHi = [];
+
+  if (industryCompatibility === 'Friendly') {
+    strengthsPoolEn.push("Name Harmony: Destiny Number " + compSingle + " is highly friendly with the '" + industry + "' sector, boosting brand fortune.");
+    strengthsPoolHi.push("नाम अनुकूलता: नाम भाग्य अंक " + compSingle + " '" + industry + "' क्षेत्र के साथ अत्यधिक अनुकूल है, जो ब्रांड विकास को बढ़ावा देता है।");
+  } else {
+    strengthsPoolEn.push("Name Power: Name vibration " + compCompound + " (Destiny " + compSingle + ") is ruled by " + planet.name + ", bringing authority.");
+    strengthsPoolHi.push("नाम बल: ब्रांड नाम की ऊर्जा " + compCompound + " (भाग्य अंक " + compSingle + ") है जो " + planet.nameHi + " द्वारा निर्देशित है।");
+  }
+
+  if (isColorCompatible) {
+    strengthsPoolEn.push("Color Resonance: Primary color '" + primaryColor + "' is highly compatible with the brand destiny number, attracting customers.");
+    strengthsPoolHi.push("रंग अनुकूलता: प्राथमिक रंग '" + primaryColor + "' ब्रांड के भाग्य अंक के साथ अत्यधिक अनुकूल है, जो उपभोक्ताओं को आकर्षित करता है।");
+  } else {
+    strengthsPoolEn.push("Visual Contrast: The color choice of '" + primaryColor + "' ensures high distinctiveness in the " + industry + " category.");
+    strengthsPoolHi.push("दृश्य विपरीतता: '" + primaryColor + "' रंग का चयन " + industry + " श्रेणी में उच्च दृश्यता और पहचान सुनिश्चित करता है।");
+  }
+
+  if (shapeStyle === 'circle') {
+    strengthsPoolEn.push("Vastu Growth: Circular geometry activates the Water element in the North direction, boosting opportunity flow.");
+    strengthsPoolHi.push("वास्तु विकास: वृत्ताकार रूप उत्तर दिशा में जल तत्व को सक्रिय करता है, जिससे नए अवसरों का प्रवाह बढ़ता है।");
+  } else if (shapeStyle === 'square') {
+    strengthsPoolEn.push("Vastu Stability: Square geometry anchors the Earth element in the Southwest, protecting capital retention.");
+    strengthsPoolHi.push("वास्तु स्थिरता: वर्गाकार रूप दक्षिण-पश्चिम में पृथ्वी तत्व को मजबूत करता है, जो पूंजी और व्यावसायिक सुरक्षा को बढ़ाता है।");
+  } else if (shapeStyle === 'triangle') {
+    strengthsPoolEn.push("Vastu Cashflow: Triangular geometry stimulates the Fire element in the Southeast, driving sales velocity.");
+    strengthsPoolHi.push("वास्तु नकदी: त्रिकोणीय रूप दक्षिण-पूर्व में अग्नि तत्व को उत्तेजित करता है, जिससे बिक्री की गति और नकदी प्रवाह बढ़ता है।");
+  } else if (shapeStyle === 'shield') {
+    strengthsPoolEn.push("Vastu Shield: Shield geometry combines Earth/Metal, providing brand protection and security against risks.");
+    strengthsPoolHi.push("वास्तु ढाल: शील्ड ज्यामिति पृथ्वी/धातु को जोड़ती है, जो ब्रांड की सुरक्षा और जोखिमों से बचाव करती है।");
+  } else {
+    strengthsPoolEn.push("Vastu Expansion: Abstract styling stimulates the Air/Space element in the East/Northeast, boosting growth.");
+    strengthsPoolHi.push("वास्तु विस्तार: अमूर्त शैली पूर्व/उत्तर-पूर्व में वायु/आकाश तत्व को उत्तेजित करती है, जो नेटवर्किंग और विकास को बढ़ाती है।");
+  }
+
+  if (typographyStyle === 'sans') {
+    strengthsPoolEn.push("Digital Readability: Sans-serif font ensures high legibility and rendering efficiency on digital screens.");
+    strengthsPoolHi.push("डिजिटल सुपाठ्यता: संस-सेरिफ़ फ़ॉन्ट डिजिटल स्क्रीन और मोबाइल पर उत्कृष्ट सुपाठ्यता सुनिश्चित करता है।");
+  } else if (typographyStyle === 'serif') {
+    strengthsPoolEn.push("Premium Vibe: Serif font conveys authority, heritage, and prestige, appealing to premium segments.");
+    strengthsPoolHi.push("प्रीमियम प्रभाव: सेरिफ़ फ़ॉन्ट ब्रांड की प्रतिष्ठा, अधिकार और पारंपरिक मूल्यों का संचार करता है।");
+  } else if (typographyStyle === 'geometric') {
+    strengthsPoolEn.push("Structural Discipline: Geometric lettering communicates engineering precision and operational control.");
+    strengthsPoolHi.push("संरचनात्मक अनुशासन: ज्यामितीय फ़ॉन्ट इंजीनियरिंग सटीकता और संगठनात्मक नियंत्रण को दर्शाता है।");
+  } else {
+    strengthsPoolEn.push("Brand Distinction: Typography choices offer high aesthetic uniqueness, setting it apart from standard templates.");
+    strengthsPoolHi.push("ब्रांड विशिष्टता: फ़ॉन्ट का अनूठा चयन मानक डिज़ाइनों से अलग एक अनूठी पहचान प्रदान करता है।");
+  }
+
+  strengthsPoolEn.push("Category Alignment: The '" + logoType + "' format serves as a highly scalable and stable branding vehicle.");
+  strengthsPoolHi.push("श्रेणी संरेखण: लोगो प्रकार '" + logoType + "' ब्रांड के लिए एक अत्यधिक उपयोगी और स्थिर माध्यम है।");
+
+  const strengths = isHi ? strengthsPoolHi.slice(0, 5) : strengthsPoolEn.slice(0, 5);
+
+  // Generate Weaknesses Pool
+  const weaknessesPoolEn = [];
+  const weaknessesPoolHi = [];
+
+  if (hasColorClash) {
+    weaknessesPoolEn.push("Elemental Color Clash: Conflict between Fire/Water or Earth/Water colors disrupts customer trust.");
+    weaknessesPoolHi.push("तत्व रंग दोष: अग्नि/जल या पृथ्वी/जल के रंगों में टकराव ग्राहकों के विश्वास को प्रभावित करता है।");
+  } else {
+    weaknessesPoolEn.push("Contrast variance: Saturated tones of " + primaryColor + " and " + secondaryColor + " may experience shifting legibility in grayscale printing.");
+    weaknessesPoolHi.push("रंग कंट्रास्ट जोखिम: " + primaryColor + " और " + secondaryColor + " का संयोजन कुछ प्रिंट मीडिया में फीका हो सकता है।");
+  }
+
+  if (industryCompatibility === 'Anti') {
+    weaknessesPoolEn.push("Industry Destiny Friction: Name Destiny Number " + compSingle + " is incompatible with " + industry + ", causing delays.");
+    weaknessesPoolHi.push("ग्रहीय उद्योग घर्षण: नाम भाग्य अंक " + compSingle + " '" + industry + "' क्षेत्र के लिए प्रतिकूल है, जिससे कार्यों में देरी हो सकती है।");
+  } else {
+    weaknessesPoolEn.push("Category overlap: Standard layout design shares common traits with typical " + industry + " competitors.");
+    weaknessesPoolHi.push("विशिष्टता जोखिम: " + industry + " क्षेत्र के मानक प्रारूपों से आंशिक समानता होना।");
+  }
+
+  if (hasShapeClash) {
+    weaknessesPoolEn.push("Vastu Shape Clash: '" + shapeStyle + "' geometry is unfavorable for the " + industry + " domain, creating cash/project hurdles.");
+    weaknessesPoolHi.push("वास्तु आकृति दोष: '" + shapeStyle + "' ज्यामिति " + industry + " उद्योग के लिए प्रतिकूल है, जो प्रगति में बाधाएं लाती है।");
+  } else {
+    weaknessesPoolEn.push("Visual weight shift: Minor structural discrepancy between the line thickness of the symbol and wordmark characters.");
+    weaknessesPoolHi.push("आकार असंतुलन: फोंट का दृश्य भार मुख्य आकार की तुलना में असंतुलित होना।");
+  }
+
+  if (typographyStyle === 'script') {
+    weaknessesPoolEn.push("Readability risk: Script typography can reduce the speed of brand recognition at smaller favicon scales.");
+    weaknessesPoolHi.push("पठन जटिलता: स्क्रिप्ट फ़ॉन्ट शैली के कारण छोटे आकारों में ब्रांड का नाम पढ़ना मुश्किल हो सकता है।");
+  } else {
+    weaknessesPoolEn.push("Favicon limitations: Subtle geometry elements bleed when scaled down to 16x16 px favicon layouts.");
+    weaknessesPoolHi.push("Favicon सीमाएं: छोटे आकारों पर बारीक विवरण धुंधले हो सकते हैं।");
+  }
+
+  weaknessesPoolEn.push("Cultural divergence: Minor risk of secondary color tone carrying alternate meanings in overseas niche markets.");
+  weaknessesPoolHi.push("अवचेतन विचलन: कुछ अंतरराष्ट्रीय बाजारों में रंगों की भिन्न व्याख्या हो सकती है।");
+
+  const weaknesses = isHi ? weaknessesPoolHi.slice(0, 5) : weaknessesPoolEn.slice(0, 5);
+
+  // Generate Recommendations
+  let actionStrEn = "";
+  let actionStrHi = "";
+  let recDetailsEn = "";
+  let recDetailsHi = "";
+
+  if (hasColorClash || hasShapeClash || industryCompatibility === 'Anti') {
+    actionStrEn = "Partial Redesign / Optimization Required";
+    actionStrHi = "आंशिक पुनर्डिज़ाइन (Partial Redesign) आवश्यक";
+
+    if (hasColorClash) {
+      recDetailsEn = "1. Color Remedy: Insert a thin neutral border (silver, white, or gold) between the clashing colors (" + primaryColor + " and " + secondaryColor + ") to break the direct Fire-Water or Earth-Water contact.\n2. Letter Spacing: Increase typography letter-spacing (kerning) by 6% to allow natural energy flow.\n3. Base Placement: Place the logo elements on a square background base to ground any volatile elements.\n4. Vastu remedy: Keep a small green plant or copper pyramid in the North of your workspace to attract opportunities.";
+      recDetailsHi = "1. रंग दोष उपाय: अग्नि-जल या पृथ्वी-जल के सीधे संपर्क को तोड़ने के लिए प्राथमिक रंग (" + primaryColor + ") और सहायक रंग (" + secondaryColor + ") के बीच एक पतली सफेद या चांदी जैसी रेखा (धातु तत्व) जोड़ें।\n2. अक्षरों की दूरी: टाइपोग्राफी में अक्षरों के बीच की दूरी को 6% बढ़ाएं ताकि पठन स्पष्टता बेहतर हो।\n3. वर्गाकार पृष्ठभूमि: लोगो को एक वर्गाकार पृष्ठभूमि पर रखें ताकि तत्वों को स्थिरता मिले।\n4. वास्तु उपाय: अपने कार्यालय के उत्तर क्षेत्र में नया अवसर प्रवाह बढ़ाने के लिए एक छोटा हरा पौधा या तांबे का पिरामिड रखें।";
+    } else if (industryCompatibility === 'Anti') {
+      recDetailsEn = "1. Destiny Remediation: Since destiny number " + compSingle + " is unfriendly with the " + industry + " industry, add a solid line (metal bar) below the name to act as an energy bridge.\n2. Visual Anchor: Add a small solid dot (Bindu) in gold or " + primaryColor + " at the end of the brand wordmark to represent closure and financial success.\n3. Typography Adjustments: Increase font stroke weight slightly to represent Jupiter stability.\n4. Saturation check: Boost color saturation by 10% for high-speed digital advertisements.";
+      recDetailsHi = "1. प्रतिकूल भाग्य उपाय: चूंकि नाम का भाग्य अंक " + compSingle + " इस उद्योग के अनुकूल नहीं है, इसलिए नाम के नीचे एक ठोस रेखा (मेटल बार) जोड़ें।\n2. विजुअल बिंदु उपाय: लोगो के नाम के अंत में एक छोटा स्वर्ण या " + primaryColor + " रंग का बिंदु (बिंदु) जोड़ें।\n3. फ़ॉन्ट संतुलन: गुरु या शुक्र की शुभ ऊर्जाओं को आकर्षित करने के लिए अक्षरों के वजन को थोड़ा भारी करें।\n4. रंग सुधार: विज्ञापनों में स्पष्टता के लिए प्राथमिक रंग की चमक को 10% बढ़ाएं।";
+    } else {
+      recDetailsEn = "1. Shape Remedy: Align the '" + shapeStyle + "' geometry to fit standard grids using golden ratio templates to reduce structural volatility.\n2. Digital Favicons: Isolate the main logo icon in '" + primaryColor + "' for digital favicons and app icons.\n3. Spacing: Increase letter spacing by 5% to support digital readability.\n4. Color tone: Boost primary color saturation to ensure vibrant reproduction in print media.";
+      recDetailsHi = "1. आकृति सुधार: आकृति की ऊर्जा को संतुलित करने के लिए ग्रिड लेआउट का उपयोग करें ताकि संरचनात्मक अस्थिरता कम हो।\n2. सूक्ष्म सुधार: डिजिटल फेविकॉन और ऐप आइकन के लिए केवल '" + primaryColor + "' रंग के मुख्य आइकन का उपयोग करें।\n3. स्पेसिंग: डिजिटल स्क्रीन पर सुपाठ्यता के लिए अक्षरों के बीच की दूरी को 5% बढ़ाएं।\n4. रंग सुरक्षा: सभी प्रकार के प्रिंट और विज्ञापन मीडिया में समान शेड्स का उपयोग सुनिश्चित करें।";
+    }
+  } else {
+    actionStrEn = brandFit >= 8.0 ? "No change / Minor refinement" : "Minor optimization";
+    actionStrHi = brandFit >= 8.0 ? "कोई बदलाव नहीं / मामूली रिफाइनमेंट" : "मामूली सुधार";
+
+    recDetailsEn = "1. Fine-tuning: Isolate the main logo icon in '" + primaryColor + "' for digital favicons and app icons.\n2. Kerning optimization: Increase typography letter spacing by 5% to support digital readability.\n3. Typography style: " + (brandStyle === 'premium' ? 'Refine font strokes to project a luxury aesthetic.' : 'Strengthen font edges to reinforce modern authority.') + "\n4. Saturation: Maintain consistent brand reproduction guidelines across all physical and print media.";
+    recDetailsHi = "1. सूक्ष्म सुधार: डिजिटल फेविकॉन और ऐप आइकन के लिए केवल '" + primaryColor + "' रंग के मुख्य आइकन का उपयोग करें।\n2. स्पेसिंग: डिजिटल स्क्रीन पर सुपाठ्यता के लिए अक्षरों के बीच की दूरी को 5% बढ़ाएं।\n3. फ़ॉन्ट सुधार: " + (brandStyle === 'premium' ? 'लक्जरी लुक देने के लिए अक्षरों की मोटाई को थोड़ा स्लिम करें।' : 'आधुनिक विश्वसनीयता बढ़ाने के लिए फ़ॉन्ट के कोनों को स्पष्ट करें।') + "\n4. रंग सुरक्षा: सभी प्रकार के प्रिंट और विज्ञापन मीडिया में समान शेड्स का उपयोग सुनिश्चित करें।";
+  }
+
+  const result = {
+    basics: {
+      companyName,
+      industry,
+      targetAudience,
+      market: isHi ? { local: 'स्थानीय', regional: 'क्षेत्रीय', national: 'राष्ट्रीय', global: 'वैश्विक' }[market] || market : market.toUpperCase(),
+      brandStyle: isHi ? { premium: 'प्रीमियम / लक्जरी', massmarket: 'मास मार्केट', spiritual: 'आध्यात्मिक / गूढ़', corporate: 'कॉर्पोरेट / व्यावसायिक', modern: 'आधुनिक', traditional: 'पारंपरिक / क्लासिक', bold: 'बोल्ड / उच्च ऊर्जा' }[brandStyle] || brandStyle : brandStyle.toUpperCase(),
+      mainPromise,
+      rank: brandRank
+    },
+    scores: {
+      brandFit,
+      visualClarity,
+      memorability,
+      trustFactor,
+      premiumFeel,
+      scalability,
+      potential
+    },
+    executiveSummary: isHi
+      ? "नाम '" + companyName + "' का किल्डियन विश्लेषण दर्शाता है कि इसका संयुक्त अंक " + compCompound + " (भाग्य अंक " + compSingle + ", स्वामी: " + planet.nameHi + ") है। यह अंक इस उद्योग के साथ " + (industryCompatibility === 'Friendly' ? 'अत्यधिक अनुकूल' : industryCompatibility === 'Anti' ? 'प्रतिकूल' : 'तटस्थ') + " है। चुनी गई '" + brandStyle + "' शैली और प्राथमिक रंग " + primaryColor + " का संयोजन '" + targetAudience + "' दर्शकों को आकर्षित करता है, और वास्तु के अनुसार '" + shapeStyle + "' की ज्यामिति ब्रांड के वादे '" + mainPromise + "' को संबल प्रदान करती है।"
+      : "An analysis of the brand name '" + companyName + "' reveals a Chaldean compound frequency of " + compCompound + ", reducing to Destiny Number " + compSingle + " (ruled by " + planet.name + "). This destiny number is " + (industryCompatibility === 'Friendly' ? 'highly compatible' : industryCompatibility === 'Anti' ? 'unfriendly' : 'neutral') + " with the '" + industry + "' sector. The '" + brandStyle + "' style and " + primaryColor + " color target the '" + targetAudience + "' demographic, and Vastu shape '" + shapeStyle + "' supports the core promise of '" + mainPromise + "'.",
+
+    designAudit: {
+      logoTypeInfo: isHi ? simplicityDescHi : simplicityDescEn,
+      shapeInfo: isHi ? shapeDescHi + " " + shapeIndustryClashHi : shapeDescEn + " " + shapeIndustryClashEn,
+      primaryColorInfo: isHi ? primaryColorDescHi + " " + colorClashHi : primaryColorDescEn + " " + colorClashEn,
+      secondaryColorInfo: isHi ? secondaryColorDescHi + " " + primaryColor + " और " + secondaryColor + " का यह संयोजन दृश्य सुपाठ्यता बढ़ाता है।" : secondaryColorDescEn + " The visual relationship between " + primaryColor + " and " + secondaryColor + " supports cognitive recall.",
+      typographyInfo: isHi ? typoDescHi : typoDescEn,
+      scalabilityInfo: isHi ? scalabilityDescHi : scalabilityDescEn
+    },
+
+    psychologyLayer: {
+      emotionalSignal: isHi ? emotionalDescHi : emotionalDescEn,
+      energyFlow: flowDesc,
+      occultElement: elementEnergy,
+      metaphysicalBalance: isHi ? metaphysicalBalanceHi : metaphysicalBalanceEn
+    },
+
+    predictions: isHi ? predictionsHi : predictionsEn,
+
+    competitorBenchmark: {
+      intro: isHi
+        ? "समान " + industry + " उद्योग में शीर्ष प्रतिस्पर्धियों के साथ तुलना:"
+        : "Competitive comparison against top players in the " + industry + " industry:",
+      items: competitorsList,
+      rankingText: isHi
+        ? "इस विश्लेषण के आधार पर, " + companyName + " का लोगो प्रतिस्पर्धी बाजार में visual clarity और brand positioning में " + brandRank + "रे स्थान पर आता है।"
+        : "Based on this audit, " + companyName + "'s logo ranks " + brandRank + " overall in visual clarity and category alignment within the active benchmark group."
+    },
+
+    strengths,
+    weaknesses,
+
+    recommendations: {
+      action: isHi ? actionStrHi : actionStrEn,
+      details: isHi ? recDetailsHi : recDetailsEn
+    }
+  };
+
+  return result;
+};
