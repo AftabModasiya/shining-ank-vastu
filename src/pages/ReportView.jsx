@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions } from '../utils/numerology';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
@@ -1822,6 +1822,87 @@ function ReportView() {
                         <div className={`baby-justification ${babyGender}`}>
                           {getBirthDateGenderJustification(activeBaby, babyGender, language)}
                         </div>
+
+                        {/* Baby Name Suggestion Report */}
+                        {(() => {
+                          const nameReport = getNameSuggestions(activeBaby.date, babyGender);
+                          if (!nameReport) return null;
+                          return (
+                            <div className="baby-name-suggestions-container" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(232, 213, 191, 0.5)' }}>
+                              <div className="baby-breakdown-title" style={{ fontSize: '1rem', color: '#b5820a', marginBottom: '16px' }}>{rpt.babyNameSuggestionTitle}</div>
+                              
+                              <div className="baby-name-card-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                                <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                                  <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                                    {rpt.babyNameAnalysisTitle}
+                                  </div>
+                                  <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                                    <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyDriver}:</span>
+                                    <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.driver}</span>
+                                  </div>
+                                  <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                                    <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyConductor}:</span>
+                                    <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.conductor}</span>
+                                  </div>
+                                  <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                                    <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameMissingPriority}:</span>
+                                    <span className="baby-stat-val" style={{ color: '#c05050', fontWeight: 'bold' }}>{nameReport.missingPriority.length > 0 ? nameReport.missingPriority.join(', ') : rpt.babyNone}</span>
+                                  </div>
+                                  <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                                    <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameSelectedTarget}:</span>
+                                    <span className="baby-stat-val" style={{ color: '#b5820a', fontWeight: 'bold', fontSize: '1.05rem' }}>{nameReport.bestTarget}</span>
+                                  </div>
+                                </div>
+
+                                <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                                  <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                                    {rpt.babyNameInitialsTitle}
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                    {nameReport.initials.map(letter => (
+                                      <span key={letter} style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontWeight: 'bold', padding: '6px 14px', borderRadius: '8px', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(181,130,10,0.15)' }}>
+                                        {letter}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div style={{ fontSize: '0.8rem', color: '#8c6f58', marginTop: '12px', fontStyle: 'italic' }}>
+                                    {isHi ? 'भाग्यशाली नामाંક ' + nameReport.bestTarget + ' के अनुकूल प्रारंभिक अक्षर' : 'Lucky starting alphabets matching Destiny Number ' + nameReport.bestTarget}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="baby-justification" style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '12px 16px', borderRadius: '0 8px 8px 0', marginBottom: '20px', fontSize: '0.92rem', lineHeight: '1.5', color: '#5a4230' }}>
+                                <strong>{rpt.babyNameJustification}:</strong> {isHi ? `लक्ष्य नामाંક ${nameReport.bestTarget} को चुना गया है क्योंकि यह मूલાંક ${nameReport.driver} અને ભાગ્યાંક ${nameReport.conductor} બંને સાથે અત્યંત અનુકૂળ અને મિત્ર છે, જેથી કોઈ વિરોધાભાસી (Anti) અંક નથી. તે લો શૂ ગ્રિડમાં ગુમ થયેલ પ્રાથમિક અંકોને પણ સંતુલિત કરે છે.` : nameReport.justification}
+                              </div>
+
+                              <div className="baby-breakdown-title" style={{ fontSize: '1rem', color: '#b5820a', marginBottom: '12px' }}>{rpt.babyNameTableTitle} ({babyGender === 'boy' ? (isHi ? 'बेबी बॉय' : 'Boy') : (isHi ? 'बेबी गर्ल' : 'Girl')})</div>
+                              <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left', background: '#fff' }}>
+                                  <thead>
+                                    <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                                      <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSrNo}</th>
+                                      <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSuggestedName}</th>
+                                      <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameBreakdown}</th>
+                                      <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{rpt.babyNameTotal}</th>
+                                      <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameMeaning}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {nameReport.suggestions.map((s) => (
+                                      <tr key={s.srNo} style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.3)', background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent' }}>
+                                        <td style={{ padding: '12px', color: '#8c6f58' }}>{s.srNo}</td>
+                                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>{s.name}</td>
+                                        <td style={{ padding: '12px', fontFamily: 'monospace', color: '#5a4230', fontSize: '0.85rem' }}>{s.calculation}</td>
+                                        <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#3d2c1e' }}>{s.total}</td>
+                                        <td style={{ padding: '12px', color: '#5a4230', fontSize: '0.85rem' }}>{s.meaning}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

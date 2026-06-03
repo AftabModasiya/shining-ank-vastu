@@ -2655,3 +2655,297 @@ export const getBirthDateGenderJustification = (analysis, gender, language = 'en
   }
 };
 
+export const getNameSuggestions = (dobStr, gender) => {
+  if (!dobStr) return null;
+  // dobStr is "15-05-2026" or "2026-05-15"
+  // Normalize date
+  let datePart = dobStr;
+  if (dobStr.includes('-')) {
+    const parts = dobStr.split('-');
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD -> DD-MM-YYYY
+      datePart = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+  }
+
+  // Calculate Driver and Conductor
+  const cleanParts = datePart.split('-');
+  const dayVal = parseInt(cleanParts[0], 10) || 1;
+  const monthVal = parseInt(cleanParts[1], 10) || 1;
+  const yearVal = parseInt(cleanParts[2], 10) || 2026;
+
+  const reduceToSingle = (num) => {
+    while (num > 9) {
+      num = String(num).split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
+    }
+    return num;
+  };
+
+  const driver = reduceToSingle(dayVal);
+  const totalSum = String(dayVal) + String(monthVal) + String(yearVal);
+  const conductorVal = String(totalSum).split('').reduce((sum, d) => {
+    const parsed = parseInt(d, 10);
+    return sum + (isNaN(parsed) ? 0 : parsed);
+  }, 0);
+  const conductor = reduceToSingle(conductorVal);
+
+  // Missing priority numbers from [1, 3, 5, 6] in Lo Shu Grid
+  // Lo Shu Grid numbers from DOB digits
+  const dobDigits = datePart.replace(/-/g, '').split('').map(Number);
+  const presentNums = new Set(dobDigits.filter(d => d >= 1 && d <= 9));
+  const missingPriority = [1, 3, 5, 6].filter(n => !presentNums.has(n));
+
+  // Determine Target Name Number based on friendship matrix
+  const candidates = [1, 3, 5, 6];
+  let bestTarget = 5; // default fallback
+  let maxScore = -999;
+
+  const friendsMap = {
+    1: [1, 2, 3, 5, 7, 9],
+    3: [1, 2, 3, 5, 7, 9],
+    5: [1, 2, 3, 5, 6, 7, 8],
+    6: [1, 5, 6, 7, 8, 9]
+  };
+
+  const antiMap = {
+    1: [8],
+    3: [6],
+    5: [],
+    6: [3]
+  };
+
+  candidates.forEach(t => {
+    // Check if target is anti to driver or conductor
+    const isAntiDriver = antiMap[t].includes(driver);
+    const isAntiConductor = antiMap[t].includes(conductor);
+    if (isAntiDriver || isAntiConductor) {
+      return; // invalid candidate
+    }
+
+    let score = 0;
+    // Missing priority
+    if (missingPriority.includes(t)) {
+      score += 5;
+    }
+    // Friend to driver
+    if (friendsMap[t].includes(driver)) {
+      score += 2;
+    }
+    // Friend to conductor
+    if (friendsMap[t].includes(conductor)) {
+      score += 2;
+    }
+
+    if (score > maxScore) {
+      maxScore = score;
+      bestTarget = t;
+    }
+  });
+
+  // Initials
+  const initialsMap = {
+    1: ['A', 'V', 'S'],
+    3: ['D', 'M', 'R'],
+    5: ['H', 'P', 'Y'],
+    6: ['I', 'K', 'S']
+  };
+  const initials = initialsMap[bestTarget] || ['A', 'K', 'S'];
+
+  // Name suggestions database
+  const chaldeanMap = {
+    A:1, I:1, J:1, Q:1, Y:1,
+    B:2, K:2, R:2,
+    C:3, G:3, L:3, S:3,
+    D:4, M:4, T:4,
+    E:5, H:5, N:5, X:5,
+    U:6, V:6, W:6,
+    O:7, Z:7,
+    F:8, P:8
+  };
+
+  const nameBreakdown = (name) => {
+    const letters = name.toUpperCase().split('');
+    const parts = letters.map(l => `${l}(${chaldeanMap[l] || 0})`);
+    const total = letters.reduce((sum, l) => sum + (chaldeanMap[l] || 0), 0);
+    const single = reduceToSingle(total);
+    return {
+      breakdown: parts.join(' + ') + ` = ${total} -> ${single}`,
+      total: single
+    };
+  };
+
+  const namesDb = {
+    1: {
+      Boy: [
+        { name: "Arav", meaning: "Peaceful, calm" },
+        { name: "Vihaan", meaning: "Dawn, morning" },
+        { name: "Vivaan", meaning: "Full of life" },
+        { name: "Adit", meaning: "From the beginning" },
+        { name: "Yug", meaning: "Era, age" },
+        { name: "Nishith", meaning: "Night" },
+        { name: "Ronit", meaning: "Bright, shining" },
+        { name: "Yash", meaning: "Fame, glory" },
+        { name: "Shaurya", meaning: "Bravery, heroism" },
+        { name: "Abhay", meaning: "Fearless" },
+        { name: "Gaurav", meaning: "Pride, honor" },
+        { name: "Manish", meaning: "God of mind" },
+        { name: "Vijay", meaning: "Victory" },
+        { name: "Amit", meaning: "Infinite, boundless" },
+        { name: "Shikhar", meaning: "Peak, summit" }
+      ],
+      Girl: [
+        { name: "Sneha", meaning: "Love, affection" },
+        { name: "Isha", meaning: "Goddess, ruler" },
+        { name: "Suman", meaning: "Good-natured, flower" },
+        { name: "Lina", meaning: "Devoted, tender" },
+        { name: "Nila", meaning: "Blue, sapphire" },
+        { name: "Kirti", meaning: "Fame, glory" },
+        { name: "Krupa", meaning: "Grace, mercy" },
+        { name: "Karishma", meaning: "Miracle, gift of God" },
+        { name: "Shanti", meaning: "Peace, tranquility" },
+        { name: "Asha", meaning: "Hope, desire" },
+        { name: "Pramila", meaning: "Beautiful, modest" },
+        { name: "Meeta", meaning: "Friend" },
+        { name: "Rajni", meaning: "Night" },
+        { name: "Sarla", meaning: "Simple, straightforward" },
+        { name: "Aaradhya", meaning: "Worshipped" }
+      ]
+    },
+    3: {
+      Boy: [
+        { name: "Aditya", meaning: "Sun" },
+        { name: "Jatin", meaning: "Disciplined, ascetic" },
+        { name: "Madhav", meaning: "Sweet like honey" },
+        { name: "Ekansh", meaning: "Whole, complete" },
+        { name: "Neev", meaning: "Foundation" },
+        { name: "Moksh", meaning: "Liberation, salvation" },
+        { name: "Rishi", meaning: "Sage, saint" },
+        { name: "Tushar", meaning: "Snow, frost" },
+        { name: "Kartik", meaning: "Name of a month, courageous" },
+        { name: "Sanjay", meaning: "Victorious, triumphant" },
+        { name: "Akhil", meaning: "Complete, universe" },
+        { name: "Lalit", meaning: "Beautiful, playful" },
+        { name: "Uday", meaning: "To rise, ascend" },
+        { name: "Pavan", meaning: "Wind, breeze" },
+        { name: "Naresh", meaning: "Lord of men" }
+      ],
+      Girl: [
+        { name: "Tanya", meaning: "Of the family, fairy queen" },
+        { name: "Hina", meaning: "Fragrance, henna" },
+        { name: "Sarita", meaning: "River, stream" },
+        { name: "Anita", meaning: "Grace, leader" },
+        { name: "Garima", meaning: "Warmth, honor" },
+        { name: "Suhani", meaning: "Pleasant, beautiful" },
+        { name: "Pratima", meaning: "Icon, image" },
+        { name: "Shruti", meaning: "Vedas, hearing" },
+        { name: "Rupali", meaning: "Beautiful, pretty" },
+        { name: "Nutan", meaning: "New, fresh" },
+        { name: "Anu", meaning: "Atom, prefix for small" },
+        { name: "Kusum", meaning: "Flower, blossom" },
+        { name: "Shradha", meaning: "Faith, trust" },
+        { name: "Manjula", meaning: "Lovely, sweet" },
+        { name: "Sarojini", meaning: "Lotus pool" }
+      ]
+    },
+    5: {
+      Boy: [
+        { name: "Hriday", meaning: "Heart, soul" },
+        { name: "Arya", meaning: "Noble, honorable" },
+        { name: "Reyan", meaning: "Lord, king" },
+        { name: "Dhruv", meaning: "Polar star, steadfast" },
+        { name: "Tejas", meaning: "Lustre, brightness" },
+        { name: "Pranav", meaning: "Sacred syllable Om" },
+        { name: "Utkarsh", meaning: "Prosperity, rise" },
+        { name: "Mayank", meaning: "Moon, pure" },
+        { name: "Atul", meaning: "Incomparable, matchless" },
+        { name: "Nitesh", meaning: "Lord of law, guide" },
+        { name: "Kamlesh", meaning: "Lord of lotus" },
+        { name: "Umesh", meaning: "Lord of Uma" },
+        { name: "Chandan", meaning: "Sandalwood" },
+        { name: "Dinesh", meaning: "Sun, lord of day" },
+        { name: "Hitesh", meaning: "Lord of goodness" }
+      ],
+      Girl: [
+        { name: "Ananya", meaning: "Matchless, unique" },
+        { name: "Navya", meaning: "New, fresh" },
+        { name: "Vanya", meaning: "Gracious gift of God" },
+        { name: "Sia", meaning: "Goddess Sita" },
+        { name: "Riya", meaning: "Singer, graceful" },
+        { name: "Esha", meaning: "Desire, wish" },
+        { name: "Payal", meaning: "Anklet" },
+        { name: "Yashika", meaning: "Success, famous" },
+        { name: "Alisha", meaning: "Protected by God" },
+        { name: "Madhuri", meaning: "Sweetness" },
+        { name: "Pallavi", meaning: "New leaves" },
+        { name: "Poonam", meaning: "Full moon" },
+        { name: "Vandana", meaning: "Worship, prayer" },
+        { name: "Jyoti", meaning: "Light, flame" },
+        { name: "Kalyani", meaning: "Auspicious, beautiful" }
+      ]
+    },
+    6: {
+      Boy: [
+        { name: "Ishan", meaning: "Lord Shiva, direction" },
+        { name: "Darsh", meaning: "Sight, handsome" },
+        { name: "Rudra", meaning: "Lord Shiva, terrible" },
+        { name: "Girish", meaning: "Lord of mountains" },
+        { name: "Chirag", meaning: "Lamp, light" },
+        { name: "Arjun", meaning: "Bright, shining, warrior" },
+        { name: "Hemant", meaning: "Early winter" },
+        { name: "Piyush", meaning: "Amrit, nectar" },
+        { name: "Hardik", meaning: "From the heart" },
+        { name: "Kapil", meaning: "Sage, sun" },
+        { name: "Dev", meaning: "God, divine" },
+        { name: "Vimal", meaning: "Pure, clean" },
+        { name: "Ranjan", meaning: "Delighting, coloring" },
+        { name: "Suresh", meaning: "Lord of gods" },
+        { name: "Yogesh", meaning: "God of yoga" }
+      ],
+      Girl: [
+        { name: "Nisha", meaning: "Night" },
+        { name: "Usha", meaning: "Dawn, morning" },
+        { name: "Pooja", meaning: "Worship, prayer" },
+        { name: "Sweta", meaning: "Pure, white" },
+        { name: "Vibha", meaning: "Ray of light, splendour" },
+        { name: "Aruna", meaning: "Dawn, reddish glow" },
+        { name: "Kavita", meaning: "Poem, poetry" },
+        { name: "Nilima", meaning: "Blue-colored" },
+        { name: "Pratibha", meaning: "Talent, intelligence" },
+        { name: "Rekha", meaning: "Line, limit" },
+        { name: "Vimla", meaning: "Pure, clean" },
+        { name: "Bindiya", meaning: "Small dot, bindu" },
+        { name: "Hema", meaning: "Golden-bodied" },
+        { name: "Prerna", meaning: "Inspiration" },
+        { name: "Manasi", meaning: "Of the mind" }
+      ]
+    }
+  };
+
+  const rawGender = gender === 'boy' || gender === 'Boy' ? 'Boy' : 'Girl';
+  const suggestedNamesRaw = namesDb[bestTarget]?.[rawGender] || [];
+
+  const suggestions = suggestedNamesRaw.map((item, idx) => {
+    const calc = nameBreakdown(item.name);
+    return {
+      srNo: idx + 1,
+      name: item.name,
+      calculation: calc.breakdown,
+      total: calc.total,
+      meaning: item.meaning
+    };
+  });
+
+  const justification = `Target Name Number ${bestTarget} is selected because it is highly compatible/friendly with both Driver ${driver} and Conductor ${conductor}, without having any planetary conflicts (Anti-numbers). It also balances the missing priority Lo Shu grid elements.`;
+
+  return {
+    driver,
+    conductor,
+    missingPriority,
+    bestTarget,
+    justification,
+    initials,
+    suggestions
+  };
+};
+
+
