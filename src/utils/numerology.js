@@ -2478,6 +2478,193 @@ export const getStockComments = (bestIndicator, mulank, bhagyank, dob, status, s
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STOCK MARKET SUITABILITY — New Financial Astrology Engine
+// Based on Driver/Conductor Anti-Number logic + Sector Mapping
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Anti-number pairs per Chaldean Financial Astrology
+const ANTI_PAIRS = [[1, 8], [4, 9], [4, 8]];
+
+const isAntiPair = (a, b) =>
+  ANTI_PAIRS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+
+// Planetary friends per number (for sector suitability)
+const PLANET_FRIENDS = {
+  1: [1, 2, 3, 9],
+  2: [1, 2, 3, 4],
+  3: [1, 2, 3, 6, 9],
+  4: [1, 2, 4, 7, 8],
+  5: [1, 4, 5, 6],
+  6: [3, 5, 6, 9],
+  7: [1, 2, 4, 7],
+  8: [4, 5, 6, 7, 8],
+  9: [1, 3, 6, 9],
+};
+
+// Sector definitions per number
+const SECTORS = {
+  1: { en: 'Government & Energy', hi: 'सरकार और ऊर्जा', planet: 'Sun (Surya)', planetHi: 'सूर्य' },
+  2: { en: 'Pharma & Liquids', hi: 'फार्मा और तरल पदार्थ', planet: 'Moon (Chandra)', planetHi: 'चंद्र' },
+  3: { en: 'Banking & FMCG', hi: 'बैंकिंग और एफएमसीजी', planet: 'Jupiter (Guru)', planetHi: 'गुरु' },
+  4: { en: 'IT & Technology', hi: 'आईटी और तकनीक', planet: 'Rahu', planetHi: 'राहु' },
+  5: { en: 'Telecom & E-commerce', hi: 'टेलीकॉम और ई-कॉमर्स', planet: 'Mercury (Budh)', planetHi: 'बुध' },
+  6: { en: 'Auto & Luxury', hi: 'ऑटो और लक्जरी', planet: 'Venus (Shukra)', planetHi: 'शुक्र' },
+  7: { en: 'Mining & R&D', hi: 'खनन और अनुसंधान', planet: 'Ketu', planetHi: 'केतु' },
+  8: { en: 'Infrastructure & Steel', hi: 'इंफ्रास्ट्रक्चर और स्टील', planet: 'Saturn (Shani)', planetHi: 'शनि' },
+  9: { en: 'Defense & Real Estate', hi: 'रक्षा और रियल एस्टेट', planet: 'Mars (Mangal)', planetHi: 'मंगल' },
+};
+
+// Sector-why explanations
+const SECTOR_WHY = {
+  1: { en: 'Sun energy governs authority and stable institutions, ideal for long-term capital growth.', hi: 'सूर्य ऊर्जा स्थिर संस्थानों को नियंत्रित करती है, दीर्घकालिक पूंजी विकास के लिए आदर्श।' },
+  2: { en: 'Moon rules liquidity and healthcare cycles; strong resonance for growth and stability.', hi: 'चंद्र तरलता और स्वास्थ्य चक्र को नियंत्रित करता है; विकास और स्थिरता के लिए मजबूत।' },
+  3: { en: 'Jupiter (Guru) governs wealth and expansion; ideal for steady compounding gains.', hi: 'गुरु धन और विस्तार को नियंत्रित करता है; स्थिर चक्रवृद्धि लाभ के लिए आदर्श।' },
+  4: { en: 'Rahu drives technological disruption and rapid price movements; compatible for tech trades.', hi: 'राहु तकनीकी व्यवधान को बढ़ावा देता है; तकनीकी ट्रेड के लिए अनुकूल।' },
+  5: { en: 'Mercury controls trade and communication; enables sharp analytical profit-booking.', hi: 'बुध व्यापार और संचार को नियंत्रित करता है; तीव्र विश्लेषणात्मक लाभ बुकिंग को सक्षम बनाता है।' },
+  6: { en: 'Venus rules luxury and consumer spending; strong buy-and-hold wealth potential.', hi: 'शुक्र विलासिता और उपभोक्ता खर्च को नियंत्रित करता है; मजबूत दीर्घकालिक धन क्षमता।' },
+  7: { en: 'Ketu governs research, underground resources; good for patient contrarian investors.', hi: 'केतु शोध और भूमिगत संसाधनों को नियंत्रित करता है; धैर्यशील निवेशकों के लिए अच्छा।' },
+  8: { en: 'Saturn rules discipline and infrastructure; excellent for long-term asset-backed holdings.', hi: 'शनि अनुशासन और बुनियादी ढांचे को नियंत्रित करता है; दीर्घकालिक संपत्ति-समर्थित निवेश के लिए उत्कृष्ट।' },
+  9: { en: 'Mars energizes defense and real estate; supports aggressive growth with strong Mars placement.', hi: 'मंगल रक्षा और रियल एस्टेट को सक्रिय करता है; मजबूत मंगल स्थिति के साथ आक्रामक विकास का समर्थन करता है।' },
+};
+
+export const analyzeStockSuitability = (dob, language = 'en') => {
+  const isHi = language === 'hi';
+
+  if (!dob) return null;
+
+  const driver = calcMulank(dob);
+  const conductor = calcBhagyank(dob);
+
+  // Get missing numbers from raw DOB grid
+  const grid = calculateLoShuGrid(dob);
+  const missing = getMissingNumbers(grid);
+
+  // ── STEP 1: Anti-Number Check ──
+  const antiDetected = isAntiPair(driver, conductor);
+  // Also check: if either is 4 or 8 and 5 is missing from DOB → strict rejection
+  const has4or8 = driver === 4 || driver === 8 || conductor === 4 || conductor === 8;
+  const missing5 = missing.includes(5);
+  const strictRejection = antiDetected || (has4or8 && missing5);
+
+  // ── STEP 2: Investment Style ──
+  // Dominant numbers: check if driver or conductor is 5/6 (trading-friendly) or 3/8/9 (long-term)
+  let investmentStyle;
+  if (strictRejection) {
+    investmentStyle = 'not_suitable';
+  } else if ([5, 6].includes(driver) || [5, 6].includes(conductor)) {
+    investmentStyle = 'trading_friendly';
+  } else if ([3, 8, 9].includes(driver) || [3, 8, 9].includes(conductor)) {
+    investmentStyle = 'long_term_only';
+  } else {
+    investmentStyle = 'long_term_only'; // default conservative
+  }
+
+  // ── STEP 3: Sector Mapping — top 3 sectors friendly to BOTH Driver & Conductor ──
+  const driverFriends = PLANET_FRIENDS[driver] || [];
+  const conductorFriends = PLANET_FRIENDS[conductor] || [];
+
+  // Find sectors whose number is friendly to BOTH
+  const compatibleSectors = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(num => {
+    // A sector number n is compatible if: n is in driver's friends AND conductor's friends
+    // Also exclude sectors that are anti to either
+    const driverAnti = ANTI_PAIRS.some(([a, b]) => (driver === a && num === b) || (driver === b && num === a));
+    const condAnti = ANTI_PAIRS.some(([a, b]) => (conductor === a && num === b) || (conductor === b && num === a));
+    return driverFriends.includes(num) && conductorFriends.includes(num) && !driverAnti && !condAnti;
+  });
+
+  // If fewer than 3 exactly-compatible sectors, relax to friendly with at least one
+  let topSectors = compatibleSectors.slice(0, 3);
+  if (topSectors.length < 3) {
+    const fallback = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(num => {
+      if (topSectors.includes(num)) return false;
+      const driverAnti = ANTI_PAIRS.some(([a, b]) => (driver === a && num === b) || (driver === b && num === a));
+      const condAnti = ANTI_PAIRS.some(([a, b]) => (conductor === a && num === b) || (conductor === b && num === a));
+      return (driverFriends.includes(num) || conductorFriends.includes(num)) && !driverAnti && !condAnti;
+    });
+    topSectors = [...topSectors, ...fallback].slice(0, 3);
+  }
+  // Final fallback: pick any non-anti sectors
+  if (topSectors.length < 3) {
+    const last = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => !topSectors.includes(n) &&
+      !ANTI_PAIRS.some(([a, b]) => (driver === a && n === b) || (driver === b && n === a)));
+    topSectors = [...topSectors, ...last].slice(0, 3);
+  }
+
+  // ── STEP 4: Build text output ──
+  const planetNames = {
+    1: isHi ? 'सूर्य (1)' : 'Sun (1)',
+    2: isHi ? 'चंद्र (2)' : 'Moon (2)',
+    3: isHi ? 'गुरु (3)' : 'Jupiter (3)',
+    4: isHi ? 'राहु (4)' : 'Rahu (4)',
+    5: isHi ? 'बुध (5)' : 'Mercury (5)',
+    6: isHi ? 'शुक्र (6)' : 'Venus (6)',
+    7: isHi ? 'केतु (7)' : 'Ketu (7)',
+    8: isHi ? 'शनि (8)' : 'Saturn (8)',
+    9: isHi ? 'मंगल (9)' : 'Mars (9)',
+  };
+
+  // Status badge
+  let statusCode, statusText, intradayText, longTermText, keyReason;
+  if (investmentStyle === 'not_suitable') {
+    statusCode = 'high_risk';
+    statusText = isHi
+      ? `🔴 ❌ उच्च जोखिम चेतावनी: आपकी अंकज्योतिष प्रोफ़ाइल के लिए सीधे शेयर बाजार में ट्रेडिंग उचित नहीं है। मूलांक ${driver} और भाग्यांक ${conductor} के बीच एंटी-नंबर घर्षण के कारण अचानक वित्तीय ऋण या हानि की उच्च संभावना है। इंट्राडे ट्रेडिंग से पूरी तरह बचें।`
+      : `🔴 ❌ HIGH RISK WARNING: Direct Share Market Trading is NOT SUITABLE for your numerology profile. High probability of sudden financial debts or losses due to Anti-number friction between Driver ${driver} and Conductor ${conductor}. Avoid Intraday trading completely.`;
+    intradayText = isHi ? '🔴 अनुशंसित नहीं' : '🔴 NOT RECOMMENDED';
+    longTermText = isHi ? 'केवल SIP/MF के साथ' : 'Only via SIP/Mutual Funds';
+    keyReason = isHi
+      ? `मूलांक ${driver} (${planetNames[driver]}) और भाग्यांक ${conductor} (${planetNames[conductor]}) एंटी-नंबर कंपन में हैं। यह संयोजन बाजार में अप्रत्याशित उतार-चढ़ाव, भावनात्मक निर्णय लेने और अचानक नुकसान को बढ़ावा देता है।`
+      : `Driver ${driver} (${planetNames[driver]}) and Conductor ${conductor} (${planetNames[conductor]}) are in Anti-number vibration. This combination triggers unpredictable market swings, emotional decision-making, and sudden losses.`;
+  } else if (investmentStyle === 'long_term_only') {
+    statusCode = 'long_term';
+    statusText = isHi
+      ? `🟡 उपयुक्तता स्थिति: केवल दीर्घकालिक निवेश। इंट्राडे या आक्रामक ट्रेडिंग से चिंता और हानि होगी। आपके धन तत्व चक्रवृद्धि, धैर्य और ठोस संपत्ति-समर्थित होल्डिंग्स के साथ सबसे अच्छा प्रतिक्रिया देते हैं।`
+      : `🟡 SUITABILITY STATUS: Long-Term Investment Only. Intraday or aggressive trading will cause anxiety and losses. Your wealth elements respond best to compounding, patience, and solid asset-backed holdings.`;
+    intradayText = isHi ? 'औसत / सावधान' : 'Average / Caution';
+    longTermText = isHi ? 'उत्कृष्ट' : 'Excellent';
+    keyReason = isHi
+      ? `मूलांक ${driver} (${planetNames[driver]}) और भाग्यांक ${conductor} (${planetNames[conductor]}) दीर्घकालिक धन संचय के लिए अनुकूल हैं। ये ग्रह विनियमन, धैर्य और गहरे मूल्य निवेश का समर्थन करते हैं। अल्पकालिक सट्टेबाजी इनकी ऊर्जा के विरुद्ध जाती है।`
+      : `Driver ${driver} (${planetNames[driver]}) and Conductor ${conductor} (${planetNames[conductor]}) favor long-term wealth accumulation. These planets support discipline, patience, and deep value investing. Short-term speculation goes against their energy.`;
+  } else {
+    statusCode = 'highly_suitable';
+    statusText = isHi
+      ? `🟢 उपयुक्तता स्थिति: ट्रेडिंग और निवेश के लिए अत्यधिक उपयुक्त। आपकी प्रोफ़ाइल में मजबूत बुध/शुक्र कंपन हैं, जो अल्पकालिक बाजारों में तीव्र विश्लेषणात्मक कौशल और उच्च लाभ-बुकिंग क्षमता को सक्षम करते हैं।`
+      : `🟢 SUITABILITY STATUS: Highly Suitable for Trading & Investments. Your profile shares strong Mercury/Venus vibrations, enabling sharp analytical skills and high profit-booking capability in short-term markets.`;
+    intradayText = isHi ? 'उत्कृष्ट' : 'Excellent';
+    longTermText = isHi ? 'अत्यधिक अनुशंसित' : 'Highly Recommended';
+    keyReason = isHi
+      ? `मूलांक ${driver} (${planetNames[driver]}) और भाग्यांक ${conductor} (${planetNames[conductor]}) व्यापार, संचार और बाजार तरलता का प्रतिनिधित्व करते हैं। यह संयोजन त्वरित निर्णय-क्षमता, स्टॉक पैटर्न पहचान और समय पर लाभ बुकिंग को प्रोत्साहित करता है।`
+      : `Driver ${driver} (${planetNames[driver]}) and Conductor ${conductor} (${planetNames[conductor]}) represent trade, communication, and market liquidity. This combination encourages fast decision-making, pattern recognition, and timely profit booking.`;
+  }
+
+  // Build sector rows
+  const sectorRows = topSectors.map(num => ({
+    number: num,
+    sector: isHi ? SECTORS[num].hi : SECTORS[num].en,
+    planet: isHi ? `${SECTORS[num].planetHi} (${num})` : `${SECTORS[num].planet} (Number ${num})`,
+    why: isHi ? SECTOR_WHY[num].hi : SECTOR_WHY[num].en,
+  }));
+
+  return {
+    driver,
+    conductor,
+    missing,
+    antiDetected,
+    strictRejection,
+    investmentStyle,
+    statusCode,
+    statusText,
+    intradayText,
+    longTermText,
+    keyReason,
+    sectorRows,
+    disclaimer: isHi
+      ? 'वित्तीय भविष्यवाणियाँ शैक्षिक उद्देश्यों के लिए हैं। निवेश करने से पहले किसी प्रमाणित वित्तीय सलाहकार से परामर्श करें।'
+      : 'Financial predictions are for educational purposes. Consult a certified financial advisor before investing.',
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // BABY BIRTH DATE CALCULATOR — Chaldean + Lo Shu Plane Scoring
 // ─────────────────────────────────────────────────────────────────────────────
 

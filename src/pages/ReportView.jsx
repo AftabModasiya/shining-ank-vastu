@@ -3,7 +3,8 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient, getClientById } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo } from '../utils/numerology';
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeStockSuitability, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo } from '../utils/numerology';
+
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
@@ -1390,230 +1391,128 @@ function ReportView() {
               )}
             </section>
 
-            {/* ── STOCK MARKET COMPATIBILITY ── */}
+            {/* ── STOCK MARKET SUITABILITY ── */}
             <section className="report-section">
               <h3 className="section-title">{rpt.stockTitle}</h3>
-              {isEditing ? (
-                <div className="name-detail-card" style={{ display: 'block' }}>
-                  <span className="detail-label">{rpt.enterStockDetails}</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.companyNameLabel}</label>
-                      <input
-                        placeholder="e.g. Reliance Industries"
-                        className="edit-input"
-                        name="report.stockMarket.companyName"
-                        value={editedData?.report?.stockMarket?.companyName || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.symbolLabel}</label>
-                      <input
-                        placeholder="e.g. RELIANCE"
-                        className="edit-input"
-                        name="report.stockMarket.symbol"
-                        value={editedData?.report?.stockMarket?.symbol || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.listingDateLabel}</label>
-                      <input
-                        type="date"
-                        className="edit-input"
-                        name="report.stockMarket.listingDate"
-                        value={editedData?.report?.stockMarket?.listingDate || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* Live Dynamic Preview */}
-                    {(() => {
-                      const cName = editedData?.report?.stockMarket?.companyName;
-                      const cSymbol = editedData?.report?.stockMarket?.symbol;
-                      const cListingDate = editedData?.report?.stockMarket?.listingDate || '-';
-                      if (cName && cSymbol) {
-                        const stockAnalysis = analyzeStock(
-                          editedData?.dob || '',
-                          cName,
-                          cSymbol,
-                          cListingDate
-                        );
-
-                        const comments = getStockComments(
-                          stockAnalysis.bestIndicator,
-                          stockAnalysis.mulank,
-                          stockAnalysis.bhagyank,
-                          editedData?.dob || '',
-                          stockAnalysis.status,
-                          stockAnalysis.score,
-                          language
-                        );
-
-                        const getStatusColor = (status) => {
-                          if (status === 'Strongly Suitable') return { bg: '#d4edda', border: '#28a745', text: '#155724' };
-                          if (status === 'Suitable') return { bg: '#e8f4fd', border: '#007bff', text: '#004085' };
-                          if (status === 'Watchlist') return { bg: '#fff3cd', border: '#ffc107', text: '#856404' };
-                          return { bg: '#f8d7da', border: '#dc3545', text: '#721c24' };
-                        };
-
-                        const colors = getStatusColor(stockAnalysis.status);
-                        const isHi = language === 'hi';
-
-                        const tStatus = isHi ? {
-                          'Strongly Suitable': 'अत्यधिक उपयुक्त',
-                          'Suitable': 'उपयुक्त',
-                          'Watchlist': 'वॉचलिस्ट',
-                          'Avoid': 'बचें'
-                        }[stockAnalysis.status] || stockAnalysis.status : stockAnalysis.status;
-
-                        return (
-                          <div style={{ marginTop: '20px', borderTop: '1px solid rgba(232, 213, 191, 0.5)', paddingTop: '15px' }}>
-                            <span className="detail-label" style={{ color: '#28a745', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
-                              🟢 {isHi ? 'लाइव पूर्वावलोकन (Live Preview)' : 'LIVE COMPATIBILITY PREVIEW'}
-                            </span>
-                            <div className="name-compatibility-container">
-                              {/* Best Match Info */}
-                              <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                                <h4 style={{ color: '#1a3a2e', marginBottom: '4px' }}>{rpt.bestIndicatorLabel}</h4>
-                                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '4px' }}>
-                                  <span style={{ fontSize: '0.9rem', color: '#495057' }}>Source: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.label}</strong></span>
-                                  {stockAnalysis.bestIndicator.compound > 0 && (
-                                    <span style={{ fontSize: '0.9rem', color: '#495057' }}>Compound: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.compound}</strong></span>
-                                  )}
-                                  <span style={{ fontSize: '0.9rem', color: '#495057' }}>Single: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.single}</strong></span>
-                                  <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.scoreLabel}: <strong style={{ color: '#007bff' }}>{stockAnalysis.score}</strong></span>
-                                </div>
-                              </div>
-
-                              {/* Bullet Insights */}
-                              <div className="name-detail-card" style={{ marginBottom: '10px' }}>
-                                <span className="detail-label">{isHi ? 'विस्तृत अंतर्दृष्टि' : 'DETAILED INSIGHTS'}</span>
-                                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {comments.map((bullet, i) => (
-                                    <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                                      <span style={{ fontSize: '1rem', color: '#495057' }}>•</span>
-                                      <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{bullet}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Final Status */}
-                              <div style={{
-                                padding: '14px 18px',
-                                borderRadius: '8px',
-                                background: colors.bg,
-                                border: `2px solid ${colors.border}`,
-                                textAlign: 'center'
-                              }}>
-                                <strong style={{ fontSize: '1.05rem', color: colors.text }}>
-                                  {isHi ? 'स्थिति' : 'STATUS'}: {tStatus}
-                                </strong>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                </div>
-              ) : (stockData?.companyName && stockData?.symbol) ? (() => {
-                const stockAnalysis = analyzeStock(
-                  displayData.dob || '',
-                  stockData.companyName,
-                  stockData.symbol,
-                  stockData.listingDate || '-'
+              {(() => {
+                const dob = isEditing ? (editedData?.dob || '') : (displayData?.dob || '');
+                if (!dob) return (
+                  <div className="empty-state-box"><p>{rpt.stockNotDefined}</p></div>
                 );
-
-                const comments = getStockComments(
-                  stockAnalysis.bestIndicator,
-                  stockAnalysis.mulank,
-                  stockAnalysis.bhagyank,
-                  displayData.dob || '',
-                  stockAnalysis.status,
-                  stockAnalysis.score,
-                  language
+                const suitability = analyzeStockSuitability(dob, language);
+                if (!suitability) return (
+                  <div className="empty-state-box"><p>{rpt.stockNotDefined}</p></div>
                 );
-
-                const getStatusColor = (status) => {
-                  if (status === 'Strongly Suitable') return { bg: '#d4edda', border: '#28a745', text: '#155724' };
-                  if (status === 'Suitable') return { bg: '#e8f4fd', border: '#007bff', text: '#004085' };
-                  if (status === 'Watchlist') return { bg: '#fff3cd', border: '#ffc107', text: '#856404' };
-                  return { bg: '#f8d7da', border: '#dc3545', text: '#721c24' };
-                };
-
-                const colors = getStatusColor(stockAnalysis.status);
+                const isHighRisk = suitability.statusCode === 'high_risk';
+                const isLongTerm = suitability.statusCode === 'long_term';
                 const isHi = language === 'hi';
-
-                const tStatus = isHi ? {
-                  'Strongly Suitable': 'अत्यधिक उपयुक्त',
-                  'Suitable': 'उपयुक्त',
-                  'Watchlist': 'वॉचलिस्ट',
-                  'Avoid': 'बचें'
-                }[stockAnalysis.status] || stockAnalysis.status : stockAnalysis.status;
-
+                const statusStyle = isHighRisk
+                  ? { bg: 'linear-gradient(135deg, #1a0000, #3d0000)', border: '#ff0000', text: '#ff4444', glow: '0 0 20px rgba(255,0,0,0.6), 0 0 40px rgba(255,0,0,0.3)' }
+                  : isLongTerm
+                  ? { bg: 'linear-gradient(135deg, #1a1400, #3d3000)', border: '#ffc107', text: '#ffd700', glow: '0 0 16px rgba(255,193,7,0.4)' }
+                  : { bg: 'linear-gradient(135deg, #001a08, #003d14)', border: '#28a745', text: '#4cff80', glow: '0 0 16px rgba(40,167,69,0.4)' };
                 return (
-                  <div className="name-compatibility-container">
-                    {/* Stock Info Cards */}
-                    <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f4f6f9, #e9ecef)', border: '1.5px solid #6c757d', marginBottom: '10px' }}>
-                      <h4 style={{ color: '#2b303a', marginBottom: '8px' }}>{rpt.stockDetails}</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '6px' }}>
-                        <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.companyNameLabel}: <strong style={{ color: '#333' }}>{stockData.companyName}</strong></span>
-                        <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.symbolLabel}: <strong style={{ color: '#333' }}>{stockData.symbol}</strong></span>
-                        {stockData.listingDate && (
-                          <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.listingDateLabel}: <strong style={{ color: '#333' }}>{formatDateToDDMMYYYY(stockData.listingDate)}</strong></span>
-                        )}
-                      </div>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                    {/* Best Match Info */}
-                    <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '10px' }}>
-                      <h4 style={{ color: '#1a3a2e', marginBottom: '4px' }}>{rpt.bestIndicatorLabel}</h4>
-                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '4px' }}>
-                        <span style={{ fontSize: '0.9rem', color: '#495057' }}>Source: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.label}</strong></span>
-                        {stockAnalysis.bestIndicator.compound > 0 && (
-                          <span style={{ fontSize: '0.9rem', color: '#495057' }}>Compound: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.compound}</strong></span>
-                        )}
-                        <span style={{ fontSize: '0.9rem', color: '#495057' }}>Single: <strong style={{ color: '#d4a017' }}>{stockAnalysis.bestIndicator.single}</strong></span>
-                        <span style={{ fontSize: '0.9rem', color: '#495057' }}>{rpt.scoreLabel}: <strong style={{ color: '#007bff' }}>{stockAnalysis.score}</strong></span>
-                      </div>
-                    </div>
-
-                    {/* Bullet Insights */}
-                    <div className="name-detail-card" style={{ marginBottom: '10px' }}>
-                      <span className="detail-label">{isHi ? 'विस्तृत अंतर्दृष्टि' : 'DETAILED INSIGHTS'}</span>
-                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {comments.map((bullet, i) => (
-                          <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '1rem', color: '#495057' }}>•</span>
-                            <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.5', color: '#333' }}>{bullet}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Final Status */}
+                    {/* 1. Core Market Suitability Status */}
                     <div style={{
-                      padding: '14px 18px',
-                      borderRadius: '8px',
-                      background: colors.bg,
-                      border: `2px solid ${colors.border}`,
-                      textAlign: 'center'
+                      background: statusStyle.bg,
+                      border: `2px solid ${statusStyle.border}`,
+                      borderRadius: '12px',
+                      padding: '20px 22px',
+                      boxShadow: statusStyle.glow,
+                      animation: isHighRisk ? 'neonPulse 1.8s ease-in-out infinite' : 'none',
                     }}>
-                      <strong style={{ fontSize: '1.05rem', color: colors.text }}>
-                        {isHi ? 'स्थिति' : 'STATUS'}: {tStatus}
-                      </strong>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', color: statusStyle.border, marginBottom: '8px', textTransform: 'uppercase' }}>
+                        {isHi ? '1. मुख्य बाजार उपयुक्तता स्थिति' : '1. CORE MARKET SUITABILITY STATUS'}
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.65', color: statusStyle.text, fontWeight: 600 }}>
+                        {suitability.statusText}
+                      </p>
+                      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#aaa', background: 'rgba(255,255,255,0.07)', padding: '4px 10px', borderRadius: '20px' }}>
+                          {isHi ? 'मूलांक' : 'Driver'}: <strong style={{ color: '#fff' }}>{suitability.driver}</strong>
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#aaa', background: 'rgba(255,255,255,0.07)', padding: '4px 10px', borderRadius: '20px' }}>
+                          {isHi ? 'भाग्यांक' : 'Conductor'}: <strong style={{ color: '#fff' }}>{suitability.conductor}</strong>
+                        </span>
+                        {suitability.antiDetected && (
+                          <span style={{ fontSize: '0.78rem', color: '#ff4444', background: 'rgba(255,0,0,0.12)', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
+                            ⚡ {isHi ? 'एंटी-नंबर' : 'ANTI-NUMBER'}
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* 2. Investment Style Analysis */}
+                    <div style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', borderRadius: '10px', padding: '18px 20px' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', color: '#8a6207', marginBottom: '12px', textTransform: 'uppercase' }}>
+                        {isHi ? '2. निवेश शैली विश्लेषण' : '2. INVESTMENT STYLE ANALYSIS'}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '12px 14px', border: '1px solid rgba(212,160,23,0.3)' }}>
+                          <div style={{ fontSize: '0.72rem', color: '#8a6207', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>
+                            {isHi ? 'इंट्राडे ट्रेडिंग' : 'Intraday Trading Suitability'}
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: isHighRisk ? '#c0392b' : '#2d6a4f' }}>
+                            {suitability.intradayText}
+                          </div>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '12px 14px', border: '1px solid rgba(212,160,23,0.3)' }}>
+                          <div style={{ fontSize: '0.72rem', color: '#8a6207', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>
+                            {isHi ? 'दीर्घकालिक धन संचय' : 'Long-Term Wealth Compounding'}
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#2d6a4f' }}>
+                            {suitability.longTermText}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#4a3728', lineHeight: '1.55', padding: '10px 14px', background: 'rgba(255,255,255,0.5)', borderRadius: '7px', borderLeft: '3px solid #d4a017' }}>
+                        <strong style={{ color: '#8a6207' }}>{isHi ? 'मुख्य कारण: ' : 'Key Reason: '}</strong>
+                        {suitability.keyReason}
+                      </div>
+                    </div>
+
+                    {/* 3. Recommended Sectors */}
+                    <div style={{ background: '#fff', border: '1.5px solid #e0d5c5', borderRadius: '10px', padding: '18px 20px' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', color: '#8a6207', marginBottom: '12px', textTransform: 'uppercase' }}>
+                        {isHi ? '3. अनुशंसित शेयर बाजार क्षेत्र (शीर्ष 3 अनुकूल क्षेत्र)' : '3. RECOMMENDED STOCK MARKET SECTORS (Top 3 Compatible Fields)'}
+                      </div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ background: 'linear-gradient(135deg, #d4a017, #c4910d)', color: '#fff' }}>
+                              <th style={{ padding: '9px 12px', textAlign: 'left', borderRadius: '6px 0 0 0', fontWeight: 700, fontSize: '0.75rem' }}>
+                                {isHi ? 'उपयुक्त क्षेत्र' : 'Suitable Sector'}
+                              </th>
+                              <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, fontSize: '0.75rem' }}>
+                                {isHi ? 'अनुकूल ग्रह/संख्या' : 'Compatible Planet/Number'}
+                              </th>
+                              <th style={{ padding: '9px 12px', textAlign: 'left', borderRadius: '0 6px 0 0', fontWeight: 700, fontSize: '0.75rem' }}>
+                                {isHi ? 'क्यों सुरक्षित/लाभदायक' : 'Why it is Safe/Profitable for You'}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {suitability.sectorRows.map((row, i) => (
+                              <tr key={i} style={{ background: i % 2 === 0 ? '#fffcf5' : '#fff5e6', borderBottom: '1px solid #f0e8d8' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1a3a2e' }}>{row.sector}</td>
+                                <td style={{ padding: '10px 12px', color: '#8a6207', fontWeight: 600 }}>{row.planet}</td>
+                                <td style={{ padding: '10px 12px', color: '#4a3728', lineHeight: '1.45' }}>{row.why}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Disclaimer */}
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#8a8a8a', textAlign: 'center', padding: '8px 0', borderTop: '1px dashed #ddd', fontStyle: 'italic' }}>
+                      ⚠️ {suitability.disclaimer}
+                    </p>
                   </div>
                 );
-              })() : (
-                <div className="empty-state-box">
-                  <p>{rpt.stockNotDefined}</p>
-                </div>
-              )}
+              })()}
             </section>
 
             {/* ── BABY BIRTH CALCULATOR ────────────────────────────── */}

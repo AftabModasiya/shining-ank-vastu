@@ -26,6 +26,7 @@ import {
   getMarriageType,
   analyzeStock,
   getStockComments,
+  analyzeStockSuitability,
   analyzeBirthDateRange,
   getBirthDateGenderJustification,
   getNameSuggestions,
@@ -2343,10 +2344,9 @@ export const generatePDF = async (clientData, language = 'en') => {
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // PAGE: STOCK MARKET COMPATIBILITY
+  // PAGE: STOCK MARKET SUITABILITY ANALYSIS
   // ════════════════════════════════════════════════════════════════════════
-  const stockInfo = reportData.stockMarket || {};
-  if (stockInfo.companyName && stockInfo.symbol) {
+  if (rawDob) {
     doc.addPage();
     drawPageShell(doc);
 
@@ -2355,106 +2355,161 @@ export const generatePDF = async (clientData, language = 'en') => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(t("STOCK MARKET COMPATIBILITY", "शेयर बाजार अनुकूलता"), 14, 27);
+    doc.text(t("STOCK MARKET SUITABILITY ANALYSIS", "शेयर बाजार उपयुक्तता विश्लेषण"), 14, 27);
 
-    // Stock details banner
-    doc.setFillColor(244, 246, 249);
-    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "F");
-    doc.setDrawColor(108, 117, 125);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "D");
+    // Run the new suitability engine
+    const suitability = analyzeStockSuitability(rawDob, language);
 
-    doc.setTextColor(51, 51, 51);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(`${t("Company / Stock Name", "कंपनी / स्टॉक का नाम")}: ${stockInfo.companyName}`, 20, 41);
-    doc.text(`${t("Stock Symbol", "स्टॉक सिंबल")}: ${stockInfo.symbol}`, 20, 47);
-    if (stockInfo.listingDate) {
-      doc.text(`${t("Listing Date", "सूचीबद्धता की तिथि")}: ${formatDateToDDMMYYYY(stockInfo.listingDate)}`, 20, 53);
+    if (suitability) {
+      let smY = 34;
+
+      // ── 1. Status Banner ──
+      const isHighRisk = suitability.statusCode === 'high_risk';
+      const isLongTerm = suitability.statusCode === 'long_term';
+
+      const bannerBg = isHighRisk ? [60, 0, 0] : isLongTerm ? [50, 40, 0] : [0, 45, 15];
+      const bannerBorder = isHighRisk ? [220, 50, 50] : isLongTerm ? [220, 170, 0] : [40, 167, 69];
+      const bannerText = isHighRisk ? [255, 100, 100] : isLongTerm ? [255, 215, 0] : [80, 220, 120];
+
+      const statusLines = doc.splitTextToSize(suitability.statusText, pageWidth - 46);
+      const statusBoxH = Math.max(statusLines.length * 3.5 + 14, 22);
+
+      doc.setFillColor(...bannerBg);
+      doc.roundedRect(15, smY, pageWidth - 30, statusBoxH, 3, 3, "F");
+      doc.setDrawColor(...bannerBorder);
+      doc.setLineWidth(0.6);
+      doc.roundedRect(15, smY, pageWidth - 30, statusBoxH, 3, 3, "D");
+
+      // Status label
+      doc.setTextColor(...bannerBorder);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.text(t("1. CORE MARKET SUITABILITY STATUS", "1. मुख्य बाजार उपयुक्तता स्थिति"), 20, smY + 5);
+
+      // Status text
+      doc.setTextColor(...bannerText);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.text(statusLines, 20, smY + 10);
+
+      // Driver / Conductor badges
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(...bannerBorder);
+      const driverLabel = `${t("Driver", "मूलांक")}: ${suitability.driver}`;
+      const condLabel = `${t("Conductor", "भाग्यांक")}: ${suitability.conductor}`;
+      doc.text(driverLabel, 20, smY + statusBoxH - 3.5);
+      doc.text(condLabel, 20 + doc.getTextWidth(driverLabel) + 8, smY + statusBoxH - 3.5);
+      if (suitability.antiDetected) {
+        const antiX = 20 + doc.getTextWidth(driverLabel) + doc.getTextWidth(condLabel) + 16;
+        doc.setTextColor(255, 80, 80);
+        doc.text(`⚡ ${t("ANTI-NUMBER", "एंटी-नंबर")}`, antiX, smY + statusBoxH - 3.5);
+      }
+
+      smY += statusBoxH + 5;
+
+      // ── 2. Investment Style Card ──
+      const keyReasonLines = doc.splitTextToSize(suitability.keyReason, pageWidth - 58);
+      const investH = Math.max(keyReasonLines.length * 3.2 + 20, 24);
+
+      doc.setFillColor(255, 252, 243);
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(15, smY, pageWidth - 30, investH, 2, 2, "FD");
+
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(t("2. INVESTMENT STYLE ANALYSIS", "2. निवेश शैली विश्लेषण"), 20, smY + 6);
+
+      // Two mini cards inline
+      const halfW = (pageWidth - 44) / 2;
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(220, 210, 190);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(20, smY + 9, halfW, 8, 1, 1, "FD");
+      doc.roundedRect(22 + halfW, smY + 9, halfW, 8, 1, 1, "FD");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(...textMuted);
+      doc.text(t("Intraday Trading", "इंट्राडे ट्रेडिंग"), 22, smY + 13);
+      doc.text(t("Long-Term Wealth", "दीर्घकालिक धन"), 24 + halfW, smY + 13);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(isHighRisk ? 192 : 45, isHighRisk ? 57 : 106, isHighRisk ? 43 : 79);
+      doc.text(suitability.intradayText.replace('🔴 ', ''), 22, smY + 16.5);
+      doc.setTextColor(45, 106, 79);
+      doc.text(suitability.longTermText, 24 + halfW, smY + 16.5);
+
+      // Key reason
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...textDark);
+      doc.text(keyReasonLines, 20, smY + 20);
+
+      smY += investH + 5;
+
+      // ── 3. Sector Table ──
+      const sectorHeaderH = 7;
+      const sectorRowH = 9;
+      const sectorTableH = sectorHeaderH + suitability.sectorRows.length * sectorRowH + 6;
+
+      doc.setFillColor(255, 252, 243);
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(15, smY, pageWidth - 30, sectorTableH + 7, 2, 2, "FD");
+
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(t("3. RECOMMENDED STOCK MARKET SECTORS (Top 3 Compatible Fields)", "3. अनुशंसित शेयर बाजार क्षेत्र (शीर्ष 3 अनुकूल क्षेत्र)"), 20, smY + 6);
+
+      // Table header
+      let tY = smY + 10;
+      doc.setFillColor(...goldPrimary);
+      doc.roundedRect(18, tY, pageWidth - 36, sectorHeaderH, 1, 1, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.8);
+      doc.text(t("Suitable Sector", "उपयुक्त क्षेत्र"), 21, tY + 4.8);
+      doc.text(t("Compatible Planet/Number", "अनुकूल ग्रह/संख्या"), 70, tY + 4.8);
+      doc.text(t("Why Safe/Profitable", "क्यों सुरक्षित"), 120, tY + 4.8);
+      tY += sectorHeaderH + 0.5;
+
+      suitability.sectorRows.forEach((row, idx) => {
+        doc.setFillColor(idx % 2 === 0 ? 255 : 249, idx % 2 === 0 ? 252 : 247, idx % 2 === 0 ? 245 : 238);
+        doc.roundedRect(18, tY, pageWidth - 36, sectorRowH, 0.5, 0.5, "F");
+
+        doc.setTextColor(...textDark);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(6.8);
+        doc.text(row.sector, 21, tY + 6);
+
+        doc.setTextColor(138, 98, 7);
+        doc.setFont("helvetica", "normal");
+        doc.text(row.planet, 70, tY + 6);
+
+        doc.setTextColor(...textDark);
+        const whyLines = doc.splitTextToSize(row.why, pageWidth - 126);
+        doc.text(whyLines[0] || '', 120, tY + 6); // single line for compactness
+        tY += sectorRowH;
+      });
+
+      smY += sectorTableH + 12;
+
+      // ── Disclaimer ──
+      doc.setDrawColor(220, 215, 205);
+      doc.setLineWidth(0.3);
+      doc.line(15, smY, pageWidth - 15, smY);
+      doc.setTextColor(140, 140, 140);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(6.5);
+      const disclaimerLines = doc.splitTextToSize(`⚠️ ${suitability.disclaimer}`, pageWidth - 36);
+      doc.text(disclaimerLines, pageWidth / 2, smY + 4, { align: "center" });
     }
 
-    // Best Indicator Card
-    const stockAnalysis = analyzeStock(rawDob, stockInfo.companyName, stockInfo.symbol, stockInfo.listingDate || '-');
-    let smY = 64;
-
-    doc.setFillColor(255, 252, 243);
-    doc.roundedRect(15, smY, pageWidth - 30, 20, 3, 3, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(15, smY, pageWidth - 30, 20, 3, 3, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(t("BEST SCORING INDICATOR", "सर्वश्रेष्ठ संकेतक"), 20, smY + 6);
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(`Source: ${stockAnalysis.bestIndicator.label}  |  Single: ${stockAnalysis.bestIndicator.single}${stockAnalysis.bestIndicator.compound > 0 ? `  |  Compound: ${stockAnalysis.bestIndicator.compound}` : ''}  |  Score: ${stockAnalysis.score}`, 20, smY + 13);
-
-    smY += 26;
-
-    // Bullet insights
-    const comments = getStockComments(
-      stockAnalysis.bestIndicator,
-      stockAnalysis.mulank,
-      stockAnalysis.bhagyank,
-      rawDob,
-      stockAnalysis.status,
-      stockAnalysis.score,
-      language
-    );
-
-    const hlH = 10 + comments.length * 8;
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, smY, pageWidth - 30, hlH, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, smY, pageWidth - 30, hlH, 2, 2, "D");
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(t("DETAILED COMPATIBILITY INSIGHTS", "विस्तृत अनुकूलता अंतर्दृष्टि"), 20, smY + 6);
-
-    let hlY = smY + 13;
-    comments.forEach(h => {
-      doc.setFillColor(...goldPrimary);
-      doc.circle(21, hlY, 1.5, "F");
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-      const hl = doc.splitTextToSize(h, pageWidth - 52);
-      doc.text(hl, 26, hlY + 1);
-      hlY += hl.length * 4.2 + 2;
-    });
-
-    smY += hlH + 6;
-
-    // Suitability Banner
-    const getStatusColor = (status) => {
-      if (status === 'Strongly Suitable') return { bg: [212, 237, 218], border: [40, 167, 69], text: [21, 87, 36] };
-      if (status === 'Suitable') return { bg: [232, 244, 253], border: [0, 123, 255], text: [0, 64, 133] };
-      if (status === 'Watchlist') return { bg: [255, 243, 205], border: [255, 193, 7], text: [133, 100, 4] };
-      return { bg: [248, 215, 218], border: [220, 53, 105], text: [114, 28, 36] };
-    };
-
-    const colors = getStatusColor(stockAnalysis.status);
-    const tStatus = isHi ? {
-      'Strongly Suitable': 'अत्यधिक उपयुक्त',
-      'Suitable': 'उपयुक्त',
-      'Watchlist': 'वॉचलिस्ट',
-      'Avoid': 'बचें'
-    }[stockAnalysis.status] || stockAnalysis.status : stockAnalysis.status;
-
-    doc.setFillColor(...colors.bg);
-    doc.roundedRect(15, smY, pageWidth - 30, 14, 3, 3, "F");
-    doc.setDrawColor(...colors.border);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(15, smY, pageWidth - 30, 14, 3, 3, "D");
-    doc.setTextColor(...colors.text);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    doc.text(`${t("STATUS", "स्थिति")}: ${tStatus}`, pageWidth / 2, smY + 9, { align: "center" });
   }
 
   // ════════════════════════════════════════════════════════════════════════
