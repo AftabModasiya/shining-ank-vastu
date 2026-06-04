@@ -30,7 +30,9 @@ import {
   analyzeBirthDateRange,
   getBirthDateGenderJustification,
   getNameSuggestions,
-  analyzeLogo
+  analyzeLogo,
+  DATE_INFLUENCER_EN,
+  DATE_INFLUENCER_HI
 } from "./numerology";
 
 // Static assets imported directly so Vite bundles them
@@ -54,6 +56,7 @@ const formatDateToDDMMYYYY = (dateStr) => {
 
 // Helper to asynchronously load images for PDF generation
 const loadImage = (src) => {
+  if (typeof window === 'undefined') return Promise.resolve(null);
   return new Promise((resolve) => {
     const img = new Image();
     img.src = src;
@@ -63,6 +66,7 @@ const loadImage = (src) => {
 };
 
 const fetchFontAsBase64 = async (url) => {
+  if (typeof window === 'undefined') return null;
   try {
     const cached = localStorage.getItem(url);
     if (cached) return cached;
@@ -101,6 +105,21 @@ export const generatePDF = async (clientData, language = 'en') => {
       "Ketu": "केतु (Ketu)", "Saturn": "शनि (Saturn)", "Mars": "मंगल (Mars)"
     };
     return planetMap[planetName] || planetName;
+  };
+
+  const getCompatStatusTranslation = (status) => {
+    const statusMap = {
+      "Highly Compatible": "उच्च संगत",
+      "Compatible": "संगत",
+      "Neutral": "तटस्थ",
+      "Challenging": "चुनौतीपूर्ण",
+      "Non-Friendly": "गैर-अनुकूल",
+      "Friendly": "अनुकूल",
+      "Excellent": "उत्कृष्ट",
+      "Good": "अच्छा",
+      "Avoid": "बचें (अशुभ)"
+    };
+    return statusMap[status] || status;
   };
 
   const translatePlaneName = (key) => {
@@ -547,7 +566,65 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.text(`${t("Report Date", "रिपोर्ट की तारीख")}: ${reportDate}`, 55.5, 174, { align: "center" });
 
   // ════════════════════════════════════════════════════════════════════════
-  // PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
+  
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: DATE INFLUENCER
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // Section Header
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("DATE INFLUENCER", "जन्म तिथि प्रभाव"), 14, 27);
+
+  const dayNum = parseInt(rawDob.split("-")[2]) || 1;
+  const defaultEnTitle = `Date Influencer — Born on ${dayNum}`;
+  const defaultEnDesc = `People born on ${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} share this birth energy.`.trim();
+  const defaultEnContent = DATE_INFLUENCER_EN[dayNum] || '';
+
+  const defaultHiTitle = `जन्म तिथि प्रभाव — ${dayNum} तारीख को जन्म`;
+  const defaultHiDesc = `${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} तारीखों को जन्मे लोगों में भी समान ऊर्जा होती है।`.trim();
+  const defaultHiContent = DATE_INFLUENCER_HI[dayNum] || '';
+
+  const isTitleEdited = reportData?.dateInfluencer?.title && reportData.dateInfluencer.title !== defaultEnTitle;
+  const isDescEdited = reportData?.dateInfluencer?.desc && reportData.dateInfluencer.desc !== defaultEnDesc;
+  const isContentEdited = reportData?.dateInfluencer?.content && reportData.dateInfluencer.content !== defaultEnContent;
+
+  const displayTitle = (isHi && !isTitleEdited) ? defaultHiTitle : (reportData?.dateInfluencer?.title || defaultEnTitle);
+  const displayDesc = (isHi && !isDescEdited) ? defaultHiDesc : (reportData?.dateInfluencer?.desc || defaultEnDesc);
+  const displayContent = (isHi && !isContentEdited) ? defaultHiContent : (reportData?.dateInfluencer?.content || defaultEnContent);
+
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "D");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(displayTitle, 20, 46);
+
+  doc.setTextColor(...textMuted);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9.5);
+  doc.text(displayDesc, 20, 53);
+
+  // Divider line
+  doc.setDrawColor(232, 213, 191);
+  doc.setLineWidth(0.15);
+  doc.line(18, 57, pageWidth - 18, 57);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  const diLines = doc.splitTextToSize(displayContent, pageWidth - 42);
+  doc.text(diLines, 20, 64);
+// PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
   drawPageShell(doc);
@@ -700,6 +777,93 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.text(pLines, 20, coreY + 31);
 
   // ════════════════════════════════════════════════════════════════════════
+  // Section 4: Hidden Influences of Yogas (Dynamic — all 6 planes with partial logic)
+  doc.addPage();
+  drawPageShell(doc);
+  const yogY = 20;
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, yogY, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("SECRET POWER OF LO SHU PLANES", "लो शु तल की गुप्त शक्ति"), 14, yogY + 7);
+
+  // Show first 4 planes on Page 3 (3 horizontal + first vertical)
+  const pagePlanes = hiddenInfluences.slice(0, 4);
+  let planeY = yogY + 16;
+  pagePlanes.forEach(plane => {
+    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
+    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
+    const borderWidth = plane.isActive ? 0.4 : 0.15;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    const planeInterp = getPlaneInterpretation(plane);
+    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
+    const cardHeight = 8 + interpLines.length * 5;
+
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(borderWidth);
+    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, planeY + 5.5);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(interpLines, 20, planeY + 11);
+
+    planeY += cardHeight + 3.5;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ── Remaining Lo Shu Planes (Middle & Right columns) ───────────────────
+  doc.addPage();
+  drawPageShell(doc);
+  let remPlaneY = 20;
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, remPlaneY, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("HIDDEN INFLUENCE — VERTICAL PLANES", "गुप्त प्रभाव — लंबवत तल"), 14, remPlaneY + 7);
+  remPlaneY += 14;
+
+  hiddenInfluences.slice(4).forEach(plane => {
+    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
+    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    const planeInterp = getPlaneInterpretation(plane);
+    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
+    const cardH = 8 + interpLines.length * 5;
+
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(plane.isActive ? 0.4 : 0.15);
+    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, remPlaneY + 5.5);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(interpLines, 20, remPlaneY + 11);
+
+    remPlaneY += cardH + 3.5;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
   // PAGE 3: MULANK-BHAGYANK ALIGNMENT & YOGAS
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -785,537 +949,6 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFontSize(10);
   doc.text(`${t("KUA NUMBER", "कुआ नंबर")}: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
 
-  // Section 4: Hidden Influences of Yogas (Dynamic — all 6 planes with partial logic)
-  const yogY = 136;
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, yogY, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("SECRET POWER OF LO SHU PLANES", "लो शु तल की गुप्त शक्ति"), 14, yogY + 7);
-
-  // Show first 4 planes on Page 3 (3 horizontal + first vertical)
-  const pagePlanes = hiddenInfluences.slice(0, 4);
-  let planeY = yogY + 16;
-  pagePlanes.forEach(plane => {
-    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
-    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
-    const borderWidth = plane.isActive ? 0.4 : 0.15;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    const planeInterp = getPlaneInterpretation(plane);
-    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
-    const cardHeight = 8 + interpLines.length * 5;
-
-    doc.setFillColor(...bgColor);
-    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(borderWidth);
-    doc.roundedRect(15, planeY, pageWidth - 30, cardHeight, 2, 2, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, planeY + 5.5);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(interpLines, 20, planeY + 11);
-
-    planeY += cardHeight + 3.5;
-  });
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 4: REPEATING NUMBERS, EFFECTS OF MISSING NUMBERS & REMEDIES
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("EFFECT OF REPEATING NUMBERS", "दोहराए गए अंकों का प्रभाव"), 14, 27);
-
-  let repY = 36;
-  const repeated = reportData.repeatedNumbersAnalysis || [];
-  if (repeated.length === 0) {
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, repY, pageWidth - 30, 16, 2, 2, "F");
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    doc.text(t("No numbers are repeated in your Date of Birth. This brings a very balanced and single-frequency energy vibration to your planes.", "आपकी जन्म तिथि में कोई भी अंक दोहराया नहीं गया है। यह आपके तलों में एक बहुत ही संतुलित और एकल-आवृत्ति ऊर्जा कंपन लाता है।"), 20, repY + 10);
-    repY += 22;
-  } else {
-    repeated.forEach(item => {
-      doc.setFillColor(254, 249, 231); // light yellow
-      doc.roundedRect(15, repY, pageWidth - 30, 13, 2, 2, "F");
-      doc.setDrawColor(...goldPrimary);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(15, repY, pageWidth - 30, 13, 2, 2, "D");
-
-      doc.setTextColor(...goldPrimary);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(`${t("Number", "अंक")} ${item.num} ${t("repeated", "दोहराया गया")} ${item.count} ${t("times:", "बार:")}`, 20, repY + 5);
-
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text(item.influence || t("Enhances the qualities of this number significantly.", "इस संख्या के गुणों को महत्वपूर्ण रूप से बढ़ाता है।"), 20, repY + 9);
-      repY += 15.5;
-    });
-  }
-
-  // Section 6 & 7: Effects of Missing Numbers & Personalized Remedies
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, repY + 4, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("EFFECTS OF MISSING NUMBERS & PERSONALIZED REMEDIES", "लापता अंक और व्यक्तिगत उपाय"), 14, repY + 11);
-
-  let remY = repY + 20;
-  const missingArr = getMissingNumbers(loShuGrid);
-  
-  // Issue 8 fix: Show ALL missing numbers using dynamic getMissingNumberRemedyData
-  if (missingArr.length === 0) {
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, remY, pageWidth - 30, 16, 2, 2, "F");
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    doc.text(t("Congratulations! Your Lo Shu Grid contains no missing numbers. You have a highly cohesive primary energy spectrum.", "बधाई हो! आपके लो शु ग्रिड में कोई भी लापता अंक नहीं है। आपके पास एक अत्यधिक सुसंगत प्राथमिक ऊर्जा स्पेक्ट्रम है।"), 20, remY + 10);
-  } else {
-    missingArr.forEach(num => {
-      const remInfo = getMissingNumberRemedyData(num);
-
-      // Handle arrays of effects/remedies if available, else split string by newline
-      const effectsList = remInfo.effectsList || (remInfo.effects || "").split("\n").map(e => e.replace(/^•\s*/, ""));
-      const remediesList = remInfo.remediesList || (remInfo.crystal || "").split("\n").map(r => r.replace(/^•\s*/, ""));
-
-      // Set active font to helvetica normal size 8.2 for splitTextToSize calculations
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-
-      const wrappedEffects = [];
-      effectsList.forEach(eff => {
-        const lines = doc.splitTextToSize(`• ${eff}`, pageWidth - 46);
-        wrappedEffects.push(lines);
-      });
-
-      const wrappedRemedies = [];
-      remediesList.forEach(rem => {
-        const lines = doc.splitTextToSize(`• ${rem}`, pageWidth - 46);
-        wrappedRemedies.push(lines);
-      });
-
-      // Calculate total text lines to size the card dynamically
-      const totalEffectsLines = wrappedEffects.reduce((acc, lines) => acc + lines.length, 0);
-      const totalRemediesLines = wrappedRemedies.reduce((acc, lines) => acc + lines.length, 0);
-
-      // Height: Header title (9.5) + "EFFECT:" title (5.5) + effects lines + "REMEDIES:" title (5.5) + remedies lines + padding
-      const cardH = 9.5 + 5.5 + (totalEffectsLines * 4.2) + 5.5 + (totalRemediesLines * 4.2) + 7;
-
-      // Guard: add new page if content overflows
-      if (remY + cardH > pageHeight - 25) {
-        doc.addPage();
-        drawPageShell(doc);
-        drawFooter(doc);
-        remY = 25;
-      }
-
-      doc.setFillColor(253, 234, 234); // Pastel pink card
-      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "F");
-      doc.setDrawColor(...goldPrimary);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "D");
-
-      // Draw title
-      doc.setTextColor(...goldPrimary);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.text(`${t("Missing Number", "लापता अंक")} ${num} (${isHi ? getPlanetTranslation(remInfo.planet) : remInfo.planet})`, 20, remY + 6.5);
-
-      let textY = remY + 11.5;
-
-      // EFFECT section
-      doc.setTextColor(197, 34, 31); // Reddish text for effect heading
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.text(t("EFFECT:", "प्रभाव:"), 20, textY);
-      textY += 4.2;
-
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-      wrappedEffects.forEach(lines => {
-        doc.text(lines, 20, textY);
-        textY += lines.length * 4.2;
-      });
-
-      // REMEDIES section
-      textY += 1.5;
-      doc.setTextColor(19, 115, 51); // Greenish text for remedies heading
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.text(t("REMEDIES:", "उपाय:"), 20, textY);
-      textY += 4.2;
-
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-      wrappedRemedies.forEach(lines => {
-        doc.text(lines, 20, textY);
-        textY += lines.length * 4.2;
-      });
-
-      remY += cardH + 4;
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 5: PROFESSIONAL & CAREER OUTLOOK & NAME COMPATIBILITY
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  // Section 8
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("PROFESSIONAL & CAREER OUTLOOK", "व्यावसायिक एवं करियर दृष्टिकोण"), 14, 27);
-
-  // 1. Compatibility Matrix
-  let careerY = 36;
-  doc.setFillColor(243, 246, 252);
-  doc.roundedRect(15, careerY, pageWidth - 30, 22, 2, 2, "F");
-  doc.setDrawColor(173, 193, 230);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(15, careerY, pageWidth - 30, 22, 2, 2, "D");
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  // Translate compatibility status
-  const getCompatStatusTranslation = (status) => {
-    const statusMap = {
-      "Highly Compatible": "उच्च संगत",
-      "Compatible": "संगत",
-      "Neutral": "तटस्थ",
-      "Challenging": "चुनौतीपूर्ण",
-      "Non-Friendly": "गैर-अनुकूल",
-      "Friendly": "अनुकूल"
-    };
-    return statusMap[status] || status;
-  };
-  doc.text(`${t("Combination", "संयोजन")} ${mulank}-${bhagyank} ${t("Connection", "संबंध")}: ${isHi ? getCompatStatusTranslation(careerData.compatibilityStatus) : careerData.compatibilityStatus}`, 20, careerY + 6);
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  const esotericLines = doc.splitTextToSize(`${t("Esoteric Insight", "रहस्यमय अंतर्दृष्टि")}: ${careerData.esotericReason}`, pageWidth - 42);
-  doc.text(esotericLines, 20, careerY + 11);
-  
-  careerY += 26;
-
-  // 2. Workstyle
-  const workstyleLines = doc.splitTextToSize(careerData.workstyle, pageWidth - 42);
-  const workstyleH = 10 + workstyleLines.length * 4.5;
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, careerY, pageWidth - 30, workstyleH, 2, 2, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(15, careerY, pageWidth - 30, workstyleH, 2, 2, "D");
-
-  doc.setTextColor(...goldPrimary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(t("Impact on Workstyle", "कार्यशैली पर प्रभाव"), 20, careerY + 5.5);
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.text(workstyleLines, 20, careerY + 11);
-
-  careerY += workstyleH + 4;
-
-  // 3. Suitable Careers
-  let careersH = 8;
-  const suitableWrapped = careerData.topCareers.map((c, idx) => {
-    const lines = doc.splitTextToSize(`${t("Field", "क्षेत्र")} ${idx + 1}: ${c.field} - ${c.explanation}`, pageWidth - 46);
-    careersH += lines.length * 4.5 + 2;
-    return lines;
-  });
-
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, careerY, pageWidth - 30, careersH, 2, 2, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(15, careerY, pageWidth - 30, careersH, 2, 2, "D");
-
-  doc.setTextColor(...goldPrimary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(t("Top 3 Recommended Career Fields", "शीर्ष 3 अनुशंसित करियर क्षेत्र"), 20, careerY + 5.5);
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  let innerY = careerY + 11;
-  suitableWrapped.forEach(lines => {
-    doc.text(lines, 20, innerY);
-    innerY += lines.length * 4.5 + 2;
-  });
-
-  careerY += careersH + 4;
-
-  // 4. Careers to Avoid
-  let avoidH = 8;
-  const avoidWrapped = careerData.careersToAvoid.map(item => {
-    const lines = doc.splitTextToSize(`• ${item}`, pageWidth - 42);
-    avoidH += lines.length * 4.5 + 1;
-    return lines;
-  });
-
-  doc.setFillColor(255, 240, 240);
-  doc.roundedRect(15, careerY, pageWidth - 30, avoidH, 2, 2, "F");
-  doc.setDrawColor(249, 213, 213);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(15, careerY, pageWidth - 30, avoidH, 2, 2, "D");
-
-  doc.setTextColor(197, 34, 31);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(t("Careers to Avoid (Strict Warning)", "इन करियर से बचें (कड़ी चेतावनी)"), 20, careerY + 5.5);
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  let innerAvoidY = careerY + 11;
-  avoidWrapped.forEach(lines => {
-    doc.text(lines, 20, innerAvoidY);
-    innerAvoidY += lines.length * 4.5 + 1;
-  });
-
-  careerY += avoidH + 4;
-
-  // 5. Golden Remedy
-  const remedyLines = doc.splitTextToSize(careerData.goldenRemedy, pageWidth - 42);
-  const remedyH = 10 + remedyLines.length * 4.5;
-
-  doc.setFillColor(254, 249, 231);
-  doc.roundedRect(15, careerY, pageWidth - 30, remedyH, 2, 2, "F");
-  doc.setDrawColor(249, 231, 159);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(15, careerY, pageWidth - 30, remedyH, 2, 2, "D");
-
-  doc.setTextColor(176, 96, 0);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(t("Golden Professional Remedy", "स्वर्णिम व्यावसायिक उपाय"), 20, careerY + 5.5);
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.text(remedyLines, 20, careerY + 11);
-
-  const careerCardH = careerY + remedyH - 36;
-
-  // Section 9: Name Number Compatibility Analysis
-  let sec9StartY = 36 + careerCardH + 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.2);
-  const nameCompLines = doc.splitTextToSize(nameCompatData.description, pageWidth - 46);
-  const cardHeight = 16 + (nameCompLines.length * 4.5) + 12; // dynamic height including headers, description height, status line, and padding
-  
-  if (sec9StartY + cardHeight + 20 > pageHeight - 25) {
-    doc.addPage();
-    drawPageShell(doc);
-    drawFooter(doc);
-    sec9StartY = 20;
-  }
-
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, sec9StartY, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("NAME NUMBER COMPATIBILITY ANALYSIS", "नाम अंक संगतता विश्लेषण"), 14, sec9StartY + 7);
-
-  const sec9CardStartY = sec9StartY + 16;
-
-  doc.setFillColor(234, 238, 252); // Pastel blue card
-  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "D");
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
-  doc.text(`${t("Current Name Vibrations", "वर्तमान नाम कंपन")}: ${clientData.name || t("Native", "जातक")} (${t("Chaldean Root", "चाल्डियन मूल")}: ${nameCompatData.nameNumber})`, 20, sec9CardStartY + 7);
-
-  // Divider line inside name card
-  doc.setDrawColor(200, 210, 240);
-  doc.setLineWidth(0.15);
-  doc.line(18, sec9CardStartY + 10, pageWidth - 18, sec9CardStartY + 10);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.2);
-  let currentTextY = sec9CardStartY + 16;
-  nameCompLines.forEach(line => {
-    doc.text(line, 20, currentTextY);
-    currentTextY += 4.5;
-  });
-
-  const statusY = currentTextY + 5;
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...goldPrimary);
-  doc.text(`${t("Name Number Compatibility Status", "नाम अंक संगतता स्थिति")}: ${isHi ? getCompatStatusTranslation(nameCompatData.status) : nameCompatData.status}`, 20, statusY);
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 6: MOBILE COMPATIBILITY & 5-YEAR FUTURE PREDICTIONS
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  // Section 10
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("MOBILE NUMBER COMPATIBILITY INSIGHTS", "मोबाइल नंबर संगतता अंतर्दृष्टि"), 14, 27);
-
-  // 1. Pre-calculate line wraps and heights to compute container height
-  const descWidth = pageWidth - 66; // 144mm width
-  const vibLines = mobileData.isValid ? doc.splitTextToSize(mobileData.vibrationMeaning, descWidth) : [];
-  const compLines = mobileData.isValid ? doc.splitTextToSize(mobileData.compatibilityDescription, descWidth) : [];
-  const zeroLines = mobileData.isValid ? doc.splitTextToSize(mobileData.zeroAnalysis, descWidth) : [];
-  const lastFourText = mobileData.isValid ? (isHi ? `[${mobileData.lastFourDigits}] योग ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}` : `[${mobileData.lastFourDigits}] sum to ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}`) : "";
-  const lastFourLines = mobileData.isValid ? doc.splitTextToSize(lastFourText, descWidth) : [];
-
-  let cardH = 30; // default height if invalid
-  if (mobileData.isValid) {
-    const h1 = Math.max(4.5, vibLines.length * 4);
-    const h2 = Math.max(4.5, compLines.length * 4);
-    const h3 = Math.max(4.5, zeroLines.length * 4);
-    const h4 = Math.max(4.5, lastFourLines.length * 4);
-    cardH = 14 + h1 + h2 + h3 + h4 + 4; // 14mm header offset + total line heights + padding
-  }
-
-  // Draw background box for Section 10
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "D");
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
-  doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone} (${t("Sum", "योग")}: ${mobileData.totalSum} | ${t("Root", "मूलांक")}: ${mobileData.singleDigit})`, 20, 42);
-
-  // Draw a horizontal divider line below title
-  doc.setDrawColor(232, 213, 191);
-  doc.setLineWidth(0.15);
-  doc.line(18, 45, pageWidth - 18, 45);
-
-  doc.setFontSize(8.5);
-  let contentY = 50;
-
-  if (mobileData.isValid) {
-    // 1. Vibration
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...goldPrimary);
-    doc.text(t("VIBRATION:", "कंपन:"), 20, contentY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...textDark);
-    doc.text(vibLines, 48, contentY);
-    contentY += Math.max(4.5, vibLines.length * 4);
-
-    // 2. Compatibility
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...goldPrimary);
-    doc.text(t("COMPATIBILITY:", "संगतता:"), 20, contentY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...textDark);
-    doc.text(compLines, 48, contentY);
-    contentY += Math.max(4.5, compLines.length * 4);
-
-    // 3. Vastu Flow
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...goldPrimary);
-    doc.text(t("VASTU FLOW:", "वास्तु प्रवाह:"), 20, contentY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...textDark);
-    doc.text(zeroLines, 48, contentY);
-    contentY += Math.max(4.5, zeroLines.length * 4);
-
-    // 4. Last 4 Digits
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...goldPrimary);
-    doc.text(t("LAST 4 DIGITS:", "अंतिम 4 अंक:"), 20, contentY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...textDark);
-    doc.text(lastFourLines, 48, contentY);
-  } else {
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...textMuted);
-    doc.text(t("No mobile number has been provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, 52);
-  }
-
-  // Section 11: 5-Year Future Predictions (Dynamic Personal Year per calendar year)
-  // Dynamically position Section 11 relative to the end of Section 10 card
-  const sec11StartY = 35 + cardH + 6;
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, sec11StartY, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("5-YEAR PERSONAL YEAR FORECAST", "5-वर्षीय व्यक्तिगत वर्ष पूर्वानुमान"), 14, sec11StartY + 7);
-
-  let yrY = sec11StartY + 16;
-  fiveYearPredictions.forEach(pred => {
-    const themeLines = doc.splitTextToSize(pred.theme, pageWidth - 58);
-    const cardH = 8 + themeLines.length * 4.5;
-
-    doc.setFillColor(254, 249, 231);
-    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "D");
-
-    // Year badge
-    doc.setFillColor(...goldPrimary);
-    doc.roundedRect(15, yrY, 26, cardH, 2, 2, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(`${pred.year}`, 28, yrY + cardH / 2 + 1, { align: "center" });
-    doc.setFontSize(7);
-    doc.text(`PY ${pred.personalYear}`, 28, yrY + cardH / 2 + 5.5, { align: "center" });
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.text(pred.title, 44, yrY + 5.5);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.text(themeLines, 44, yrY + 10.5);
-
-    yrY += cardH + 3;
-  });
-
-  // ════════════════════════════════════════════════════════════════════════
   // PAGE 6b: CHALDEAN COMPATIBILITY + REMAINING LO SHU PLANES
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1403,119 +1036,6 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFontSize(9);
   doc.text(caDescLines, 20, 96);
 
-  // ── Remaining Lo Shu Planes (Middle & Right columns) ───────────────────
-  const caDescCardH = caDescLines.length * 5.5 + 6;
-  let remPlaneY = 90 + caDescCardH + 10;
-
-  // Guard: if vertical planes will overflow this page, push them to a new page
-  if (remPlaneY + 40 > pageHeight - 25) {
-    doc.addPage();
-    drawPageShell(doc);
-    drawFooter(doc);
-    remPlaneY = 25;
-  }
-
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, remPlaneY, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("HIDDEN INFLUENCE — VERTICAL PLANES", "गुप्त प्रभाव — लंबवत तल"), 14, remPlaneY + 7);
-  remPlaneY += 14;
-
-  hiddenInfluences.slice(4).forEach(plane => {
-    const statusLabel = plane.isActive ? t("FULLY ACTIVE", "पूर्ण सक्रिय") : plane.isInactive ? t("ABSENT", "अनुपस्थित") : t("PARTIAL", "आंशिक सक्रिय");
-    const bgColor = plane.isActive ? [234, 248, 240] : plane.isInactive ? [253, 234, 234] : [254, 249, 231];
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    const planeInterp = getPlaneInterpretation(plane);
-    const interpLines = doc.splitTextToSize(planeInterp, pageWidth - 42);
-    const cardH = 8 + interpLines.length * 5;
-
-    doc.setFillColor(...bgColor);
-    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(plane.isActive ? 0.4 : 0.15);
-    doc.roundedRect(15, remPlaneY, pageWidth - 30, cardH, 2, 2, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(`${translatePlaneName(plane.key)} — ${statusLabel}`, 20, remPlaneY + 5.5);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(interpLines, 20, remPlaneY + 11);
-
-    remPlaneY += cardH + 3.5;
-  });
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 6c: PERSONAL YEAR DETAILED ANALYSIS
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(`${t("PERSONAL YEAR", "व्यक्तिगत वर्ष")} ${personalYearNum} — ${t("DETAILED ANALYSIS", "विस्तृत विश्लेषण")}`, 14, 27);
-
-  // Year badge
-  doc.setFillColor(234, 248, 240);
-  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "D");
-  doc.setFillColor(...goldPrimary);
-  doc.circle(32, 46, 9, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(personalYearNum), 32, 49, { align: "center" });
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
-  doc.text(personalYearInfo.title, 46, 43);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  const pyThemeLines = doc.splitTextToSize(personalYearInfo.theme, pageWidth - 65);
-  doc.text(pyThemeLines, 46, 49);
-
-  // 4 life area cards
-  const lifeAreas = [
-    { label: t("HEALTH", "स्वास्थ्य"),       text: personalYearInfo.health,       bg: [253, 234, 234] },
-    { label: t("FINANCE", "वित्त"),      text: personalYearInfo.finance,      bg: [234, 248, 240] },
-    { label: t("CAREER", "करियर"),       text: personalYearInfo.career,       bg: [234, 238, 252] },
-    { label: t("RELATIONSHIP", "संबंध"), text: personalYearInfo.relationship, bg: [254, 249, 231] }
-  ];
-
-  let lifeY = 62;
-  lifeAreas.forEach(area => {
-    const aLines = doc.splitTextToSize(area.text, pageWidth - 46);
-    const aH = 8 + aLines.length * 5.2;
-
-    doc.setFillColor(...area.bg);
-    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(area.label, 20, lifeY + 6);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(aLines, 20, lifeY + 12);
-
-    lifeY += aH + 4;
-  });
-
-  // ════════════════════════════════════════════════════════════════════════
   // PAGE 7: LUCKY/UNLUCKY ELEMENTS, COLORS & SIGNATURE STYLE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1666,6 +1186,116 @@ export const generatePDF = async (clientData, language = 'en') => {
   });
 
   // ════════════════════════════════════════════════════════════════════════
+  // Section 6 & 7: Effects of Missing Numbers & Personalized Remedies
+  doc.addPage();
+  drawPageShell(doc);
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("EFFECTS OF MISSING NUMBERS & PERSONALIZED REMEDIES", "लापता अंक और व्यक्तिगत उपाय"), 14, 27);
+
+  let remY = 36;
+  const missingArr = getMissingNumbers(loShuGrid);
+  
+  // Issue 8 fix: Show ALL missing numbers using dynamic getMissingNumberRemedyData
+  if (missingArr.length === 0) {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, remY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.text(t("Congratulations! Your Lo Shu Grid contains no missing numbers. You have a highly cohesive primary energy spectrum.", "बधाई हो! आपके लो शु ग्रिड में कोई भी लापता अंक नहीं है। आपके पास एक अत्यधिक सुसंगत प्राथमिक ऊर्जा स्पेक्ट्रम है।"), 20, remY + 10);
+  } else {
+    missingArr.forEach(num => {
+      const remInfo = getMissingNumberRemedyData(num);
+
+      // Handle arrays of effects/remedies if available, else split string by newline
+      const effectsList = remInfo.effectsList || (remInfo.effects || "").split("\n").map(e => e.replace(/^•\s*/, ""));
+      const remediesList = remInfo.remediesList || (remInfo.crystal || "").split("\n").map(r => r.replace(/^•\s*/, ""));
+
+      // Set active font to helvetica normal size 8.2 for splitTextToSize calculations
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+
+      const wrappedEffects = [];
+      effectsList.forEach(eff => {
+        const lines = doc.splitTextToSize(`• ${eff}`, pageWidth - 46);
+        wrappedEffects.push(lines);
+      });
+
+      const wrappedRemedies = [];
+      remediesList.forEach(rem => {
+        const lines = doc.splitTextToSize(`• ${rem}`, pageWidth - 46);
+        wrappedRemedies.push(lines);
+      });
+
+      // Calculate total text lines to size the card dynamically
+      const totalEffectsLines = wrappedEffects.reduce((acc, lines) => acc + lines.length, 0);
+      const totalRemediesLines = wrappedRemedies.reduce((acc, lines) => acc + lines.length, 0);
+
+      // Height: Header title (9.5) + "EFFECT:" title (5.5) + effects lines + "REMEDIES:" title (5.5) + remedies lines + padding
+      const cardH = 9.5 + 5.5 + (totalEffectsLines * 4.2) + 5.5 + (totalRemediesLines * 4.2) + 7;
+
+      // Guard: add new page if content overflows
+      if (remY + cardH > pageHeight - 25) {
+        doc.addPage();
+        drawPageShell(doc);
+        drawFooter(doc);
+        remY = 25;
+      }
+
+      doc.setFillColor(253, 234, 234); // Pastel pink card
+      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "F");
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(15, remY, pageWidth - 30, cardH, 3, 3, "D");
+
+      // Draw title
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.text(`${t("Missing Number", "लापता अंक")} ${num} (${isHi ? getPlanetTranslation(remInfo.planet) : remInfo.planet})`, 20, remY + 6.5);
+
+      let textY = remY + 11.5;
+
+      // EFFECT section
+      doc.setTextColor(197, 34, 31); // Reddish text for effect heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(t("EFFECT:", "प्रभाव:"), 20, textY);
+      textY += 4.2;
+
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      wrappedEffects.forEach(lines => {
+        doc.text(lines, 20, textY);
+        textY += lines.length * 4.2;
+      });
+
+      // REMEDIES section
+      textY += 1.5;
+      doc.setTextColor(19, 115, 51); // Greenish text for remedies heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(t("REMEDIES:", "उपाय:"), 20, textY);
+      textY += 4.2;
+
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      wrappedRemedies.forEach(lines => {
+        doc.text(lines, 20, textY);
+        textY += lines.length * 4.2;
+      });
+
+      remY += cardH + 4;
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
   // PAGE 8: YANTRA-BASED REMEDIES & BRACELET REMEDIES
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1727,6 +1357,810 @@ export const generatePDF = async (clientData, language = 'en') => {
   // doc.setFont("helvetica", "bold");
   // doc.setTextColor(0, 150, 100);
   // doc.text("Recommended: Multi-Gemstone Prosperity Bracelet (Wear on Left hand)", 20, 154);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 4: REPEATING NUMBERS, EFFECTS OF MISSING NUMBERS & REMEDIES
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("EFFECT OF REPEATING NUMBERS", "दोहराए गए अंकों का प्रभाव"), 14, 27);
+
+  let repY = 36;
+  const repeated = reportData.repeatedNumbersAnalysis || [];
+  if (repeated.length === 0) {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, repY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.text(t("No numbers are repeated in your Date of Birth. This brings a very balanced and single-frequency energy vibration to your planes.", "आपकी जन्म तिथि में कोई भी अंक दोहराया नहीं गया है। यह आपके तलों में एक बहुत ही संतुलित और एकल-आवृत्ति ऊर्जा कंपन लाता है।"), 20, repY + 10);
+    repY += 22;
+  } else {
+    repeated.forEach(item => {
+      doc.setFillColor(254, 249, 231); // light yellow
+      doc.roundedRect(15, repY, pageWidth - 30, 13, 2, 2, "F");
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(15, repY, pageWidth - 30, 13, 2, 2, "D");
+
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(`${t("Number", "अंक")} ${item.num} ${t("repeated", "दोहराया गया")} ${item.count} ${t("times:", "बार:")}`, 20, repY + 5);
+
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.text(item.influence || t("Enhances the qualities of this number significantly.", "इस संख्या के गुणों को महत्वपूर्ण रूप से बढ़ाता है।"), 20, repY + 9);
+      repY += 15.5;
+    });
+  }
+
+  
+  // PAGE: 7) PROFESSIONAL CAREER OUTLOOK
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // Section Header
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("PROFESSIONAL CAREER OUTLOOK", "व्यावसायिक करियर आउटलुक"), 14, 27);
+
+  // Career outlook & compatibility card
+  doc.setFillColor(255, 254, 249);
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, 36, pageWidth - 30, 80, 3, 3, "FD");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.text(`Compatibility: Mulank ${mulank} & Bhagyank ${bhagyank} (Combination ${mulank}-${bhagyank})`, 20, 46);
+
+  // Compatibility Connection Badge
+  const careerCompatLabel = `${careerData.compatibilityStatus} ${t("Connection", "संबंध")}`;
+  doc.setFillColor(
+    careerData.compatibilityStatus === 'Highly Compatible' ? 230 :
+    careerData.compatibilityStatus === 'Anti' ? 252 : 255,
+    careerData.compatibilityStatus === 'Highly Compatible' ? 244 :
+    careerData.compatibilityStatus === 'Anti' ? 232 : 247,
+    careerData.compatibilityStatus === 'Highly Compatible' ? 234 :
+    careerData.compatibilityStatus === 'Anti' ? 230 : 230
+  );
+  doc.roundedRect(20, 52, doc.getTextWidth(careerCompatLabel) + 8, 7, 1.5, 1.5, "F");
+  doc.setTextColor(
+    careerData.compatibilityStatus === 'Highly Compatible' ? 19 :
+    careerData.compatibilityStatus === 'Anti' ? 197 : 176,
+    careerData.compatibilityStatus === 'Highly Compatible' ? 115 :
+    careerData.compatibilityStatus === 'Anti' ? 34 : 96,
+    careerData.compatibilityStatus === 'Highly Compatible' ? 51 :
+    careerData.compatibilityStatus === 'Anti' ? 31 : 0
+  );
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.text(careerCompatLabel, 24, 57);
+
+  // Esoteric insights title & body
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text(t("Esoteric Insights:", "गूढ़ अंतर्दृष्टि:"), 20, 68);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const esotericLines = doc.splitTextToSize(careerData.esotericReason, pageWidth - 46);
+  doc.text(esotericLines, 20, 74);
+
+
+  // PAGE: 8) IMPACT ON WORK STYLE
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("IMPACT ON WORK STYLE", "कार्य शैली पर प्रभाव"), 14, 27);
+
+  doc.setFillColor(255, 254, 249);
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  
+  const workstyleLines = doc.splitTextToSize(careerData.workstyle, pageWidth - 46);
+  const workstyleBoxH = Math.max(workstyleLines.length * 5 + 16, 60);
+  doc.roundedRect(15, 36, pageWidth - 30, workstyleBoxH, 3, 3, "FD");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(t("Your Professional Work Style & Approach", "आपकी व्यावसायिक कार्य शैली और दृष्टिकोण"), 20, 46);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(workstyleLines, 20, 53);
+
+
+  // PAGE: 9) MOST SUITABLE CAREER
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("MOST SUITABLE CAREER", "सबसे उपयुक्त करियर"), 14, 27);
+
+  // Renders Top careers, avoid list, golden remedy
+  let suitY = 36;
+
+  // 1. Recommended Careers Card
+  doc.setFillColor(255, 254, 249);
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, suitY, pageWidth - 30, 84, 3, 3, "FD");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(t("TOP 3 RECOMMENDED CAREERS", "शीर्ष 3 अनुशंसित करियर"), 20, suitY + 7);
+
+  let cY = suitY + 15;
+  careerData.topCareers.forEach((c, idx) => {
+    doc.setTextColor(176, 96, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(`${t("Field", "क्षेत्र")} ${idx + 1}: ${c.field}`, 20, cY);
+    
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.8);
+    const expLines = doc.splitTextToSize(c.explanation, pageWidth - 46);
+    doc.text(expLines, 20, cY + 4.2);
+    cY += 21;
+  });
+
+  suitY += 90;
+
+  // 2. Careers to Avoid Card
+  doc.setFillColor(253, 234, 234); // red tint
+  doc.setDrawColor(220, 100, 100);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, suitY, pageWidth - 30, 32, 3, 3, "FD");
+
+  doc.setTextColor(197, 34, 31); // red
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(t("CAREERS TO AVOID", "बचने योग्य करियर"), 20, suitY + 7);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  let avoidStr = careerData.careersToAvoid.join(", ");
+  const avoidLines = doc.splitTextToSize(avoidStr, pageWidth - 46);
+  doc.text(avoidLines, 20, suitY + 13);
+
+  suitY += 38;
+
+  // 3. Golden Professional Remedy Card
+  doc.setFillColor(254, 249, 231); // yellow tint
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, suitY, pageWidth - 30, 24, 3, 3, "FD");
+
+  doc.setTextColor(176, 96, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(t("Golden Professional Remedy", "स्वर्णिम व्यावसायिक उपाय"), 20, suitY + 6.5);
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.2);
+  const remedyLines = doc.splitTextToSize(careerData.goldenRemedy, pageWidth - 46);
+  doc.text(remedyLines, 20, suitY + 12);
+// Section 11: 5-Year Future Predictions (Dynamic Personal Year per calendar year)
+  doc.addPage();
+  drawPageShell(doc);
+  const sec11StartY = 20;
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, sec11StartY, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("5-YEAR PERSONAL YEAR FORECAST", "5-वर्षीय व्यक्तिगत वर्ष पूर्वानुमान"), 14, sec11StartY + 7);
+
+  let yrY = sec11StartY + 16;
+  fiveYearPredictions.slice(0, 3).forEach(pred => {
+    const themeLines = doc.splitTextToSize(pred.theme, pageWidth - 58);
+    const cardH = 8 + themeLines.length * 4.5;
+
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, yrY, pageWidth - 30, cardH, 2, 2, "D");
+
+    // Year badge
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(15, yrY, 26, cardH, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(`${pred.year}`, 28, yrY + cardH / 2 + 1, { align: "center" });
+    doc.setFontSize(7);
+    doc.text(`PY ${pred.personalYear}`, 28, yrY + cardH / 2 + 5.5, { align: "center" });
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(pred.title, 44, yrY + 5.5);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(themeLines, 44, yrY + 10.5);
+
+    yrY += cardH + 3;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 6c: PERSONAL YEAR DETAILED ANALYSIS
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`${t("PERSONAL YEAR", "व्यक्तिगत वर्ष")} ${personalYearNum} — ${t("DETAILED ANALYSIS", "विस्तृत विश्लेषण")}`, 14, 27);
+
+  // Year badge
+  doc.setFillColor(234, 248, 240);
+  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 36, pageWidth - 30, 20, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(32, 46, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(personalYearNum), 32, 49, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(personalYearInfo.title, 46, 43);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const pyThemeLines = doc.splitTextToSize(personalYearInfo.theme, pageWidth - 65);
+  doc.text(pyThemeLines, 46, 49);
+
+  // 4 life area cards
+  const lifeAreas = [
+    { label: t("HEALTH", "स्वास्थ्य"),       text: personalYearInfo.health,       bg: [253, 234, 234] },
+    { label: t("FINANCE", "वित्त"),      text: personalYearInfo.finance,      bg: [234, 248, 240] },
+    { label: t("CAREER", "करियर"),       text: personalYearInfo.career,       bg: [234, 238, 252] },
+    { label: t("RELATIONSHIP", "संबंध"), text: personalYearInfo.relationship, bg: [254, 249, 231] }
+  ];
+
+  let lifeY = 62;
+  lifeAreas.forEach(area => {
+    const aLines = doc.splitTextToSize(area.text, pageWidth - 46);
+    const aH = 8 + aLines.length * 5.2;
+
+    doc.setFillColor(...area.bg);
+    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, lifeY, pageWidth - 30, aH, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(area.label, 20, lifeY + 6);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text(aLines, 20, lifeY + 12);
+
+    lifeY += aH + 4;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 6: MOBILE COMPATIBILITY & 5-YEAR FUTURE PREDICTIONS
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // Section 10
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("MOBILE NUMBER COMPATIBILITY INSIGHTS", "मोबाइल नंबर संगतता अंतर्दृष्टि"), 14, 27);
+
+  // 1. Pre-calculate line wraps and heights to compute container height
+  const descWidth = pageWidth - 66; // 144mm width
+  const vibLines = mobileData.isValid ? doc.splitTextToSize(mobileData.vibrationMeaning, descWidth) : [];
+  const compLines = mobileData.isValid ? doc.splitTextToSize(mobileData.compatibilityDescription, descWidth) : [];
+  const zeroLines = mobileData.isValid ? doc.splitTextToSize(mobileData.zeroAnalysis, descWidth) : [];
+  const lastFourText = mobileData.isValid ? (isHi ? `[${mobileData.lastFourDigits}] योग ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}` : `[${mobileData.lastFourDigits}] sum to ${mobileData.lastFourSingleDigit}: ${mobileData.lastFourMeaning}`) : "";
+  const lastFourLines = mobileData.isValid ? doc.splitTextToSize(lastFourText, descWidth) : [];
+
+  let cardH = 30; // default height if invalid
+  if (mobileData.isValid) {
+    const h1 = Math.max(4.5, vibLines.length * 4);
+    const h2 = Math.max(4.5, compLines.length * 4);
+    const h3 = Math.max(4.5, zeroLines.length * 4);
+    const h4 = Math.max(4.5, lastFourLines.length * 4);
+    cardH = 14 + h1 + h2 + h3 + h4 + 4; // 14mm header offset + total line heights + padding
+  }
+
+  // Draw background box for Section 10
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, 35, pageWidth - 30, cardH, 3, 3, "D");
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone} (${t("Sum", "योग")}: ${mobileData.totalSum} | ${t("Root", "मूलांक")}: ${mobileData.singleDigit})`, 20, 42);
+
+  // Draw a horizontal divider line below title
+  doc.setDrawColor(232, 213, 191);
+  doc.setLineWidth(0.15);
+  doc.line(18, 45, pageWidth - 18, 45);
+
+  doc.setFontSize(8.5);
+  let contentY = 50;
+
+  if (mobileData.isValid) {
+    // 1. Vibration
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text(t("VIBRATION:", "कंपन:"), 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(vibLines, 48, contentY);
+    contentY += Math.max(4.5, vibLines.length * 4);
+
+    // 2. Compatibility
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text(t("COMPATIBILITY:", "संगतता:"), 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(compLines, 48, contentY);
+    contentY += Math.max(4.5, compLines.length * 4);
+
+    // 3. Vastu Flow
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text(t("VASTU FLOW:", "वास्तु प्रवाह:"), 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(zeroLines, 48, contentY);
+    contentY += Math.max(4.5, zeroLines.length * 4);
+
+    // 4. Last 4 Digits
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...goldPrimary);
+    doc.text(t("LAST 4 DIGITS:", "अंतिम 4 अंक:"), 20, contentY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textDark);
+    doc.text(lastFourLines, 48, contentY);
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textMuted);
+    doc.text(t("No mobile number has been provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, 52);
+  }
+
+  // PAGE 12b: MOBILE NUMBER ANALYSIS (Strict Planetary Matrix)
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("MOBILE NUMBER ANALYSIS", "मोबाइल नंबर विश्लेषण"), 14, 27);
+
+  let mbY = 36;
+
+  // Helpers for final pages translations
+  const translateMobileBullet = (bullet) => {
+    if (!isHi) return bullet;
+
+    if (bullet.includes("mobile number compound total is")) {
+      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
+      if (match) {
+        const [_, compound, single, planet] = match;
+        const cleanPlanet = planet.split(" (")[0];
+        const tPlanet = getPlanetTranslation(cleanPlanet);
+        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
+      }
+    }
+
+    if (bullet.includes("with your Driver")) {
+      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
+      if (match) {
+        const [_, single, relation, driver] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
+        const descText = relation === 'friendly' 
+          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
+          : (relation === 'non-friendly'
+             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
+             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
+        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
+      }
+    }
+
+    if (bullet.includes("with your Conductor")) {
+      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
+      if (match) {
+        const [_, relation, conductor] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
+        const descText = relation === 'friendly'
+          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
+          : (relation === 'conflicts'
+             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
+             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
+        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
+      }
+    }
+
+    if (bullet.includes("already present in your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
+      if (match) {
+        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
+      }
+    }
+    if (bullet.includes("is missing from your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
+      if (match) {
+        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
+      }
+    }
+
+    if (bullet.includes("Using this vibration regularly")) {
+      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
+    }
+    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
+      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
+    }
+    if (bullet.includes("It serves as a reliable, balanced connection")) {
+      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
+    }
+
+    if (bullet.includes("this mobile number is highly favorable")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
+    }
+    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
+      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
+    }
+    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
+    }
+
+    return bullet;
+  };
+
+  const translateNameItemText = (text) => {
+    if (!isHi) return text;
+    if (text.includes("ideal range")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
+    }
+    if (text.includes("should be 1, 3, 5 or 6")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
+    }
+
+    const isFirst = text.includes("First Name");
+    const isLast = text.includes("Last Name");
+    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
+
+    if (text.includes("Combination Count is")) {
+      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
+      if (match) {
+        const [_, compound, label, rating] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
+      }
+    }
+    if (text.includes("Combination Count is") || text.includes("rating is")) {
+      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
+      if (match) {
+        const [_, compound, rating, label] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यen');
+        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
+      }
+    }
+
+    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
+    if (compatMatch) {
+      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
+      const getLabel = (l) => {
+        if (l === 'Good Friend') return 'मित्र';
+        if (l === 'Non-Friend') return 'शत्रु';
+        return 'तटस्थ';
+      };
+      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
+    }
+
+    return text;
+  };
+
+  if (mobileCheck.isValid) {
+    // Header card
+    doc.setFillColor(244, 246, 249);
+    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "F");
+    doc.setDrawColor(108, 117, 125);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "D");
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone}`, 20, mbY + 7);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${t("Mobile Total", "मोबाइल योग")}: ${mobileCheck.totalSum} (${mobileCheck.singleDigit})   |   ${t("Mulank", "मूलांक")}: ${mobileCheck.mulank}   |   ${t("Bhagyank", "भाग्यांक")}: ${mobileCheck.bhagyank}`, 20, mbY + 14);
+
+    mbY += 28;
+
+    // Detailed Insights Card
+    // Pre-calculate height of all bullets to draw a clean container
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    let cardH = 12; // top padding + title
+    mobileCheck.bullets.forEach(bullet => {
+      const translated = translateMobileBullet(bullet);
+      const lines = doc.splitTextToSize(translated, pageWidth - 54);
+      cardH += lines.length * 4.2 + 3.5;
+    });
+    cardH += 4; // bottom padding
+
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(t("DETAILED COMPATIBILITY INSIGHTS", "विस्तृत संगतता अंतर्दृष्टि"), 20, mbY + 6);
+
+    let bulletY = mbY + 12;
+    mobileCheck.bullets.forEach(bullet => {
+      // Draw bullet point dot
+      doc.setFillColor(...goldPrimary);
+      doc.circle(21, bulletY + 1, 1.6, "F");
+      
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const translated = translateMobileBullet(bullet);
+      const lines = doc.splitTextToSize(translated, pageWidth - 54);
+      doc.text(lines, 26, bulletY + 2);
+      bulletY += lines.length * 4.2 + 3.5;
+    });
+
+    mbY += cardH + 6;
+
+    // Status Banner at bottom
+    const statusBg = mobileCheck.overallStatus === 'Friendly' ? [212, 237, 218] : mobileCheck.overallStatus === 'Non-Friendly' ? [248, 215, 218] : [255, 243, 205];
+    const statusFg = mobileCheck.overallStatus === 'Friendly' ? [21, 87, 36]   : mobileCheck.overallStatus === 'Non-Friendly' ? [114, 28, 36]  : [133, 100, 4];
+    const statusBorder = mobileCheck.overallStatus === 'Friendly' ? [40, 167, 69] : mobileCheck.overallStatus === 'Non-Friendly' ? [220, 53, 69] : [255, 193, 7];
+
+    doc.setFillColor(...statusBg);
+    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "F");
+    doc.setDrawColor(...statusBorder);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "D");
+
+    doc.setTextColor(...statusFg);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`${t("STATUS", "स्थिति")}: ${isHi ? getCompatStatusTranslation(mobileCheck.overallStatus) : mobileCheck.overallStatus}`, pageWidth / 2, mbY + 9, { align: "center" });
+
+  } else {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, mbY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textMuted);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9.5);
+    doc.text(t("No mobile number provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, mbY + 10);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // Section 9: Name Number Compatibility Analysis
+  doc.addPage();
+  drawPageShell(doc);
+  let sec9StartY = 20;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.2);
+  const nameCompLines = doc.splitTextToSize(nameCompatData.description, pageWidth - 46);
+  const cardHeight = 16 + (nameCompLines.length * 4.5) + 12; // dynamic height including headers, description height, status line, and padding
+  
+  if (sec9StartY + cardHeight + 20 > pageHeight - 25) {
+    doc.addPage();
+    drawPageShell(doc);
+    drawFooter(doc);
+    sec9StartY = 20;
+  }
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, sec9StartY, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("NAME NUMBER COMPATIBILITY ANALYSIS", "नाम अंक संगतता विश्लेषण"), 14, sec9StartY + 7);
+
+  const sec9CardStartY = sec9StartY + 16;
+
+  doc.setFillColor(234, 238, 252); // Pastel blue card
+  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, sec9CardStartY, pageWidth - 30, cardHeight, 3, 3, "D");
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text(`${t("Current Name Vibrations", "वर्तमान नाम कंपन")}: ${clientData.name || t("Native", "जातक")} (${t("Chaldean Root", "चाल्डियन मूल")}: ${nameCompatData.nameNumber})`, 20, sec9CardStartY + 7);
+
+  // Divider line inside name card
+  doc.setDrawColor(200, 210, 240);
+  doc.setLineWidth(0.15);
+  doc.line(18, sec9CardStartY + 10, pageWidth - 18, sec9CardStartY + 10);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.2);
+  let currentTextY = sec9CardStartY + 16;
+  nameCompLines.forEach(line => {
+    doc.text(line, 20, currentTextY);
+    currentTextY += 4.5;
+  });
+
+  const statusY = currentTextY + 5;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...goldPrimary);
+  doc.text(`${t("Name Number Compatibility Status", "नाम अंक संगतता स्थिति")}: ${isHi ? getCompatStatusTranslation(nameCompatData.status) : nameCompatData.status}`, 20, statusY);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE 12c: NAME NUMEROLOGY ANALYSIS (Strict Planetary Matrix)
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("NAME NUMEROLOGY ANALYSIS", "नाम अंकज्योतिष विश्लेषण"), 14, 27);
+
+  let nmY = 36;
+
+  const drawNameCard = (title, cardData, isFullName = false) => {
+    if (!cardData) return;
+    const lineItems = [
+      { good: cardData.not48Check,     text: cleanStars(isHi ? `नाम का योग 4 या 8 नहीं होना चाहिए। ${cardData.not48Check ? '✓' : `वर्तमान में ${cardData.single} है।`}` : `Count should not be 4 or 8. ${cardData.not48Check ? '✓' : `Currently ${cardData.single}.`}`) },
+      { good: cardData.driverStatus !== 'enemy' && cardData.conductorStatus !== 'enemy', text: cleanStars(translateNameItemText(cardData.compatLine)) },
+    ];
+    if (isFullName) {
+      lineItems.push({ good: cardData.targetOk, text: cleanStars(translateNameItemText(cardData.targetLine)) });
+    }
+    lineItems.push({ good: cardData.compoundRating?.label !== 'Bad', text: cleanStars(translateNameItemText(cardData.compoundLine)) });
+
+    // Pre-calculate height
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.2);
+    let totalH = 12 + 6; // title + compound badge row
+    lineItems.forEach(item => {
+      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
+      totalH += lines.length * 4.2 + 3;
+    });
+    totalH += 4; // bottom padding
+
+    if (nmY + totalH > pageHeight - 30) {
+      doc.addPage();
+      drawPageShell(doc);
+      drawFooter(doc);
+      nmY = 25;
+    }
+
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "D");
+
+    // Title + numbers
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(title, 20, nmY + 6);
+    doc.setTextColor(...textMuted);
+    doc.setFontSize(8);
+    doc.text(`${t("Compound", "संयुक्त")}: ${cardData.compound}   ${t("Single", "एकल")}: ${cardData.single}`, pageWidth - 20, nmY + 6, { align: "right" });
+
+    let lineY = nmY + 12;
+    lineItems.forEach(item => {
+      const dotColor = item.good ? [19, 115, 51] : [197, 34, 31];
+      doc.setFillColor(...dotColor);
+      doc.circle(21, lineY + 1, 1.8, "F");
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
+      doc.text(lines, 26, lineY + 2);
+      lineY += lines.length * 4.2 + 3;
+    });
+
+    nmY += totalH + 5;
+  };
+
+  if (nameNumerologyCheck.isValid) {
+    if (!nameNumerologyCheck.lastNameCard) {
+      drawNameCard(`${t("NAME ANALYSIS", "नाम विश्लेषण")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+    } else {
+      drawNameCard(`${t("FIRST NAME", "प्रथम नाम")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
+      drawNameCard(`${t("LAST NAME", "अंतिम नाम")}: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
+      drawNameCard(`${t("FULL NAME", "पूर्ण नाम")}: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
+    }
+
+    // Final Status Banner
+    if (nmY + 16 > pageHeight - 30) {
+      doc.addPage();
+      drawPageShell(doc);
+      drawFooter(doc);
+      nmY = 25;
+    }
+    const statusBg = nameNumerologyCheck.finalStatusGood ? [212, 237, 218] : [248, 215, 218];
+    const statusFg = nameNumerologyCheck.finalStatusGood ? [21, 87, 36]   : [114, 28, 36];
+    const statusBorder = nameNumerologyCheck.finalStatusGood ? [40, 167, 69] : [220, 53, 69];
+    doc.setFillColor(...statusBg);
+    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "F");
+    doc.setDrawColor(...statusBorder);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "D");
+    doc.setTextColor(...statusFg);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    const friendlyStatusTxt = nameNumerologyCheck.finalStatusGood ? t("Name Balanced ✓", "नाम संतुलित ✓") : t("Name Not Balanced ✗", "नाम संतुलित नहीं ✗");
+    doc.text(`${t("STATUS", "स्थिति")}: ${friendlyStatusTxt}`, pageWidth / 2, nmY + 9, { align: "center" });
+  } else {
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, nmY, pageWidth - 30, 16, 2, 2, "F");
+    doc.setTextColor(...textMuted);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9.5);
+    doc.text(t("No name data available for analysis.", "विश्लेषण के लिए कोई नाम डेटा उपलब्ध नहीं है।"), 20, nmY + 10);
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: FOREIGN SETTLEMENT PREDICTION
@@ -2007,340 +2441,6 @@ export const generatePDF = async (clientData, language = 'en') => {
         blY += bl.length * 4.2 + 3;
       });
     }
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 12b: MOBILE NUMBER ANALYSIS (Strict Planetary Matrix)
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("MOBILE NUMBER ANALYSIS", "मोबाइल नंबर विश्लेषण"), 14, 27);
-
-  let mbY = 36;
-
-  // Helpers for final pages translations
-  const translateMobileBullet = (bullet) => {
-    if (!isHi) return bullet;
-
-    if (bullet.includes("mobile number compound total is")) {
-      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
-      if (match) {
-        const [_, compound, single, planet] = match;
-        const cleanPlanet = planet.split(" (")[0];
-        const tPlanet = getPlanetTranslation(cleanPlanet);
-        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
-      }
-    }
-
-    if (bullet.includes("with your Driver")) {
-      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
-      if (match) {
-        const [_, single, relation, driver] = match;
-        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
-        const descText = relation === 'friendly' 
-          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
-          : (relation === 'non-friendly'
-             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
-             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
-        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
-      }
-    }
-
-    if (bullet.includes("with your Conductor")) {
-      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
-      if (match) {
-        const [_, relation, conductor] = match;
-        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
-        const descText = relation === 'friendly'
-          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
-          : (relation === 'conflicts'
-             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
-             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
-        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
-      }
-    }
-
-    if (bullet.includes("already present in your birth date")) {
-      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
-      if (match) {
-        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
-      }
-    }
-    if (bullet.includes("is missing from your birth date")) {
-      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
-      if (match) {
-        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
-      }
-    }
-
-    if (bullet.includes("Using this vibration regularly")) {
-      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
-    }
-    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
-      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
-    }
-    if (bullet.includes("It serves as a reliable, balanced connection")) {
-      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
-    }
-
-    if (bullet.includes("this mobile number is highly favorable")) {
-      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
-    }
-    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
-      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
-    }
-    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
-      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
-    }
-
-    return bullet;
-  };
-
-  const translateNameItemText = (text) => {
-    if (!isHi) return text;
-    if (text.includes("ideal range")) {
-      const match = text.match(/is\s+(\d+)/);
-      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
-    }
-    if (text.includes("should be 1, 3, 5 or 6")) {
-      const match = text.match(/is\s+(\d+)/);
-      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
-    }
-
-    const isFirst = text.includes("First Name");
-    const isLast = text.includes("Last Name");
-    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
-
-    if (text.includes("Combination Count is")) {
-      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
-      if (match) {
-        const [_, compound, label, rating] = match;
-        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
-        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
-      }
-    }
-    if (text.includes("Combination Count is") || text.includes("rating is")) {
-      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
-      if (match) {
-        const [_, compound, rating, label] = match;
-        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यen');
-        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
-      }
-    }
-
-    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
-    if (compatMatch) {
-      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
-      const getLabel = (l) => {
-        if (l === 'Good Friend') return 'मित्र';
-        if (l === 'Non-Friend') return 'शत्रु';
-        return 'तटस्थ';
-      };
-      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
-    }
-
-    return text;
-  };
-
-  if (mobileCheck.isValid) {
-    // Header card
-    doc.setFillColor(244, 246, 249);
-    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "F");
-    doc.setDrawColor(108, 117, 125);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(15, mbY, pageWidth - 30, 22, 3, 3, "D");
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    doc.text(`${t("Mobile Number", "मोबाइल नंबर")}: ${phone}`, 20, mbY + 7);
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    doc.text(`${t("Mobile Total", "मोबाइल योग")}: ${mobileCheck.totalSum} (${mobileCheck.singleDigit})   |   ${t("Mulank", "मूलांक")}: ${mobileCheck.mulank}   |   ${t("Bhagyank", "भाग्यांक")}: ${mobileCheck.bhagyank}`, 20, mbY + 14);
-
-    mbY += 28;
-
-    // Detailed Insights Card
-    // Pre-calculate height of all bullets to draw a clean container
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.2);
-    let cardH = 12; // top padding + title
-    mobileCheck.bullets.forEach(bullet => {
-      const translated = translateMobileBullet(bullet);
-      const lines = doc.splitTextToSize(translated, pageWidth - 54);
-      cardH += lines.length * 4.2 + 3.5;
-    });
-    cardH += 4; // bottom padding
-
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, mbY, pageWidth - 30, cardH, 2, 2, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(t("DETAILED COMPATIBILITY INSIGHTS", "विस्तृत संगतता अंतर्दृष्टि"), 20, mbY + 6);
-
-    let bulletY = mbY + 12;
-    mobileCheck.bullets.forEach(bullet => {
-      // Draw bullet point dot
-      doc.setFillColor(...goldPrimary);
-      doc.circle(21, bulletY + 1, 1.6, "F");
-      
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-      const translated = translateMobileBullet(bullet);
-      const lines = doc.splitTextToSize(translated, pageWidth - 54);
-      doc.text(lines, 26, bulletY + 2);
-      bulletY += lines.length * 4.2 + 3.5;
-    });
-
-    mbY += cardH + 6;
-
-    // Status Banner at bottom
-    const statusBg = mobileCheck.overallStatus === 'Friendly' ? [212, 237, 218] : mobileCheck.overallStatus === 'Non-Friendly' ? [248, 215, 218] : [255, 243, 205];
-    const statusFg = mobileCheck.overallStatus === 'Friendly' ? [21, 87, 36]   : mobileCheck.overallStatus === 'Non-Friendly' ? [114, 28, 36]  : [133, 100, 4];
-    const statusBorder = mobileCheck.overallStatus === 'Friendly' ? [40, 167, 69] : mobileCheck.overallStatus === 'Non-Friendly' ? [220, 53, 69] : [255, 193, 7];
-
-    doc.setFillColor(...statusBg);
-    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "F");
-    doc.setDrawColor(...statusBorder);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(15, mbY, pageWidth - 30, 14, 3, 3, "D");
-
-    doc.setTextColor(...statusFg);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    doc.text(`${t("STATUS", "स्थिति")}: ${isHi ? getCompatStatusTranslation(mobileCheck.overallStatus) : mobileCheck.overallStatus}`, pageWidth / 2, mbY + 9, { align: "center" });
-
-  } else {
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, mbY, pageWidth - 30, 16, 2, 2, "F");
-    doc.setTextColor(...textMuted);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9.5);
-    doc.text(t("No mobile number provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, mbY + 10);
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 12c: NAME NUMEROLOGY ANALYSIS (Strict Planetary Matrix)
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("NAME NUMEROLOGY ANALYSIS", "नाम अंकज्योतिष विश्लेषण"), 14, 27);
-
-  let nmY = 36;
-
-  const drawNameCard = (title, cardData, isFullName = false) => {
-    if (!cardData) return;
-    const lineItems = [
-      { good: cardData.not48Check,     text: cleanStars(isHi ? `नाम का योग 4 या 8 नहीं होना चाहिए। ${cardData.not48Check ? '✓' : `वर्तमान में ${cardData.single} है।`}` : `Count should not be 4 or 8. ${cardData.not48Check ? '✓' : `Currently ${cardData.single}.`}`) },
-      { good: cardData.driverStatus !== 'enemy' && cardData.conductorStatus !== 'enemy', text: cleanStars(translateNameItemText(cardData.compatLine)) },
-    ];
-    if (isFullName) {
-      lineItems.push({ good: cardData.targetOk, text: cleanStars(translateNameItemText(cardData.targetLine)) });
-    }
-    lineItems.push({ good: cardData.compoundRating?.label !== 'Bad', text: cleanStars(translateNameItemText(cardData.compoundLine)) });
-
-    // Pre-calculate height
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.2);
-    let totalH = 12 + 6; // title + compound badge row
-    lineItems.forEach(item => {
-      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
-      totalH += lines.length * 4.2 + 3;
-    });
-    totalH += 4; // bottom padding
-
-    if (nmY + totalH > pageHeight - 30) {
-      doc.addPage();
-      drawPageShell(doc);
-      drawFooter(doc);
-      nmY = 25;
-    }
-
-    doc.setFillColor(254, 249, 231);
-    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(15, nmY, pageWidth - 30, totalH, 3, 3, "D");
-
-    // Title + numbers
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(title, 20, nmY + 6);
-    doc.setTextColor(...textMuted);
-    doc.setFontSize(8);
-    doc.text(`${t("Compound", "संयुक्त")}: ${cardData.compound}   ${t("Single", "एकल")}: ${cardData.single}`, pageWidth - 20, nmY + 6, { align: "right" });
-
-    let lineY = nmY + 12;
-    lineItems.forEach(item => {
-      const dotColor = item.good ? [19, 115, 51] : [197, 34, 31];
-      doc.setFillColor(...dotColor);
-      doc.circle(21, lineY + 1, 1.8, "F");
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
-      const lines = doc.splitTextToSize(item.text, pageWidth - 54);
-      doc.text(lines, 26, lineY + 2);
-      lineY += lines.length * 4.2 + 3;
-    });
-
-    nmY += totalH + 5;
-  };
-
-  if (nameNumerologyCheck.isValid) {
-    if (!nameNumerologyCheck.lastNameCard) {
-      drawNameCard(`${t("NAME ANALYSIS", "नाम विश्लेषण")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
-    } else {
-      drawNameCard(`${t("FIRST NAME", "प्रथम नाम")}: ${nameNumerologyCheck.firstNameCard.name}`, nameNumerologyCheck.firstNameCard, false);
-      drawNameCard(`${t("LAST NAME", "अंतिम नाम")}: ${nameNumerologyCheck.lastNameCard.name}`, nameNumerologyCheck.lastNameCard, false);
-      drawNameCard(`${t("FULL NAME", "पूर्ण नाम")}: ${nameNumerologyCheck.fullNameCard.name}`, nameNumerologyCheck.fullNameCard, true);
-    }
-
-    // Final Status Banner
-    if (nmY + 16 > pageHeight - 30) {
-      doc.addPage();
-      drawPageShell(doc);
-      drawFooter(doc);
-      nmY = 25;
-    }
-    const statusBg = nameNumerologyCheck.finalStatusGood ? [212, 237, 218] : [248, 215, 218];
-    const statusFg = nameNumerologyCheck.finalStatusGood ? [21, 87, 36]   : [114, 28, 36];
-    const statusBorder = nameNumerologyCheck.finalStatusGood ? [40, 167, 69] : [220, 53, 69];
-    doc.setFillColor(...statusBg);
-    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "F");
-    doc.setDrawColor(...statusBorder);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(15, nmY, pageWidth - 30, 14, 3, 3, "D");
-    doc.setTextColor(...statusFg);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    const friendlyStatusTxt = nameNumerologyCheck.finalStatusGood ? t("Name Balanced ✓", "नाम संतुलित ✓") : t("Name Not Balanced ✗", "नाम संतुलित नहीं ✗");
-    doc.text(`${t("STATUS", "स्थिति")}: ${friendlyStatusTxt}`, pageWidth / 2, nmY + 9, { align: "center" });
-  } else {
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, nmY, pageWidth - 30, 16, 2, 2, "F");
-    doc.setTextColor(...textMuted);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9.5);
-    doc.text(t("No name data available for analysis.", "विश्लेषण के लिए कोई नाम डेटा उपलब्ध नहीं है।"), 20, nmY + 10);
   }
 
   // ════════════════════════════════════════════════════════════════════════

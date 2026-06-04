@@ -1452,6 +1452,73 @@ const AFFIRMATIONS = {
     "I am a vessel of divine wisdom.",
   ],
 };
+export const DATE_INFLUENCER_EN = {
+  1: "Born on the 1st, you are a natural initiator. Sun energy gives you remarkable leadership and an unbreakable drive. You achieve greatest success in independent ventures and pioneering roles.",
+  2: "Born on the 2nd, Moon energy makes you highly intuitive and empathetic. You excel in partnerships, counseling, and creative arts. Your sensitivity is your greatest strength.",
+  3: "Born on the 3rd, Jupiter blesses you with wisdom, optimism, and excellent communication. You thrive in teaching, writing, and creative expression roles.",
+  4: "Born on the 4th, Rahu energy makes you unconventional and analytically sharp. You excel in technology, research, and building reliable structures.",
+  5: "Born on the 5th, Mercury gives you quick wit and adaptability. Sales, marketing, travel, and communication are your natural domains.",
+  6: "Born on the 6th, Venus bestows charm, aesthetic sensitivity, and a nurturing nature. You shine in creative, hospitality, and family-oriented roles.",
+  7: "Born on the 7th, Neptune (Ketu) energy deepens your spiritual awareness and analytical mind. You are drawn to research, occult sciences, and spiritual paths.",
+  8: "Born on the 8th, Saturn energy provides exceptional discipline and material manifestation ability. Business, authority roles, and long-term investments favor you.",
+  9: "Born on the 9th, Mars infuses you with courage, drive, and humanitarian passion. You excel in leadership, defense, sports, and social causes.",
+  10: "Born on the 10th (reduces to 1), you carry strong Sun energy — a natural leader who inspires others and achieves remarkable independence.",
+  11: "Born on the 11th (Master Number), you are a highly intuitive spiritual messenger. Inspiration, healing, and visionary thinking define your life path.",
+  12: "Born on the 12th (reduces to 3), Jupiter's creative and expressive energy flows through you — a natural communicator and creative mind.",
+  13: "Born on the 13th (reduces to 4), Rahu energy combined with disciplined Saturnian influence makes you a determined builder of lasting structures.",
+  14: "Born on the 14th (reduces to 5), you carry dynamic Mercury energy — versatile, communicative, and naturally drawn to variety and change.",
+  15: "Born on the 15th (reduces to 6), you carry strong Venus energy amplified by the Sun — charismatic, creative, and deeply nurturing.",
+  16: "Born on the 16th (reduces to 7), you are spiritually inclined and analytically gifted — drawn to deeper truths and solitary contemplation.",
+  17: "Born on the 17th (reduces to 8), Saturn's karmic power and the visionary 7 combine for powerful material manifestation and authority.",
+  18: "Born on the 18th (reduces to 9), Mars energy is amplified — you are a natural warrior for justice with a humanitarian heart.",
+  19: "Born on the 19th (reduces to 1), Sun energy is doubly strong — exceptional leadership potential and the drive to overcome all obstacles.",
+  20: "Born on the 20th (reduces to 2), Moon energy is magnified — deeply intuitive, emotionally rich, and naturally skilled in creating harmony.",
+  21: "Born on the 21st (reduces to 3), Jupiter's wisdom combines with the Moon's creativity — an inspired and expressive communicator.",
+  22: "Born on the 22nd (Master Number), you carry the vibration of a Master Builder — capable of manifesting extraordinary visions into reality.",
+  23: "Born on the 23rd (reduces to 5), you carry the Royal Star of the Lion — highly adaptable, communicative, and naturally charismatic.",
+  24: "Born on the 24th (reduces to 6), Venus energy combined with Moon nurturing makes you a natural caretaker with great artistic gifts.",
+  25: "Born on the 25th (reduces to 7), you have powerful spiritual insight and analytical depth — a seeker of wisdom and hidden truths.",
+  26: "Born on the 26th (reduces to 8), Saturn's discipline meets Venus's creativity — strong material manifestation with artistic sensibility.",
+  27: "Born on the 27th (reduces to 9), Mars energy is refined by spiritual 7 — a courageous humanitarian with deep compassion.",
+  28: "Born on the 28th (reduces to 1), Sun leadership is tempered by the Moon and Saturn — a balanced leader who builds lasting legacies.",
+  29: "Born on the 29th (reduces to 11), Moon and Mars combine with Master 11 energy — deeply intuitive and inspired by a higher calling.",
+  30: "Born on the 30th (reduces to 3), pure Jupiter energy flows through you — a natural teacher, philosopher, and creative expression master.",
+  31: "Born on the 31st (reduces to 4), Rahu and Jupiter combine — an innovative builder who thinks outside conventional frameworks."
+};
+
+export const DATE_INFLUENCER_HI = {
+  1: "1 तारीख को जन्मे, आप एक प्राकृतिक प्रवर्तक हैं। सूर्य की ऊर्जा आपको असाधारण नेतृत्व और अटूट प्रेरणा देती है। आप स्वतंत्र उद्यमों और अग्रणी भूमिकाओं में सबसे बड़ी सफलता प्राप्त करते हैं।",
+  2: "2 तारीख को जन्मे, चंद्रमा की ऊर्जा आपको अत्यधिक सहज और सहानुभूतिपूर्ण बनाती है। आप साझेदारी, परामर्श और रचनात्मक कलाओं में उत्कृष्टता प्राप्त करते हैं। आपकी संवेदनशीलता आपकी सबसे बड़ी ताकत है।",
+  3: "3 तारीख को जन्मे, बृहस्पति आपको ज्ञान, आशावाद और उत्कृष्ट संचार का आशीर्वाद देता है। आप शिक्षण, लेखन और रचनात्मक अभिव्यक्ति की भूमिकाओं में फलते-फूलते हैं।",
+  4: "4 तारीख को जन्मे, राहु की ऊर्जा आपको लीक से हटकर सोचने वाला और विश्लेषणात्मक रूप से तेज बनाती है। आप प्रौद्योगिकी, अनुसंधान और विश्वसनीय संरचनाओं के निर्माण में उत्कृष्टता प्राप्त करते हैं।",
+  5: "5 तारीख को जन्मे, बुध आपको त्वरित बुद्धि और अनुकूलनशीलता देता है। बिक्री, विपणन, यात्रा और संचार आपके प्राकृतिक क्षेत्र हैं।",
+  6: "6 तारीख को जन्मे, शुक्र आकर्षण, सौंदर्य संवेदनशीलता और पोषण करने वाला स्वभाव प्रदान करता है। आप रचनात्मक, आतिथ्य और परिवार-उन्मुख भूमिकाओं में चमकते हैं।",
+  7: "7 तारीख को जन्मे, नेपच्यून (केतु) ऊर्जा आपकी आध्यात्मिक जागरूकता और विश्लेषणात्मक दिमाग को गहरा करती है। आप अनुसंधान, गूढ़ विज्ञान और आध्यात्मिक पथों की ओर आकर्षित होते हैं।",
+  8: "8 तारीख को जन्मे, शनि ऊर्जा असाधारण अनुशासन और भौतिक प्रकटीकरण क्षमता प्रदान करती है। व्यवसाय, अधिकार भूमिकाएँ और दीर्घकालिक निवेश आपके पक्ष में काम करते हैं।",
+  9: "9 तारीख को जन्मे, मंगल आपको साहस, अभियान और मानवीय जुनून से भर देता है। आप नेतृत्व, रक्षा, खेल और सामाजिक कार्यों में उत्कृष्टता प्राप्त करते हैं।",
+  10: "10 तारीख को जन्मे (घटकर 1 होता है), आप मजबूत सूर्य ऊर्जा ले जाते हैं — एक प्राकृतिक नेता जो दूसरों को प्रेरित करता है और उल्लेखनीय स्वतंत्रता प्राप्त करता है।",
+  11: "11 तारीख को जन्मे (मास्टर नंबर), आप एक अत्यधिक सहज आध्यात्मिक संदेशवाहक हैं। प्रेरणा, उपचार और दूरदर्शी सोच आपके जीवन पथ को परिभाषित करती है।",
+  12: "12 तारीख को जन्मे (घटकर 3 होता है), बृहस्पति की रचनात्मक और अभिव्यंजक ऊर्जा आप में बहती है — एक प्राकृतिक संचारक और रचनात्मक दिमाग।",
+  13: "13 तारीख को जन्मे (घटकर 4 होता है), अनुशासित शनि प्रभाव के साथ राहु ऊर्जा आपको स्थायी संरचनाओं का एक दृढ़ निर्माता बनाती है।",
+  14: "14 तारीख को जन्मे (घटकर 5 होता है), आप गतिशील बुध ऊर्जा ले जाते हैं — बहुमुखी, संचारी और स्वाभाविक रूप से विविधता और परिवर्तन के प्रति आकर्षित।",
+  15: "15 तारीख को जन्मे (घटकर 6 होता है), आप सूर्य द्वारा प्रवर्धित मजबूत शुक्र ऊर्जा ले जाते हैं — करिश्माई, रचनात्मक और गहरे पोषण करने वाले।",
+  16: "16 तारीख को जन्मे (घटकर 7 होता है), आप आध्यात्मिक रूप से झुके हुए और विश्लेषणात्मक रूप से प्रतिभाशाली हैं — गहरे सत्यों और एकांत चिंतन की ओर आकर्षित।",
+  17: "17 तारीख को जन्मे (घटकर 8 होता है), शनि की कर्म शक्ति और दूरदर्शी 7 शक्तिशाली भौतिक प्रकटीकरण और अधिकार के लिए गठबंधन करते हैं।",
+  18: "18 तारीख को जन्मे (घटकर 9 होता है), मंगल ऊर्जा प्रवर्धित है — आप एक मानवीय हृदय के साथ न्याय के लिए एक स्वाभाविक योद्धा हैं।",
+  19: "19 तारीख को जन्मे (घटकर 1 होता है), सूर्य ऊर्जा दोगुनी मजबूत है — असाधारण नेतृत्व क्षमता और सभी बाधाओं को दूर करने की प्रेरणा।",
+  20: "20 तारीख को जन्मे (घटकर 2 होता है), चंद्रमा ऊर्जा प्रवर्धित है — गहराई से सहज, भावनात्मक रूप से समृद्ध, और सद्भाव बनाने में स्वाभाविक रूप से कुशल।",
+  21: "21 तारीख को जन्मे (घटकर 3 होता है), बृहस्पति का ज्ञान चंद्रमा की रचनात्मकता के साथ जुड़ता है — एक प्रेरित और अभिव्यंजक संचारक।",
+  22: "22 तारीख को जन्मे (मास्टर नंबर), आप एक मास्टर बिल्डर का कंपन ले जाते हैं — असाधारण दूरदृष्टि को वास्तविकता में प्रकट करने में सक्षम।",
+  23: "23 तारीख को जन्मे (घटकर 5 होता है), आप शेर का शाही सितारा ले जाते हैं — अत्यधिक अनुकूलनशील, संचारी और स्वाभाविक रूप से करिश्माई।",
+  24: "24 तारीख को जन्मे (घटकर 6 होता है), चंद्रमा के पोषण के साथ शुक्र की ऊर्जा आपको महान कलात्मक उपहारों के साथ एक प्राकृतिक देखभाल करने वाला बनाती है।",
+  25: "25 तारीख को जन्मे (घटकर 7 होता है), आपके पास शक्तिशाली आध्यात्मिक अंतर्दृष्टि और विश्लेषणात्मक गहराई है — ज्ञान और छिपे हुए सत्यों के साधक।",
+  26: "26 तारीख को जन्मे (घटकर 8 होता है), शनि का अनुशासन शुक्र की रचनात्मकता से मिलता है — कलात्मक संवेदनशीलता के साथ मजबूत भौतिक प्रकटीकरण।",
+  27: "27 तारीख को जन्मे (घटकर 9 होता है), आध्यात्मिक 7 द्वारा मंगल ऊर्जा को परिष्कृत किया गया है — गहरी करुणा के साथ एक साहसी मानवतावादी।",
+  28: "28 तारीख को जन्मे (घटकर 1 होता है), सूर्य के नेतृत्व को चंद्रमा और शनि द्वारा संतुलित किया जाता है — एक संतुलित नेता जो स्थायी विरासत बनाता है।",
+  29: "29 तारीख को जन्मे (घटकर 11 होता है), चंद्रमा और मंगल मास्टर 11 ऊर्जा के साथ गठबंधन करते हैं — गहराई से सहज और एक उच्च आह्वान से प्रेरित।",
+  30: "30 तारीख को जन्मे (घटकर 3 होता है), शुद्ध बृहस्पति ऊर्जा आपके माध्यम से बहती है — एक प्राकृतिक शिक्षक, दार्शनिक और रचनात्मक अभिव्यक्ति गुरु।",
+  31: "31 तारीख को जन्मे (घटकर 4 होता है), राहु और बृहस्पति का मेल — एक अभिनव निर्माता जो पारंपरिक संरचनाओं से बाहर सोचता है।"
+};
 
 export const getAffirmations = (num) => AFFIRMATIONS[num] || AFFIRMATIONS[1];
 
@@ -1508,41 +1575,8 @@ export const generateReport = (name, dob, gender) => {
 
   const personalityContent = `Your Psychic Number ${mulank} is ruled by ${mulankPlanet}, shaping your core personality and daily impulses. Your Destiny Number ${bhagyank} is ruled by ${bhagyankPlanet}, guiding the long-term direction of your life's achievements. ${compatText} Your most productive periods come when you actively work with your lucky numbers and favorable dates to align your actions with cosmic timing.`;
 
-  // Dynamic date influencer content
   const dayNum = parseInt(dob.split("-")[2]);
-  const DATE_INFLUENCER_CONTENT = {
-    1: "Born on the 1st, you are a natural initiator. Sun energy gives you remarkable leadership and an unbreakable drive. You achieve greatest success in independent ventures and pioneering roles.",
-    2: "Born on the 2nd, Moon energy makes you highly intuitive and empathetic. You excel in partnerships, counseling, and creative arts. Your sensitivity is your greatest strength.",
-    3: "Born on the 3rd, Jupiter blesses you with wisdom, optimism, and excellent communication. You thrive in teaching, writing, and creative expression roles.",
-    4: "Born on the 4th, Rahu energy makes you unconventional and analytically sharp. You excel in technology, research, and building reliable structures.",
-    5: "Born on the 5th, Mercury gives you quick wit and adaptability. Sales, marketing, travel, and communication are your natural domains.",
-    6: "Born on the 6th, Venus bestows charm, aesthetic sensitivity, and a nurturing nature. You shine in creative, hospitality, and family-oriented roles.",
-    7: "Born on the 7th, Neptune (Ketu) energy deepens your spiritual awareness and analytical mind. You are drawn to research, occult sciences, and spiritual paths.",
-    8: "Born on the 8th, Saturn energy provides exceptional discipline and material manifestation ability. Business, authority roles, and long-term investments favor you.",
-    9: "Born on the 9th, Mars infuses you with courage, drive, and humanitarian passion. You excel in leadership, defense, sports, and social causes.",
-    10: "Born on the 10th (reduces to 1), you carry strong Sun energy — a natural leader who inspires others and achieves remarkable independence.",
-    11: "Born on the 11th (Master Number), you are a highly intuitive spiritual messenger. Inspiration, healing, and visionary thinking define your life path.",
-    12: "Born on the 12th (reduces to 3), Jupiter's creative and expressive energy flows through you — a natural communicator and creative mind.",
-    13: "Born on the 13th (reduces to 4), Rahu energy combined with disciplined Saturnian influence makes you a determined builder of lasting structures.",
-    14: "Born on the 14th (reduces to 5), you carry dynamic Mercury energy — versatile, communicative, and naturally drawn to variety and change.",
-    15: "Born on the 15th (reduces to 6), you carry strong Venus energy amplified by the Sun — charismatic, creative, and deeply nurturing.",
-    16: "Born on the 16th (reduces to 7), you are spiritually inclined and analytically gifted — drawn to deeper truths and solitary contemplation.",
-    17: "Born on the 17th (reduces to 8), Saturn's karmic power and the visionary 7 combine for powerful material manifestation and authority.",
-    18: "Born on the 18th (reduces to 9), Mars energy is amplified — you are a natural warrior for justice with a humanitarian heart.",
-    19: "Born on the 19th (reduces to 1), Sun energy is doubly strong — exceptional leadership potential and the drive to overcome all obstacles.",
-    20: "Born on the 20th (reduces to 2), Moon energy is magnified — deeply intuitive, emotionally rich, and naturally skilled in creating harmony.",
-    21: "Born on the 21st (reduces to 3), Jupiter's wisdom combines with the Moon's creativity — an inspired and expressive communicator.",
-    22: "Born on the 22nd (Master Number), you carry the vibration of a Master Builder — capable of manifesting extraordinary visions into reality.",
-    23: "Born on the 23rd (reduces to 5), you carry the Royal Star of the Lion — highly adaptable, communicative, and naturally charismatic.",
-    24: "Born on the 24th (reduces to 6), Venus energy combined with Moon nurturing makes you a natural caretaker with great artistic gifts.",
-    25: "Born on the 25th (reduces to 7), you have powerful spiritual insight and analytical depth — a seeker of wisdom and hidden truths.",
-    26: "Born on the 26th (reduces to 8), Saturn's discipline meets Venus's creativity — strong material manifestation with artistic sensibility.",
-    27: "Born on the 27th (reduces to 9), Mars energy is refined by spiritual 7 — a courageous humanitarian with deep compassion.",
-    28: "Born on the 28th (reduces to 1), Sun leadership is tempered by the Moon and Saturn — a balanced leader who builds lasting legacies.",
-    29: "Born on the 29th (reduces to 11), Moon and Mars combine with Master 11 energy — deeply intuitive and inspired by a higher calling.",
-    30: "Born on the 30th (reduces to 3), pure Jupiter energy flows through you — a natural teacher, philosopher, and creative expression master.",
-    31: "Born on the 31st (reduces to 4), Rahu and Jupiter combine — an innovative builder who thinks outside conventional frameworks."
-  };
+  const DATE_INFLUENCER_CONTENT = DATE_INFLUENCER_EN;
 
   // Dynamic missing number remedies from actual grid
   const missingNumbersRemedies = missingNums.map(num => ({

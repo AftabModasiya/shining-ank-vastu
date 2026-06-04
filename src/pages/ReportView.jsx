@@ -3,8 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Download, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { updateClient, getClientById } from '../services/clientService';
-import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeStockSuitability, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo } from '../utils/numerology';
-
+import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeStockSuitability, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo, DATE_INFLUENCER_EN, DATE_INFLUENCER_HI } from '../utils/numerology';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './ReportView.css';
@@ -552,6 +551,171 @@ function ReportView() {
               )}
             </div>
 
+            {/* ── 4. DATE INFLUENCER ───────────────────────── */}
+            {(() => {
+              const rDob = report?.dob || editedData?.dob || '';
+              const rParts = rDob.split('-');
+              const rDayNum = rParts.length === 3 ? parseInt(rParts[2]) : 1;
+              
+              const defaultEnTitle = `Date Influencer — Born on ${rDayNum}`;
+              const defaultEnDesc = `People born on ${rDayNum}, ${rDayNum + 9 <= 31 ? rDayNum + 9 : ''} ${rDayNum + 18 <= 31 ? ', ' + (rDayNum + 18) : ''} share this birth energy.`.trim();
+              const defaultEnContent = DATE_INFLUENCER_EN[rDayNum] || '';
+
+              const defaultHiTitle = `जन्म तिथि प्रभाव — ${rDayNum} तारीख को जन्म`;
+              const defaultHiDesc = `${rDayNum}, ${rDayNum + 9 <= 31 ? rDayNum + 9 : ''} ${rDayNum + 18 <= 31 ? ', ' + (rDayNum + 18) : ''} तारीखों को जन्मे लोगों में भी समान ऊर्जा होती है।`.trim();
+              const defaultHiContent = DATE_INFLUENCER_HI[rDayNum] || '';
+
+              const isTitleEdited = report?.dateInfluencer?.title && report.dateInfluencer.title !== defaultEnTitle;
+              const isDescEdited = report?.dateInfluencer?.desc && report.dateInfluencer.desc !== defaultEnDesc;
+              const isContentEdited = report?.dateInfluencer?.content && report.dateInfluencer.content !== defaultEnContent;
+
+              const displayTitle = (isHi && !isTitleEdited) ? defaultHiTitle : (report?.dateInfluencer?.title || '');
+              const displayDesc = (isHi && !isDescEdited) ? defaultHiDesc : (report?.dateInfluencer?.desc || '');
+              const displayContent = (isHi && !isContentEdited) ? defaultHiContent : (report?.dateInfluencer?.content || '');
+
+              return (
+                <section className="report-section">
+                  <div className="date-influencer-card">
+                    {isEditing ? (
+                      <>
+                        <input name="report.dateInfluencer.title" value={report?.dateInfluencer?.title || ''} onChange={handleInputChange} className="edit-input-bold" />
+                        <input name="report.dateInfluencer.desc" value={report?.dateInfluencer?.desc || ''} onChange={handleInputChange} className="edit-input-small" />
+                        <textarea name="report.dateInfluencer.content" value={report?.dateInfluencer?.content || ''} onChange={handleInputChange} className="edit-textarea" />
+                      </>
+                    ) : (
+                      <>
+                        <h4>{displayTitle}</h4>
+                        <p>{displayDesc}</p>
+                        <p>{displayContent}</p>
+                      </>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
+
+            {/* ── 6. LO SHU GRID ──────────────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.loShuTitle}</h3>
+              <div className="loshu-container">
+                <div className="loshu-grid">
+                  {[4, 9, 2, 3, 5, 7, 8, 1, 6].map((num, idx) => {
+                    // Full grid with Mulank, Bhagyank & Kua included per client spec
+                    const grid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
+                    const count = grid[num - 1];
+                    const cellValue = count > 0 ? Array(count).fill(num).join(' ') : '';
+                    return (
+                      <div key={idx} className={`grid-cell ${count > 0 ? 'present' : 'empty'}`}>
+                        {cellValue}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Grid Highlights — computed from FULL grid (DOB + Mulank + Bhagyank + Kua) */}
+                <div className="grid-interpretation">
+                  <h4>{rpt.gridHighlights}</h4>
+                  {(() => {
+                    const fullGrid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
+                    const presentNums = getPresentNumbers(fullGrid);
+                    const missingNums = getMissingNumbers(fullGrid);
+                    const repeatedNums = getRepeatedNumbers(fullGrid);
+                    const arrows = getArrows(fullGrid);
+
+                    return (
+                      <>
+                        <div className="present-numbers">
+                          <p><strong>{rpt.presentNumbers}:</strong></p>
+                          <div className="number-tags">
+                            {presentNums.map((item, idx) => (
+                              <span key={idx} className="tag tag-present">
+                                {item.num} ({item.planet}) {item.count > 1 ? `(x${item.count})` : ''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="missing-numbers" style={{ marginTop: '12px' }}>
+                          <p><strong>{rpt.missingNumbers}:</strong></p>
+                          <div className="number-tags">
+                            {missingNums.length > 0 ? missingNums.map((num, idx) => (
+                              <span key={idx} className="tag tag-missing">{num}</span>
+                            )) : (
+                              <span className="tag tag-present">{rpt.completeGrid}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {repeatedNums.length > 0 && (
+                          <div className="repeated-numbers" style={{ marginTop: '12px' }}>
+                            <p><strong>{rpt.repeatedNumbers}:</strong></p>
+                            <div className="number-tags" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                              {repeatedNums.map((item, idx) => (
+                                <span key={idx} className="tag tag-present" style={{ background: 'linear-gradient(145deg, #fdf2cc, #fde4a3)', border: '1px solid rgba(181,130,10,0.3)', color: '#8a6207' }}>
+                                  {rpt.digit} {item.num}: {item.strength} ({item.count}x)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="arrow-analysis" style={{ marginTop: '14px', borderTop: '1px solid rgba(232,213,191,0.4)', paddingTop: '10px' }}>
+                          {arrows.positive.length > 0 && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.positivePlanes}:</strong></p>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                {arrows.positive.map((arr, idx) => (
+                                  <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#e6f4ea', color: '#137333', fontSize: '11px', fontWeight: 'bold' }}>
+                                    {arr}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {arrows.negative.length > 0 && (
+                            <div>
+                              <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.weaknesses}:</strong></p>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                {arrows.negative.map((arr, idx) => (
+                                  <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#fce8e6', color: '#c5221f', fontSize: '11px', fontWeight: 'bold' }}>
+                                    {arr}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <p className="kua-note" style={{ marginTop: '14px' }}><strong>{rpt.kuaNumber}: {calculateKua(displayData.dob, displayData.gender)}</strong></p>
+                </div>
+              </div>
+            </section>
+
+            {/* ── 11. PERSONALITY ANALYSIS ─────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.personalityTitle}</h3>
+              <div className="personality-card">
+                {isEditing ? (
+                  <>
+                    <input name="report.personalityAnalysis.title" value={report.personalityAnalysis.title} onChange={handleInputChange} className="edit-input-bold" />
+                    <textarea name="report.personalityAnalysis.content" value={report.personalityAnalysis.content} onChange={handleInputChange} className="edit-textarea" />
+                  </>
+                ) : (
+                  <>
+                    <h4>{report.personalityAnalysis.title}</h4>
+                    <p>{report.personalityAnalysis.content}</p>
+                  </>
+                )}
+                <div className="personality-highlights">
+                  <div className="highlight-item"><strong>{rpt.luckyNumberLabel}:</strong> {luckyData.luckyNumber}</div>
+                  <div className="highlight-item"><strong>{rpt.luckyColorLabel}:</strong> {luckyData.luckyColor}</div>
+                  <div className="highlight-item"><strong>{rpt.luckyDirectionLabel}:</strong> {luckyData.luckyDirection}</div>
+                </div>
+              </div>
+            </section>
+
             {/* ── 2. ♦ Core Numbers ♦ DIVIDER ─────────────── */}
             <div className="core-divider">
               <div className="core-divider-line"></div>
@@ -632,22 +796,33 @@ function ReportView() {
             </div> */}
             </div>
 
-            {/* ── 4. DATE INFLUENCER ───────────────────────── */}
+            {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
             <section className="report-section">
-              <div className="date-influencer-card">
-                {isEditing ? (
-                  <>
-                    <input name="report.dateInfluencer.title" value={report.dateInfluencer.title} onChange={handleInputChange} className="edit-input-bold" />
-                    <input name="report.dateInfluencer.desc" value={report.dateInfluencer.desc} onChange={handleInputChange} className="edit-input-small" />
-                    <textarea name="report.dateInfluencer.content" value={report.dateInfluencer.content} onChange={handleInputChange} className="edit-textarea" />
-                  </>
-                ) : (
-                  <>
-                    <h4>{report.dateInfluencer.title}</h4>
-                    <p>{report.dateInfluencer.desc}</p>
-                    <p>{report.dateInfluencer.content}</p>
-                  </>
-                )}
+              <h3 className="section-title">{rpt.chaldeanTitle}</h3>
+              <div className="name-compatibility-container">
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
+                  <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
+                  <div className="name-badge-row">
+                    <span className="badge" style={{
+                      background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
+                        compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
+                      color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
+                        compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
+                      border: '1px solid currentColor'
+                    }}>
+                      <strong>
+                        {compatibilityAnalysis.overallStatus === 'friend' ? rpt.highlyCompatible :
+                          compatibilityAnalysis.overallStatus === 'enemy' ? rpt.challenging : rpt.neutral}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+                <div className="name-detail-card" style={{ display: 'block' }}>
+                  <span className="detail-label">{rpt.chaldeanRelationship}</span>
+                  <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
+                    {compatibilityAnalysis.description}
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -672,7 +847,291 @@ function ReportView() {
                   </div>
                 ))}
               </div>
+
+              {/* Signature Style for Success */}
+              <div className="name-detail-card" style={{ marginTop: '16px', background: 'linear-gradient(135deg, #fffcf5, #fdf6e2)', border: '1.5px solid #d4a017' }}>
+                <span className="detail-label" style={{ color: '#8a6207' }}>
+                  {language === 'hi' ? '💎 सफलता के लिए हस्ताक्षर शैली' : '💎 SIGNATURE STYLE FOR SUCCESS'}
+                </span>
+                <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', fontSize: '0.88rem', lineHeight: '1.6', color: '#4a3728' }}>
+                  {(() => {
+                    const sigRules = [
+                      language === 'hi' ? '• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।' : '• Sign at a continuous rising angle of approximately 45 degrees.',
+                      language === 'hi' ? '• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।' : '• Never put a line cutting through any letters of your name.',
+                      language === 'hi' ? '• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।' : '• Always end your signature with a forward and rising stroke.',
+                      language === 'hi' ? '• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।' : '• Use two parallel underlines below the signature with a rising ending.',
+                      language === 'hi' ? '• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।' : '• Ensure the first alphabet of your name is larger and clearly readable.'
+                    ];
+                    return sigRules.map((rule, idx) => <li key={idx} style={{ marginBottom: '6px' }}>{rule}</li>);
+                  })()}
+                </ul>
+              </div>
+
             </section>
+
+            {/* ── 7. MISSING NUMBERS & REMEDIES ───────────── */}
+            {report.missingNumbersRemedies?.length > 0 && (
+              <section className="report-section">
+                <h3 className="section-title">{rpt.missingRemediesTitle}</h3>
+                <div className="remedies-list">
+                  {report.missingNumbersRemedies.map((remedy, idx) => (
+                    <div key={idx} className="remedy-card">
+                      <div className="remedy-header">
+                        <h4>{rpt.missingNumber} {remedy.num} ({remedy.planet})</h4>
+                      </div>
+                      {isEditing ? (
+                        <div className="edit-remedy">
+                          <label>{rpt.effects}:</label>
+                          <textarea value={remedy.effects} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'effects')} className="edit-textarea" />
+                          <label>{rpt.crystalRemedy}:</label>
+                          <input type="text" value={remedy.crystal} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'crystal')} className="edit-input" />
+                        </div>
+                      ) : (
+                        <div className="remedy-content">
+                          <div style={{ marginBottom: '12px' }}>
+                            <strong style={{ color: '#c5221f', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.effectLabel}:</strong>
+                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
+                              {(remedy.effectsList || (remedy.effects || '').split('\n')).map((e, eIdx) => {
+                                const cleanText = e.replace(/^•\s*/, '').trim();
+                                return cleanText ? <li key={eIdx}>{cleanText}</li> : null;
+                              })}
+                            </ul>
+                          </div>
+                          <div>
+                            <strong style={{ color: '#137333', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.remediesLabel}:</strong>
+                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
+                              {(remedy.remediesList || (remedy.crystal || '').split('\n')).map((r, rIdx) => {
+                                const cleanText = r.replace(/^•\s*/, '').trim();
+                                return cleanText ? <li key={rIdx}>{cleanText}</li> : null;
+                              })}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+              {/* Yantra & Bracelet Remedies */}
+              <div className="name-compatibility-container" style={{ marginTop: '20px' }}>
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3f6fc, #eaf0fc)', border: '1.5px solid #adc1e6', marginBottom: '14px' }}>
+                  <h4 style={{ color: '#1a3a6e' }}>
+                    {language === 'hi' ? '🛡️ महा यंत्र और क्रिस्टल ब्रेसलेट उपाय' : '🛡️ MAHA YANTRA & CRYSTAL BRACELET REMEDIES'}
+                  </h4>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#444' }}>
+                    {language === 'hi' 
+                      ? 'ये ऊर्जावान धातु यंत्र और अर्ध-कीमती क्रिस्टल ब्रेसलेट आपके जीवन में लापता संख्याओं के ग्रहों के कंपन को संतुलित करने के लिए सिद्ध हैं।'
+                      : 'These energized metal yantras and semi-precious crystal bracelets are proven to balance the planetary vibrations of missing numbers in your life.'}
+                  </p>
+                </div>
+
+                <div className="name-detail-card" style={{ display: 'block' }}>
+                  <span className="detail-label" style={{ color: '#137333' }}>
+                    {language === 'hi' ? 'अनुशंसित रत्न और ब्रेसलेट उपाय' : 'RECOMMENDED GEMSTONES & BRACELETS'}
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                    {(() => {
+                      const braceletRemedies = [
+                        { num: 1, name: language === 'hi' ? 'लाल जैस्पर / गार्नेट ब्रेसलेट (सूर्य)' : 'Red Jasper / Garnet Bracelet (Sun)', desc: language === 'hi' ? 'ऊर्जा, आत्मविश्वास और नेतृत्व कौशल में सुधार करता है।' : 'Improves energy, confidence, and leadership skills.' },
+                        { num: 2, name: language === 'hi' ? 'सफेद मूनस्टोन / मोती ब्रेसलेट (चंद्र)' : 'White Moonstone / Pearl Bracelet (Moon)', desc: language === 'hi' ? 'मानसिक शांति, अंतर्ज्ञान और भावनात्मक संतुलन लाता है।' : 'Brings mental peace, intuition, and emotional balance.' },
+                        { num: 3, name: language === 'hi' ? 'पीला एवेन्ट्यूरिन ब्रेसलेट (गुरु)' : 'Yellow Aventurine Bracelet (Jupiter)', desc: language === 'hi' ? 'ज्ञान, शिक्षा और आध्यात्मिक विकास को बढ़ाता है।' : 'Enhances knowledge, education, and spiritual growth.' },
+                        { num: 4, name: language === 'hi' ? 'गोमेद / हेसोनाइट ब्रेसलेट (राहु)' : 'Hessonite / Rahu Bracelet (Rahu)', desc: language === 'hi' ? 'अचानक लाभ, सुरक्षा और भ्रम को दूर करने में मदद करता है।' : 'Helps with sudden gains, protection, and clearing illusions.' },
+                        { num: 5, name: language === 'hi' ? 'हरा एवेन्ट्यूरिन / जेड ब्रेसलेट (बुध)' : 'Green Aventurine / Jade Bracelet (Mercury)', desc: language === 'hi' ? 'संचार, व्यवसाय और धन संचय को बढ़ाता है।' : 'Enhances communication, business, and wealth compounding.' },
+                        { num: 6, name: language === 'hi' ? 'क्लियर क्वार्ट्ज / स्फटिक ब्रेसलेट (शुक्र)' : 'Clear Quartz / Sphatik Bracelet (Venus)', desc: language === 'hi' ? 'लक्जरी, आकर्षण और संबंधों में सुधार लाता है।' : 'Brings luxury, charm, and improves relationships.' },
+                        { num: 7, name: language === 'hi' ? 'टाइगर आई ब्रेसलेट (केतु)' : 'Tiger Eye Bracelet (Ketu)', desc: language === 'hi' ? 'बुरी नजर से सुरक्षा, साहस और ध्यान में सुधार लाता है।' : 'Brings protection from evil eye, courage, and concentration.' },
+                        { num: 8, name: language === 'hi' ? 'काला ओब्सीडियन / एमेथिस्ट ब्रेसलेट (शनि)' : 'Black Obsidian / Amethyst Bracelet (Saturn)', desc: language === 'hi' ? 'स्थायित्व, करियर में वृद्धि और सुरक्षा देता है।' : 'Brings stability, career growth, and protection.' },
+                        { num: 9, name: language === 'hi' ? 'लाल मूंगा / कार्वेलियन ब्रेसलेट (मंगल)' : 'Red Coral / Carnelian Bracelet (Mars)', desc: language === 'hi' ? 'साहस, शारीरिक ऊर्जा और विजय दिलाता है।' : 'Brings courage, physical energy, and victory.' }
+                      ];
+                      
+                      const dob = isEditing ? (editedData?.dob || '') : (displayData?.dob || '');
+                      const grid = calculateLoShuGrid(dob, [mulank, bhagyank, kuaNum]);
+                      const missingNums = [];
+                      for (let i = 1; i <= 9; i++) {
+                        if (grid[i - 1] === 0) missingNums.push(i);
+                      }
+
+                      const activeRemedies = braceletRemedies.filter(r => missingNums.includes(r.num));
+
+                      return activeRemedies.length > 0 ? activeRemedies.map((r, idx) => (
+                        <div key={idx} style={{ background: '#f8f9fa', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
+                          <strong style={{ fontSize: '0.85rem', color: '#1a3a2e', display: 'block' }}>Number {r.num}: {r.name}</strong>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#555', lineHeight: '1.4' }}>{r.desc}</p>
+                        </div>
+                      )) : <div style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic' }}>{language === 'hi' ? 'कोई लापता संख्या नहीं है, किसी विशिष्ट रत्न या ब्रेसलेट की आवश्यकता नहीं है।' : 'No missing numbers, no specific bracelet remedies needed.'}</div>;
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              </section>
+            )}
+
+            {/* ── 8. REPEATED NUMBERS ─────────────────────── */}
+            {report.repeatedNumbersAnalysis?.length > 0 && (
+              <section className="report-section">
+                <h3 className="section-title">{rpt.repeatedTitle}</h3>
+                <div className="repeated-grid">
+                  {report.repeatedNumbersAnalysis.map((item, idx) => (
+                    <div key={idx} className="repeated-card">
+                      <h4>{rpt.number} {item.num} ({item.count} {rpt.times})</h4>
+                      {isEditing ? (
+                        <textarea value={item.influence} onChange={(e) => handleArrayChange(e, 'report.repeatedNumbersAnalysis', idx, 'influence')} className="edit-textarea" />
+                      ) : (
+                        <p>{item.influence}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            
+            {/* ── Topic 7: Professional Career Outlook ── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.careerTitle}</h3>
+              <div className="career-outlook-container">
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3f6fc, #eaf0fc)', border: '1px solid #adc1e6', marginBottom: '15px' }}>
+                  <h4>Compatibility: Mulank {mulank} & Bhagyank {bhagyank} (Combination {mulank}-{bhagyank})</h4>
+                  <div className="name-badge-row">
+                    <span className="badge" style={{
+                      background: careerData.compatibilityStatus === 'Highly Compatible' ? '#e6f4ea' :
+                        careerData.compatibilityStatus === 'Anti' ? '#fce8e6' : '#fff7e6',
+                      color: careerData.compatibilityStatus === 'Highly Compatible' ? '#137333' :
+                        careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
+                      border: '1px solid currentColor'
+                    }}>
+                      <strong>{careerData.compatibilityStatus} {rpt.connection}</strong>
+                    </span>
+                  </div>
+                  <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#444', fontStyle: 'italic' }}>
+                    <strong>{rpt.esotericInsight}:</strong> {careerData.esotericReason}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Topic 8: Impact on Work Style ── */}
+            <section className="report-section">
+              <h3 className="section-title">{language === 'hi' ? '💼 कार्य शैली पर प्रभाव' : '💼 Impact on Work Style'}</h3>
+              <div className="career-outlook-container">
+                <div className="name-detail-card">
+                  <span className="detail-label">{rpt.workstyle}</span>
+                  <p className="detail-value" style={{ lineHeight: '1.6' }}>{careerData.workstyle}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Topic 9: Most Suitable Career ── */}
+            <section className="report-section">
+              <h3 className="section-title">{language === 'hi' ? '🚀 सबसे उपयुक्त करियर क्षेत्र' : '🚀 Most Suitable Career'}</h3>
+              <div className="career-outlook-container">
+                {/* Suitable Careers List */}
+                <div className="name-detail-card" style={{ marginBottom: '15px' }}>
+                  <span className="detail-label">{rpt.topCareers}</span>
+                  <ul className="career-fields-list" style={{ listStyle: 'none', padding: 0, margin: '10px 0 0 0' }}>
+                    {careerData.topCareers.map((c, idx) => (
+                      <li key={idx} style={{ marginBottom: '12px', borderLeft: '3px solid #d4a017', paddingLeft: '12px' }}>
+                        <strong style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>{rpt.field} {idx + 1}: {c.field}</strong>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#555' }}>{c.explanation}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Careers to Avoid */}
+                <div className="name-detail-card" style={{ background: '#fff0f0', border: '1px solid #f9d5d5', marginBottom: '15px' }}>
+                  <span className="detail-label" style={{ color: '#c5221f' }}>{rpt.careersToAvoid}</span>
+                  <ul style={{ paddingLeft: '20px', margin: '10px 0 0 0', fontSize: '0.88rem', color: '#444', lineHeight: '1.5' }}>
+                    {careerData.careersToAvoid.map((item, idx) => (
+                      <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Golden Remedy */}
+                <div className="name-detail-card" style={{ background: '#fef9e7', border: '1px solid #f9e79f' }}>
+                  <span className="detail-label" style={{ color: '#b06000' }}>{rpt.goldenRemedy}</span>
+                  <p className="detail-value" style={{ marginTop: '8px', lineHeight: '1.6', fontSize: '0.9rem', fontWeight: '500' }}>
+                    {careerData.goldenRemedy}
+                  </p>
+                </div>
+              </div>
+            </section>
+{/* ── 9. SUITABLE PROFESSIONS ──────────────────── */}
+            {report.suitableProfessions?.length > 0 && (
+              <section className="report-section">
+                <h3 className="section-title">{rpt.professionsTitle}</h3>
+                <div className="professions-list">
+                  {report.suitableProfessions.map((prof, idx) => (
+                    <div key={idx} className="profession-item">
+                      {isEditing ? (
+                        <input value={prof} onChange={(e) => handleArrayChange(e, 'report.suitableProfessions', idx)} className="edit-input-inline" />
+                      ) : <span>• {prof}</span>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── 10. 3-YEAR FORECAST ──────────────────────── */}
+            {report.futurePredictions && (
+              <section className="report-section">
+                <h3 className="section-title">{rpt.forecastTitle}</h3>
+                <div className="forecast-grid">
+                  {Object.keys(report.futurePredictions).map((key) => {
+                    const forecast = report.futurePredictions[key];
+                    return (
+                      <div key={key} className="forecast-card">
+                        <h4>{rpt.year} {forecast.year}</h4>
+                        {isEditing ? (
+                          <>
+                            <input value={forecast.title} onChange={(e) => handleNestedArrayChange(e, 'report.futurePredictions', key, 'title')} className="edit-input-bold" />
+                            <textarea value={forecast.desc} onChange={(e) => handleNestedArrayChange(e, 'report.futurePredictions', key, 'desc')} className="edit-textarea" />
+                          </>
+                        ) : (
+                          <>
+                            <h5>{forecast.title}</h5>
+                            <p>{forecast.desc}</p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+              {/* Detailed Personal Year Forecast Card */}
+              <div className="name-compatibility-container" style={{ marginTop: '20px' }}>
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017', marginBottom: '14px' }}>
+                  <h4 style={{ color: '#8a6207' }}>
+                    {language === 'hi' ? '📈 चालू वर्ष व्यक्तिगत वर्ष विश्लेषण' : '📈 CURRENT YEAR PERSONAL YEAR DETAILED ANALYSIS'}
+                  </h4>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#444' }}>
+                    {language === 'hi' 
+                      ? 'वर्तमान व्यक्तिगत वर्ष चक्र के आधार पर आपके जीवन के विभिन्न क्षेत्रों पर पड़ने वाला प्रभाव।'
+                      : 'Detailed impact on various aspects of your life based on the current Personal Year cycle.'}
+                  </p>
+                </div>
+
+                <div className="name-detail-card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  {(() => {
+                    const detailedForecasts = [
+                      { label: language === 'hi' ? '❤️ संबंध और परिवार' : '❤️ Relationships & Family', desc: language === 'hi' ? 'पारिवारिक सुख-शांति बनी रहेगी, आपसी विश्वास मजबूत होगा और संबंधों में मधुरता आएगी।' : 'Family peace and harmony will prevail, strengthening mutual trust and harmony.' },
+                      { label: language === 'hi' ? '💼 करियर और व्यवसाय' : '💼 Career & Business', desc: language === 'hi' ? 'नए अवसरों के साथ पेशेवर जीवन में सकारात्मक बदलाव आएंगे और नए प्रोजेक्ट शुरू होंगे।' : 'Positive changes in professional life with new opportunities and execution of new projects.' },
+                      { label: language === 'hi' ? '💰 वित्तीय स्थिति' : '💰 Financial Outlook', desc: language === 'hi' ? 'निवेश के लिए अच्छा वर्ष है, लेकिन सोच-समझकर और गणना किए गए जोखिमों के साथ ही निर्णय लें।' : 'Good year for investments, but make calculated decisions and avoid impulsive spending.' },
+                      { label: language === 'hi' ? '💚 स्वास्थ्य दृष्टिकोण' : '💚 Health Outlook', desc: language === 'hi' ? 'स्वास्थ्य सामान्यतः ठीक रहेगा, लेकिन जीवनशैली में सुधार और तनाव प्रबंधन आवश्यक है।' : 'Health will remain mostly stable, but lifestyle improvements and stress management are highly advised.' }
+                    ];
+                    return detailedForecasts.map((df, idx) => (
+                      <div key={idx} style={{ background: '#fffcf5', border: '1px solid #f9e79f', borderRadius: '8px', padding: '10px 12px' }}>
+                        <strong style={{ fontSize: '0.85rem', color: '#8a6207', display: 'block', marginBottom: '4px' }}>{df.label}</strong>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#4a3728', lineHeight: '1.45' }}>{df.desc}</p>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              </section>
+            )}
 
             {/* ── 5b. MOBILE ANALYSIS (Strict Planetary Matrix) ─── */}
             <section className="report-section">
@@ -862,341 +1321,153 @@ function ReportView() {
               )}
             </section>
 
-            {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
+            {/* ── 13. NAME SPELLING SUGGESTION ─────────────────── */}
             <section className="report-section">
-              <h3 className="section-title">{rpt.chaldeanTitle}</h3>
-              <div className="name-compatibility-container">
-                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
-                  <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
-                  <div className="name-badge-row">
-                    <span className="badge" style={{
-                      background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
-                        compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
-                      color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
-                        compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
-                      border: '1px solid currentColor'
-                    }}>
-                      <strong>
-                        {compatibilityAnalysis.overallStatus === 'friend' ? rpt.highlyCompatible :
-                          compatibilityAnalysis.overallStatus === 'enemy' ? rpt.challenging : rpt.neutral}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-                <div className="name-detail-card" style={{ display: 'block' }}>
-                  <span className="detail-label">{rpt.chaldeanRelationship}</span>
-                  <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
-                    {compatibilityAnalysis.description}
-                  </div>
-                </div>
-              </div>
-            </section>
+              <h3 className="section-title">{rpt.nameSpellingTitle}</h3>
+              <p style={{ color: '#8c6f58', fontSize: '0.9rem', marginBottom: '20px', marginTop: '-10px' }}>
+                {rpt.nameSpellingDescription}
+              </p>
 
-            {/* ── 5d. PROFESSIONAL & CAREER OUTLOOK ─────────── */}
-            <section className="report-section">
-              <h3 className="section-title">{rpt.careerTitle}</h3>
-              <div className="career-outlook-container">
-                {/* Compatibility matrix block */}
-                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #f3f6fc, #eaf0fc)', border: '1px solid #adc1e6', marginBottom: '15px' }}>
-                  <h4>Compatibility: Mulank {mulank} & Bhagyank {bhagyank} (Combination {mulank}-{bhagyank})</h4>
-                  <div className="name-badge-row">
-                    <span className="badge" style={{
-                      background: careerData.compatibilityStatus === 'Highly Compatible' ? '#e6f4ea' :
-                        careerData.compatibilityStatus === 'Anti' ? '#fce8e6' : '#fff7e6',
-                      color: careerData.compatibilityStatus === 'Highly Compatible' ? '#137333' :
-                        careerData.compatibilityStatus === 'Anti' ? '#c5221f' : '#b06000',
-                      border: '1px solid currentColor'
-                    }}>
-                      <strong>{careerData.compatibilityStatus} {rpt.connection}</strong>
-                    </span>
-                  </div>
-                  <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#444', fontStyle: 'italic' }}>
-                    <strong>{rpt.esotericInsight}:</strong> {careerData.esotericReason}
-                  </p>
-                </div>
+              {(() => {
+                const clientDob = displayData.dob;
+                const clientGender = (displayData.gender === 'male' || displayData.gender === 'boy') ? 'boy' : 'girl';
+                const nameReport = getNameSuggestions(clientDob, clientGender);
+                if (!nameReport) return null;
 
-                {/* Workstyle */}
-                <div className="name-detail-card" style={{ marginBottom: '15px' }}>
-                  <span className="detail-label">{rpt.workstyle}</span>
-                  <p className="detail-value" style={{ lineHeight: '1.6' }}>{careerData.workstyle}</p>
-                </div>
+                // Filter name suggestions by selected alphabet
+                const filteredSuggestions = selectedAlphabetFilter
+                  ? nameReport.suggestions.filter(s => s.name.toUpperCase().startsWith(selectedAlphabetFilter))
+                  : nameReport.suggestions;
 
-                {/* Suitable Careers */}
-                <div className="name-detail-card" style={{ marginBottom: '15px' }}>
-                  <span className="detail-label">{rpt.topCareers}</span>
-                  <ul className="career-fields-list" style={{ listStyle: 'none', padding: 0, margin: '10px 0 0 0' }}>
-                    {careerData.topCareers.map((c, idx) => (
-                      <li key={idx} style={{ marginBottom: '12px', borderLeft: '3px solid #d4a017', paddingLeft: '12px' }}>
-                        <strong style={{ fontSize: '0.95rem', color: '#1a3a2e' }}>{rpt.field} {idx + 1}: {c.field}</strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#555' }}>{c.explanation}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Careers to Avoid */}
-                <div className="name-detail-card" style={{ background: '#fff0f0', border: '1px solid #f9d5d5', marginBottom: '15px' }}>
-                  <span className="detail-label" style={{ color: '#c5221f' }}>{rpt.careersToAvoid}</span>
-                  <ul style={{ paddingLeft: '20px', margin: '10px 0 0 0', fontSize: '0.88rem', color: '#444', lineHeight: '1.5' }}>
-                    {careerData.careersToAvoid.map((item, idx) => (
-                      <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Golden Remedy */}
-                <div className="name-detail-card" style={{ background: '#fef9e7', border: '1px solid #f9e79f' }}>
-                  <span className="detail-label" style={{ color: '#b06000' }}>{rpt.goldenRemedy}</span>
-                  <p className="detail-value" style={{ marginTop: '8px', lineHeight: '1.6', fontSize: '0.9rem', fontWeight: '500' }}>
-                    {careerData.goldenRemedy}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* ── 6. LO SHU GRID ──────────────────────────── */}
-            <section className="report-section">
-              <h3 className="section-title">{rpt.loShuTitle}</h3>
-              <div className="loshu-container">
-                <div className="loshu-grid">
-                  {[4, 9, 2, 3, 5, 7, 8, 1, 6].map((num, idx) => {
-                    // Full grid with Mulank, Bhagyank & Kua included per client spec
-                    const grid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
-                    const count = grid[num - 1];
-                    const cellValue = count > 0 ? Array(count).fill(num).join(' ') : '';
-                    return (
-                      <div key={idx} className={`grid-cell ${count > 0 ? 'present' : 'empty'}`}>
-                        {cellValue}
+                return (
+                  <div className="baby-name-suggestions-container" style={{ marginTop: '10px' }}>
+                    <div className="baby-name-card-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                          {rpt.babyNameAnalysisTitle}
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyDriver}:</span>
+                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.driver}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyConductor}:</span>
+                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.conductor}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameMissingPriority}:</span>
+                          <span className="baby-stat-val" style={{ color: '#c05050', fontWeight: 'bold' }}>{nameReport.missingPriority.length > 0 ? nameReport.missingPriority.join(', ') : rpt.babyNone}</span>
+                        </div>
+                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
+                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameSelectedTarget}:</span>
+                          <span className="baby-stat-val" style={{ color: '#b5820a', fontWeight: 'bold', fontSize: '1.05rem' }}>{nameReport.bestTarget}</span>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Grid Highlights — computed from FULL grid (DOB + Mulank + Bhagyank + Kua) */}
-                <div className="grid-interpretation">
-                  <h4>{rpt.gridHighlights}</h4>
-                  {(() => {
-                    const fullGrid = calculateLoShuGrid(displayData.dob, [mulank, bhagyank, kuaNum]);
-                    const presentNums = getPresentNumbers(fullGrid);
-                    const missingNums = getMissingNumbers(fullGrid);
-                    const repeatedNums = getRepeatedNumbers(fullGrid);
-                    const arrows = getArrows(fullGrid);
-
-                    return (
-                      <>
-                        <div className="present-numbers">
-                          <p><strong>{rpt.presentNumbers}:</strong></p>
-                          <div className="number-tags">
-                            {presentNums.map((item, idx) => (
-                              <span key={idx} className="tag tag-present">
-                                {item.num} ({item.planet}) {item.count > 1 ? `(x${item.count})` : ''}
-                              </span>
-                            ))}
-                          </div>
+                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
+                          {rpt.babyNameInitialsTitle}
                         </div>
-
-                        <div className="missing-numbers" style={{ marginTop: '12px' }}>
-                          <p><strong>{rpt.missingNumbers}:</strong></p>
-                          <div className="number-tags">
-                            {missingNums.length > 0 ? missingNums.map((num, idx) => (
-                              <span key={idx} className="tag tag-missing">{num}</span>
-                            )) : (
-                              <span className="tag tag-present">{rpt.completeGrid}</span>
-                            )}
-                          </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                          {nameReport.initials.map(letter => (
+                            <span key={letter} style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontWeight: 'bold', padding: '6px 14px', borderRadius: '8px', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(181,130,10,0.15)' }}>
+                              {letter}
+                            </span>
+                          ))}
                         </div>
-
-                        {repeatedNums.length > 0 && (
-                          <div className="repeated-numbers" style={{ marginTop: '12px' }}>
-                            <p><strong>{rpt.repeatedNumbers}:</strong></p>
-                            <div className="number-tags" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                              {repeatedNums.map((item, idx) => (
-                                <span key={idx} className="tag tag-present" style={{ background: 'linear-gradient(145deg, #fdf2cc, #fde4a3)', border: '1px solid rgba(181,130,10,0.3)', color: '#8a6207' }}>
-                                  {rpt.digit} {item.num}: {item.strength} ({item.count}x)
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="arrow-analysis" style={{ marginTop: '14px', borderTop: '1px solid rgba(232,213,191,0.4)', paddingTop: '10px' }}>
-                          {arrows.positive.length > 0 && (
-                            <div style={{ marginBottom: '8px' }}>
-                              <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.positivePlanes}:</strong></p>
-                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                {arrows.positive.map((arr, idx) => (
-                                  <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#e6f4ea', color: '#137333', fontSize: '11px', fontWeight: 'bold' }}>
-                                    {arr}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {arrows.negative.length > 0 && (
-                            <div>
-                              <p style={{ margin: '0 0 4px', fontSize: '13px' }}><strong>{rpt.weaknesses}:</strong></p>
-                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                {arrows.negative.map((arr, idx) => (
-                                  <span key={idx} style={{ padding: '4px 8px', borderRadius: '6px', background: '#fce8e6', color: '#c5221f', fontSize: '11px', fontWeight: 'bold' }}>
-                                    {arr}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                        <div style={{ fontSize: '0.8rem', color: '#8c6f58', marginTop: '12px', fontStyle: 'italic' }}>
+                          {isHi ? 'भाग्यशाली नामांक ' + nameReport.bestTarget + ' के अनुकूल प्रारंभिक अक्षर' : 'Lucky starting alphabets matching Destiny Number ' + nameReport.bestTarget}
                         </div>
-                      </>
-                    );
-                  })()}
-                  <p className="kua-note" style={{ marginTop: '14px' }}><strong>{rpt.kuaNumber}: {calculateKua(displayData.dob, displayData.gender)}</strong></p>
-                </div>
-              </div>
-            </section>
-
-            {/* ── 7. MISSING NUMBERS & REMEDIES ───────────── */}
-            {report.missingNumbersRemedies?.length > 0 && (
-              <section className="report-section">
-                <h3 className="section-title">{rpt.missingRemediesTitle}</h3>
-                <div className="remedies-list">
-                  {report.missingNumbersRemedies.map((remedy, idx) => (
-                    <div key={idx} className="remedy-card">
-                      <div className="remedy-header">
-                        <h4>{rpt.missingNumber} {remedy.num} ({remedy.planet})</h4>
                       </div>
-                      {isEditing ? (
-                        <div className="edit-remedy">
-                          <label>{rpt.effects}:</label>
-                          <textarea value={remedy.effects} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'effects')} className="edit-textarea" />
-                          <label>{rpt.crystalRemedy}:</label>
-                          <input type="text" value={remedy.crystal} onChange={(e) => handleArrayChange(e, 'report.missingNumbersRemedies', idx, 'crystal')} className="edit-input" />
-                        </div>
-                      ) : (
-                        <div className="remedy-content">
-                          <div style={{ marginBottom: '12px' }}>
-                            <strong style={{ color: '#c5221f', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.effectLabel}:</strong>
-                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
-                              {(remedy.effectsList || (remedy.effects || '').split('\n')).map((e, eIdx) => {
-                                const cleanText = e.replace(/^•\s*/, '').trim();
-                                return cleanText ? <li key={eIdx}>{cleanText}</li> : null;
-                              })}
-                            </ul>
-                          </div>
-                          <div>
-                            <strong style={{ color: '#137333', fontSize: '0.92rem', display: 'block', marginBottom: '4px' }}>{rpt.remediesLabel}:</strong>
-                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', color: '#444', lineHeight: '1.6' }}>
-                              {(remedy.remediesList || (remedy.crystal || '').split('\n')).map((r, rIdx) => {
-                                const cleanText = r.replace(/^•\s*/, '').trim();
-                                return cleanText ? <li key={rIdx}>{cleanText}</li> : null;
-                              })}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* ── 8. REPEATED NUMBERS ─────────────────────── */}
-            {report.repeatedNumbersAnalysis?.length > 0 && (
-              <section className="report-section">
-                <h3 className="section-title">{rpt.repeatedTitle}</h3>
-                <div className="repeated-grid">
-                  {report.repeatedNumbersAnalysis.map((item, idx) => (
-                    <div key={idx} className="repeated-card">
-                      <h4>{rpt.number} {item.num} ({item.count} {rpt.times})</h4>
-                      {isEditing ? (
-                        <textarea value={item.influence} onChange={(e) => handleArrayChange(e, 'report.repeatedNumbersAnalysis', idx, 'influence')} className="edit-textarea" />
-                      ) : (
-                        <p>{item.influence}</p>
-                      )}
+                    <div className="baby-justification" style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '12px 16px', borderRadius: '0 8px 8px 0', marginBottom: '20px', fontSize: '0.92rem', lineHeight: '1.5', color: '#5a4230' }}>
+                      <strong>{rpt.babyNameJustification}:</strong> {isHi ? `लक्ष्य नामांक ${nameReport.bestTarget} को चुना गया है क्योंकि यह मूलांक ${nameReport.driver} और भाग्यांक ${nameReport.conductor} दोनों के साथ अनुकूल है, जिससे कोई भी विरोधाभास (Anti) अंक नहीं है। यह लो शू ग्रिड में अनुपस्थित प्राथमिक अंकों को संतुलित करता है।` : nameReport.justification}
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* ── 9. SUITABLE PROFESSIONS ──────────────────── */}
-            {report.suitableProfessions?.length > 0 && (
-              <section className="report-section">
-                <h3 className="section-title">{rpt.professionsTitle}</h3>
-                <div className="professions-list">
-                  {report.suitableProfessions.map((prof, idx) => (
-                    <div key={idx} className="profession-item">
-                      {isEditing ? (
-                        <input value={prof} onChange={(e) => handleArrayChange(e, 'report.suitableProfessions', idx)} className="edit-input-inline" />
-                      ) : <span>• {prof}</span>}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ── 10. 3-YEAR FORECAST ──────────────────────── */}
-            {report.futurePredictions && (
-              <section className="report-section">
-                <h3 className="section-title">{rpt.forecastTitle}</h3>
-                <div className="forecast-grid">
-                  {Object.keys(report.futurePredictions).map((key) => {
-                    const forecast = report.futurePredictions[key];
-                    return (
-                      <div key={key} className="forecast-card">
-                        <h4>{rpt.year} {forecast.year}</h4>
-                        {isEditing ? (
-                          <>
-                            <input value={forecast.title} onChange={(e) => handleNestedArrayChange(e, 'report.futurePredictions', key, 'title')} className="edit-input-bold" />
-                            <textarea value={forecast.desc} onChange={(e) => handleNestedArrayChange(e, 'report.futurePredictions', key, 'desc')} className="edit-textarea" />
-                          </>
-                        ) : (
-                          <>
-                            <h5>{forecast.title}</h5>
-                            <p>{forecast.desc}</p>
-                          </>
-                        )}
+                    {/* Filter chips */}
+                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 'bold', color: '#8c6f58' }}>{rpt.alphabetFilterLabel}</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => setSelectedAlphabetFilter(null)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            border: '1.5px solid #b5820a',
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            background: !selectedAlphabetFilter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
+                            color: !selectedAlphabetFilter ? '#fff' : '#b5820a',
+                          }}
+                        >
+                          {rpt.showAll}
+                        </button>
+                        {nameReport.initials.map(letter => (
+                          <button
+                            key={letter}
+                            onClick={() => setSelectedAlphabetFilter(letter)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              border: '1.5px solid #b5820a',
+                              fontSize: '0.8rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              background: selectedAlphabetFilter === letter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
+                              color: selectedAlphabetFilter === letter ? '#fff' : '#b5820a',
+                            }}
+                          >
+                            {letter}
+                          </button>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+                    </div>
 
-            {/* ── 11. PERSONALITY ANALYSIS ─────────────────── */}
-            <section className="report-section">
-              <h3 className="section-title">{rpt.personalityTitle}</h3>
-              <div className="personality-card">
-                {isEditing ? (
-                  <>
-                    <input name="report.personalityAnalysis.title" value={report.personalityAnalysis.title} onChange={handleInputChange} className="edit-input-bold" />
-                    <textarea name="report.personalityAnalysis.content" value={report.personalityAnalysis.content} onChange={handleInputChange} className="edit-textarea" />
-                  </>
-                ) : (
-                  <>
-                    <h4>{report.personalityAnalysis.title}</h4>
-                    <p>{report.personalityAnalysis.content}</p>
-                  </>
-                )}
-                <div className="personality-highlights">
-                  <div className="highlight-item"><strong>{rpt.luckyNumberLabel}:</strong> {luckyData.luckyNumber}</div>
-                  <div className="highlight-item"><strong>{rpt.luckyColorLabel}:</strong> {luckyData.luckyColor}</div>
-                  <div className="highlight-item"><strong>{rpt.luckyDirectionLabel}:</strong> {luckyData.luckyDirection}</div>
-                </div>
-              </div>
-            </section>
-
-            {/* ── 12. DAILY AFFIRMATIONS ───────────────────── */}
-            <section className="report-section">
-              <h3 className="section-title">{rpt.affirmationsTitle}</h3>
-              <div className="affirmations-list">
-                {report.affirmations.map((affirmation, index) => (
-                  <div key={index} className="affirmation-item">
-                    <span className="affirmation-icon">✨</span>
-                    {isEditing ? (
-                      <input value={affirmation} onChange={(e) => handleArrayChange(e, 'report.affirmations', index)} className="edit-input" />
-                    ) : <p>{affirmation}</p>}
+                    <div className="baby-breakdown-title" style={{ fontSize: '1rem', color: '#b5820a', marginBottom: '12px' }}>{rpt.babyNameTableTitle} ({displayData.gender})</div>
+                    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left', background: '#fff' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSrNo}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSuggestedName}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameBreakdown}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{rpt.babyNameTotal}</th>
+                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameMeaning}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredSuggestions.map((s) => (
+                            <tr
+                              key={s.srNo}
+                              onClick={() => setActiveChaldeanPopupName({ ...s, target: nameReport.bestTarget })}
+                              style={{ 
+                                borderBottom: '1px solid rgba(232, 213, 191, 0.3)', 
+                                background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent',
+                                cursor: 'pointer',
+                                transition: 'background 0.15s'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(181, 130, 10, 0.04)'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent'}
+                            >
+                              <td style={{ padding: '12px', color: '#8c6f58' }}>{s.srNo}</td>
+                              <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>
+                                <span style={{ borderBottom: '1.5px dashed rgba(181, 130, 10, 0.5)', paddingBottom: '2px' }}>{s.name}</span>
+                              </td>
+                              <td style={{ padding: '12px', fontFamily: 'monospace', color: '#5a4230', fontSize: '0.85rem' }}>{s.calculation}</td>
+                              <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#3d2c1e' }}>{s.total}</td>
+                              <td style={{ padding: '12px', color: '#5a4230', fontSize: '0.85rem' }}>{s.meaning}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </section>
 
             {/* ── FOREIGN SETTLEMENT PREDICTION ──────────────── */}
@@ -1869,153 +2140,19 @@ function ReportView() {
               })()}
             </section>
 
-            {/* ── 13. NAME SPELLING SUGGESTION ─────────────────── */}
+            {/* ── 12. DAILY AFFIRMATIONS ───────────────────── */}
             <section className="report-section">
-              <h3 className="section-title">{rpt.nameSpellingTitle}</h3>
-              <p style={{ color: '#8c6f58', fontSize: '0.9rem', marginBottom: '20px', marginTop: '-10px' }}>
-                {rpt.nameSpellingDescription}
-              </p>
-
-              {(() => {
-                const clientDob = displayData.dob;
-                const clientGender = (displayData.gender === 'male' || displayData.gender === 'boy') ? 'boy' : 'girl';
-                const nameReport = getNameSuggestions(clientDob, clientGender);
-                if (!nameReport) return null;
-
-                // Filter name suggestions by selected alphabet
-                const filteredSuggestions = selectedAlphabetFilter
-                  ? nameReport.suggestions.filter(s => s.name.toUpperCase().startsWith(selectedAlphabetFilter))
-                  : nameReport.suggestions;
-
-                return (
-                  <div className="baby-name-suggestions-container" style={{ marginTop: '10px' }}>
-                    <div className="baby-name-card-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
-                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
-                          {rpt.babyNameAnalysisTitle}
-                        </div>
-                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
-                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyDriver}:</span>
-                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.driver}</span>
-                        </div>
-                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
-                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyConductor}:</span>
-                          <span className="baby-stat-val" style={{ fontWeight: 'bold', color: '#3d2c1e' }}>{nameReport.conductor}</span>
-                        </div>
-                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
-                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameMissingPriority}:</span>
-                          <span className="baby-stat-val" style={{ color: '#c05050', fontWeight: 'bold' }}>{nameReport.missingPriority.length > 0 ? nameReport.missingPriority.join(', ') : rpt.babyNone}</span>
-                        </div>
-                        <div className="baby-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.9rem', color: '#5a4230' }}>
-                          <span className="baby-stat-key" style={{ color: '#8c6f58' }}>{rpt.babyNameSelectedTarget}:</span>
-                          <span className="baby-stat-val" style={{ color: '#b5820a', fontWeight: 'bold', fontSize: '1.05rem' }}>{nameReport.bestTarget}</span>
-                        </div>
-                      </div>
-
-                      <div className="baby-name-card" style={{ background: 'rgba(255, 254, 249, 0.88)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', boxShadow: '0 2px 8px rgba(181, 130, 10, 0.04)' }}>
-                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
-                          {rpt.babyNameInitialsTitle}
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                          {nameReport.initials.map(letter => (
-                            <span key={letter} style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontWeight: 'bold', padding: '6px 14px', borderRadius: '8px', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(181,130,10,0.15)' }}>
-                              {letter}
-                            </span>
-                          ))}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#8c6f58', marginTop: '12px', fontStyle: 'italic' }}>
-                          {isHi ? 'भाग्यशाली नामांक ' + nameReport.bestTarget + ' के अनुकूल प्रारंभिक अक्षर' : 'Lucky starting alphabets matching Destiny Number ' + nameReport.bestTarget}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="baby-justification" style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '12px 16px', borderRadius: '0 8px 8px 0', marginBottom: '20px', fontSize: '0.92rem', lineHeight: '1.5', color: '#5a4230' }}>
-                      <strong>{rpt.babyNameJustification}:</strong> {isHi ? `लक्ष्य नामांक ${nameReport.bestTarget} को चुना गया है क्योंकि यह मूलांक ${nameReport.driver} और भाग्यांक ${nameReport.conductor} दोनों के साथ अनुकूल है, जिससे कोई भी विरोधाभास (Anti) अंक नहीं है। यह लो शू ग्रिड में अनुपस्थित प्राथमिक अंकों को संतुलित करता है।` : nameReport.justification}
-                    </div>
-
-                    {/* Filter chips */}
-                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 'bold', color: '#8c6f58' }}>{rpt.alphabetFilterLabel}</span>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => setSelectedAlphabetFilter(null)}
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: '20px',
-                            border: '1.5px solid #b5820a',
-                            fontSize: '0.8rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: !selectedAlphabetFilter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
-                            color: !selectedAlphabetFilter ? '#fff' : '#b5820a',
-                          }}
-                        >
-                          {rpt.showAll}
-                        </button>
-                        {nameReport.initials.map(letter => (
-                          <button
-                            key={letter}
-                            onClick={() => setSelectedAlphabetFilter(letter)}
-                            style={{
-                              padding: '6px 14px',
-                              borderRadius: '20px',
-                              border: '1.5px solid #b5820a',
-                              fontSize: '0.8rem',
-                              fontWeight: 'bold',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              background: selectedAlphabetFilter === letter ? 'linear-gradient(135deg, #b5820a, #d4a326)' : '#fff',
-                              color: selectedAlphabetFilter === letter ? '#fff' : '#b5820a',
-                            }}
-                          >
-                            {letter}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="baby-breakdown-title" style={{ fontSize: '1rem', color: '#b5820a', marginBottom: '12px' }}>{rpt.babyNameTableTitle} ({displayData.gender})</div>
-                    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left', background: '#fff' }}>
-                        <thead>
-                          <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSrNo}</th>
-                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameSuggestedName}</th>
-                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameBreakdown}</th>
-                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{rpt.babyNameTotal}</th>
-                            <th style={{ padding: '12px', color: '#8c6f58', fontWeight: 'bold' }}>{rpt.babyNameMeaning}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredSuggestions.map((s) => (
-                            <tr
-                              key={s.srNo}
-                              onClick={() => setActiveChaldeanPopupName({ ...s, target: nameReport.bestTarget })}
-                              style={{ 
-                                borderBottom: '1px solid rgba(232, 213, 191, 0.3)', 
-                                background: s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent',
-                                cursor: 'pointer',
-                                transition: 'background 0.15s'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(181, 130, 10, 0.04)'}
-                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = s.srNo % 2 === 0 ? 'rgba(232, 213, 191, 0.05)' : 'transparent'}
-                            >
-                              <td style={{ padding: '12px', color: '#8c6f58' }}>{s.srNo}</td>
-                              <td style={{ padding: '12px', fontWeight: 'bold', color: '#b5820a' }}>
-                                <span style={{ borderBottom: '1.5px dashed rgba(181, 130, 10, 0.5)', paddingBottom: '2px' }}>{s.name}</span>
-                              </td>
-                              <td style={{ padding: '12px', fontFamily: 'monospace', color: '#5a4230', fontSize: '0.85rem' }}>{s.calculation}</td>
-                              <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#3d2c1e' }}>{s.total}</td>
-                              <td style={{ padding: '12px', color: '#5a4230', fontSize: '0.85rem' }}>{s.meaning}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+              <h3 className="section-title">{rpt.affirmationsTitle}</h3>
+              <div className="affirmations-list">
+                {report.affirmations.map((affirmation, index) => (
+                  <div key={index} className="affirmation-item">
+                    <span className="affirmation-icon">✨</span>
+                    {isEditing ? (
+                      <input value={affirmation} onChange={(e) => handleArrayChange(e, 'report.affirmations', index)} className="edit-input" />
+                    ) : <p>{affirmation}</p>}
                   </div>
-                );
-              })()}
+                ))}
+              </div>
             </section>
 
             {/* ── 14. BRAND LOGO ANALYSIS & AUDIT ─────────────────── */}
