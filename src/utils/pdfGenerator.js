@@ -566,8 +566,178 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.text(`${t("Report Date", "रिपोर्ट की तारीख")}: ${reportDate}`, 55.5, 174, { align: "center" });
 
   // ════════════════════════════════════════════════════════════════════════
-  
+  // PAGE 3: MULANK-BHAGYANK ALIGNMENT & YOGAS
   // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // Section Header
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("MULANK – BHAGYANK ALIGNMENT & ITS MEANING", 14, 27);
+
+  // ── Dynamic traits based on calculated mulank / bhagyank ──────────────
+  const mulankTraits = reportData.lifePathTraits || {};
+  const bhagyankTraits = reportData.expressionTraits || {};
+
+  // Mulank Box (Left Column) — date digits only
+  doc.setFillColor(254, 249, 231); // Pastel yellow card
+  doc.roundedRect(15, 38, 85, 68, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 38, 85, 68, 3, 3, "D");
+
+  doc.setFillColor(...goldPrimary);
+  doc.circle(57.5, 52, 11, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.text(String(mulank), 57.5, 55, { align: "center" });
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("Mulank", "मूलांक"), 57.5, 68, { align: "center" });
+  doc.setFont("helvetica", "italic");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...goldPrimary);
+  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(mulankTraits.planet || "Sun") : (mulankTraits.planet || "Sun")}`, 20, 78);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...textDark);
+  const mulLines = doc.splitTextToSize(mulankTraits.desc || t("Represents leadership qualities, innovation, independent thought process, and primary life focus.", "नेतृत्व गुण, नवाचार, स्वतंत्र विचार प्रक्रिया और प्राथमिक जीवन फोकस का प्रतिनिधित्व करता है।"), 76);
+  doc.text(mulLines, 20, 84);
+
+  // Bhagyank Box (Right Column) — all DOB digits
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "D");
+
+  doc.setFillColor(...goldPrimary);
+  doc.circle(pageWidth - 57.5, 52, 11, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.text(String(bhagyank), pageWidth - 57.5, 55, { align: "center" });
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 57.5, 68, { align: "center" });
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...goldPrimary);
+  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(bhagyankTraits.planet || "Moon") : (bhagyankTraits.planet || "Moon")}`, pageWidth - 95, 78);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...textDark);
+  const bhagLines = doc.splitTextToSize(bhagyankTraits.desc || t("Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", "गतिशील कार्रवाई, संबंध प्रबंधन का प्रतिनिधित्व करता है, और यह दर्शाता है कि आपकी आंतरिक क्षमता कैसे ठोस कार्यों में बदलती है।"), 76);
+  doc.text(bhagLines, pageWidth - 95, 84);
+
+  // ── Kua Number box (below the two main boxes, centered) ──────────────
+  const kuaBoxY = 112;
+  doc.setFillColor(234, 245, 255); // soft blue for kua
+  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "D");
+
+  doc.setTextColor(...goldPrimary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(`${t("KUA NUMBER", "कुआ नंबर")}: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
+
+  // PAGE 6b: CHALDEAN COMPATIBILITY + REMAINING LO SHU PLANES
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  // ── Chaldean Number Compatibility ──────────────────────────────────────
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", "चाल्डियन अंक संगतता विश्लेषण"), 14, 27);
+
+  const ca = compatibilityAnalysis;
+  const compatBg = ca.overallStatus === "friend"  ? [234, 248, 240] :
+                   ca.overallStatus === "enemy"   ? [253, 234, 234] : [254, 249, 231];
+  const compatLabel = ca.overallStatus === "friend"  ? t("HIGHLY COMPATIBLE ✓", "उच्च संगत ✓") :
+                      ca.overallStatus === "enemy"   ? t("CHALLENGING — REMEDY RECOMMENDED", "चुनौतीपूर्ण — उपाय अनुशंसित") : t("NEUTRAL", "तटस्थ");
+  const compatLabelColor = ca.overallStatus === "friend"  ? [0, 128, 0] :
+                           ca.overallStatus === "enemy"   ? [200, 50, 50] : [...goldPrimary];
+
+  // Two number boxes side by side
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(15, 36, 55, 36, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 36, 55, 36, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(42.5, 47, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(mulank), 42.5, 50, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFontSize(8.5);
+  doc.text(t("Mulank", "मूलांक"), 42.5, 60, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...textMuted);
+  doc.text(isHi ? getPlanetTranslation(ca.mulankPlanet) : ca.mulankPlanet, 42.5, 65, { align: "center" });
+
+  // "vs" connector
+  doc.setTextColor(...goldPrimary);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(t("vs", "बनाम"), pageWidth / 2, 56, { align: "center" });
+
+  // Bhagyank box
+  doc.setFillColor(254, 249, 231);
+  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "D");
+  doc.setFillColor(...goldPrimary);
+  doc.circle(pageWidth - 42.5, 47, 9, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
+  doc.setTextColor(...textDark);
+  doc.setFontSize(8.5);
+  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 42.5, 60, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...textMuted);
+  doc.text(isHi ? getPlanetTranslation(ca.bhagyankPlanet) : ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
+
+  // Compatibility status badge
+  doc.setFillColor(...compatBg);
+  doc.roundedRect(15, 78, pageWidth - 30, 8, 2, 2, "F");
+  doc.setTextColor(...compatLabelColor);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text(compatLabel, pageWidth / 2, 83.5, { align: "center" });
+
+  // Description
+  doc.setFillColor(255, 254, 249);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
+  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "D");
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(caDescLines, 20, 96);
+
   // PAGE: DATE INFLUENCER
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -863,178 +1033,7 @@ export const generatePDF = async (clientData, language = 'en') => {
     remPlaneY += cardH + 3.5;
   });
 
-  // ════════════════════════════════════════════════════════════════════════
-  // PAGE 3: MULANK-BHAGYANK ALIGNMENT & YOGAS
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
 
-  // Section Header
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("MULANK – BHAGYANK ALIGNMENT & ITS MEANING", 14, 27);
-
-  // ── Dynamic traits based on calculated mulank / bhagyank ──────────────
-  const mulankTraits = reportData.lifePathTraits || {};
-  const bhagyankTraits = reportData.expressionTraits || {};
-
-  // Mulank Box (Left Column) — date digits only
-  doc.setFillColor(254, 249, 231); // Pastel yellow card
-  doc.roundedRect(15, 38, 85, 68, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(15, 38, 85, 68, 3, 3, "D");
-
-  doc.setFillColor(...goldPrimary);
-  doc.circle(57.5, 52, 11, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text(String(mulank), 57.5, 55, { align: "center" });
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("Mulank", "मूलांक"), 57.5, 68, { align: "center" });
-  doc.setFont("helvetica", "italic");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...goldPrimary);
-  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(mulankTraits.planet || "Sun") : (mulankTraits.planet || "Sun")}`, 20, 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...textDark);
-  const mulLines = doc.splitTextToSize(mulankTraits.desc || t("Represents leadership qualities, innovation, independent thought process, and primary life focus.", "नेतृत्व गुण, नवाचार, स्वतंत्र विचार प्रक्रिया और प्राथमिक जीवन फोकस का प्रतिनिधित्व करता है।"), 76);
-  doc.text(mulLines, 20, 84);
-
-  // Bhagyank Box (Right Column) — all DOB digits
-  doc.setFillColor(254, 249, 231);
-  doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(pageWidth - 100, 38, 85, 68, 3, 3, "D");
-
-  doc.setFillColor(...goldPrimary);
-  doc.circle(pageWidth - 57.5, 52, 11, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text(String(bhagyank), pageWidth - 57.5, 55, { align: "center" });
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 57.5, 68, { align: "center" });
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...goldPrimary);
-  doc.text(`${t("Planet", "ग्रह")}: ${isHi ? getPlanetTranslation(bhagyankTraits.planet || "Moon") : (bhagyankTraits.planet || "Moon")}`, pageWidth - 95, 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...textDark);
-  const bhagLines = doc.splitTextToSize(bhagyankTraits.desc || t("Represents dynamic action, relationship handling, and how your inner potential converts to tangible actions.", "गतिशील कार्रवाई, संबंध प्रबंधन का प्रतिनिधित्व करता है, और यह दर्शाता है कि आपकी आंतरिक क्षमता कैसे ठोस कार्यों में बदलती है।"), 76);
-  doc.text(bhagLines, pageWidth - 95, 84);
-
-  // ── Kua Number box (below the two main boxes, centered) ──────────────
-  const kuaBoxY = 112;
-  doc.setFillColor(234, 245, 255); // soft blue for kua
-  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(pageWidth / 2 - 35, kuaBoxY, 70, 18, 3, 3, "D");
-
-  doc.setTextColor(...goldPrimary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text(`${t("KUA NUMBER", "कुआ नंबर")}: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
-
-  // PAGE 6b: CHALDEAN COMPATIBILITY + REMAINING LO SHU PLANES
-  // ════════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  drawPageShell(doc);
-
-  // ── Chaldean Number Compatibility ──────────────────────────────────────
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", "चाल्डियन अंक संगतता विश्लेषण"), 14, 27);
-
-  const ca = compatibilityAnalysis;
-  const compatBg = ca.overallStatus === "friend"  ? [234, 248, 240] :
-                   ca.overallStatus === "enemy"   ? [253, 234, 234] : [254, 249, 231];
-  const compatLabel = ca.overallStatus === "friend"  ? t("HIGHLY COMPATIBLE ✓", "उच्च संगत ✓") :
-                      ca.overallStatus === "enemy"   ? t("CHALLENGING — REMEDY RECOMMENDED", "चुनौतीपूर्ण — उपाय अनुशंसित") : t("NEUTRAL", "तटस्थ");
-  const compatLabelColor = ca.overallStatus === "friend"  ? [0, 128, 0] :
-                           ca.overallStatus === "enemy"   ? [200, 50, 50] : [...goldPrimary];
-
-  // Two number boxes side by side
-  doc.setFillColor(254, 249, 231);
-  doc.roundedRect(15, 36, 55, 36, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(15, 36, 55, 36, 3, 3, "D");
-  doc.setFillColor(...goldPrimary);
-  doc.circle(42.5, 47, 9, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(mulank), 42.5, 50, { align: "center" });
-  doc.setTextColor(...textDark);
-  doc.setFontSize(8.5);
-  doc.text(t("Mulank", "मूलांक"), 42.5, 60, { align: "center" });
-  doc.setFontSize(7.5);
-  doc.setTextColor(...textMuted);
-  doc.text(isHi ? getPlanetTranslation(ca.mulankPlanet) : ca.mulankPlanet, 42.5, 65, { align: "center" });
-
-  // "vs" connector
-  doc.setTextColor(...goldPrimary);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(t("vs", "बनाम"), pageWidth / 2, 56, { align: "center" });
-
-  // Bhagyank box
-  doc.setFillColor(254, 249, 231);
-  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "D");
-  doc.setFillColor(...goldPrimary);
-  doc.circle(pageWidth - 42.5, 47, 9, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
-  doc.setTextColor(...textDark);
-  doc.setFontSize(8.5);
-  doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 42.5, 60, { align: "center" });
-  doc.setFontSize(7.5);
-  doc.setTextColor(...textMuted);
-  doc.text(isHi ? getPlanetTranslation(ca.bhagyankPlanet) : ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
-
-  // Compatibility status badge
-  doc.setFillColor(...compatBg);
-  doc.roundedRect(15, 78, pageWidth - 30, 8, 2, 2, "F");
-  doc.setTextColor(...compatLabelColor);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text(compatLabel, pageWidth / 2, 83.5, { align: "center" });
-
-  // Description
-  doc.setFillColor(255, 254, 249);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
-  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "D");
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(caDescLines, 20, 96);
 
   // PAGE 7: LUCKY/UNLUCKY ELEMENTS, COLORS & SIGNATURE STYLE
   // ════════════════════════════════════════════════════════════════════════
@@ -1145,45 +1144,7 @@ export const generatePDF = async (clientData, language = 'en') => {
     }
   });
 
-  // Section 14: Signature Style for Success
-  // Use tracked yIdx to accurately position after the last row
-  const actualRows = yIdx + (xIdx > 0 ? 1 : 0); // rows actually used (yIdx doesn't increment after last row if incomplete)
-  const luckyGridEndY = 38 + actualRows * 20 + 8;  // 8mm gap after the grid
 
-  doc.setFillColor(...goldPrimary);
-  doc.roundedRect(10, luckyGridEndY, pageWidth - 20, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(t("SIGNATURE STYLE FOR SUCCESS", "सफलता के लिए हस्ताक्षर शैली"), 14, luckyGridEndY + 7);
-
-  const sigBoxY = luckyGridEndY + 14;  // 4mm below header bottom (header is 10mm)
-  doc.setFillColor(255, 254, 249);
-  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "F");
-  doc.setDrawColor(...goldPrimary);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "D");
-
-  doc.setTextColor(...textDark);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(t("Prosperity Signature Rules:", "समृद्धि हस्ताक्षर नियम:"), 20, sigBoxY + 8);
-
-  const sigRules = [
-    t("• Sign at a continuous rising angle of approximately 45 degrees.", "• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।"),
-    t("• Never put a line cutting through any letters of your name.", "• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।"),
-    t("• Always end your signature with a forward and rising stroke.", "• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।"),
-    t("• Use two parallel underlines below the signature with a rising ending.", "• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।"),
-    t("• Ensure the first alphabet of your name is larger and clearly readable.", "• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।")
-  ];
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  let sigY = sigBoxY + 16;
-  sigRules.forEach(rule => {
-    doc.text(rule, 20, sigY);
-    sigY += 9;
-  });
 
   // ════════════════════════════════════════════════════════════════════════
   // Section 6 & 7: Effects of Missing Numbers & Personalized Remedies
@@ -3097,6 +3058,47 @@ export const generatePDF = async (clientData, language = 'en') => {
   }
 
   // ════════════════════════════════════════════════════════════════════════
+  // PAGE: SIGNATURE STYLE FOR SUCCESS
+  // ════════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  drawPageShell(doc);
+
+  doc.setFillColor(...goldPrimary);
+  doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(t("SIGNATURE STYLE FOR SUCCESS", "सफलता के लिए हस्ताक्षर शैली"), 14, 27);
+
+  const sigBoxY = 38;
+  doc.setFillColor(255, 254, 249);
+  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "F");
+  doc.setDrawColor(...goldPrimary);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(15, sigBoxY, pageWidth - 30, 68, 3, 3, "D");
+
+  doc.setTextColor(...textDark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(t("Prosperity Signature Rules:", "समृद्धि हस्ताक्षर नियम:"), 20, sigBoxY + 8);
+
+  const sigRules = [
+    t("• Sign at a continuous rising angle of approximately 45 degrees.", "• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।"),
+    t("• Never put a line cutting through any letters of your name.", "• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।"),
+    t("• Always end your signature with a forward and rising stroke.", "• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।"),
+    t("• Use two parallel underlines below the signature with a rising ending.", "• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।"),
+    t("• Ensure the first alphabet of your name is larger and clearly readable.", "• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।")
+  ];
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  let sigY = sigBoxY + 16;
+  sigRules.forEach(rule => {
+    doc.text(rule, 20, sigY);
+    sigY += 9;
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
   // PAGES: BRAND LOGO ANALYSIS & AUDIT (2 PAGES)
   // ════════════════════════════════════════════════════════════════════════
   const logoInfo = reportData.logoAnalysis || {};
@@ -3624,6 +3626,99 @@ export const generatePDF = async (clientData, language = 'en') => {
       const lines = doc.splitTextToSize(contentText, pageWidth - 42);
       doc.text(lines, 20, 48);
     }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE: DAILY AFFIRMATIONS
+  // ════════════════════════════════════════════════════════════════════════
+  if (reportData.affirmations && reportData.affirmations.length > 0) {
+    doc.addPage();
+    drawPageShell(doc);
+
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(t("DAILY AFFIRMATIONS", "दैनिक प्रतिज्ञान"), 14, 27);
+
+    const getAffirmationTranslation = (aff) => {
+      const map = {
+        // 1
+        "I lead with confidence and purpose.": "मैं आत्मविश्वास और उद्देश्य के साथ नेतृत्व करता हूँ।",
+        "I am the creator of my own destiny.": "मैं अपने भाग्य का निर्माता हूँ।",
+        "My independence is my superpower.": "मेरी स्वतंत्रता मेरी महाशक्ति है।",
+        // 2
+        "I attract harmony into every relationship.": "मैं हर रिश्ते में सद्भाव आकर्षित करता हूँ।",
+        "My sensitivity is a gift.": "मेरी संवेदनशीलता एक उपहार है।",
+        "I create peace wherever I go.": "मैं जहाँ भी जाता हूँ, शांति का निर्माण करता हूँ।",
+        // 3
+        "My creativity flows freely and abundantly.": "मेरी रचनात्मकता स्वतंत्र और प्रचुर रूप से बहती है।",
+        "I express myself with joy and confidence.": "मैं खुद को खुशी और आत्मविश्वास के साथ व्यक्त करता हूँ।",
+        "The universe celebrates my unique voice.": "ब्रह्मांड मेरी अनूठी आवाज का जश्न मनाता है।",
+        // 4
+        "I build my dreams with patience and dedication.": "मैं धैर्य और समर्पण के साथ अपने सपनों का निर्माण करता हूँ।",
+        "My hard work creates lasting foundations.": "मेरी कड़ी मेहनत स्थायी नींव बनाती है।",
+        "I am disciplined, grounded, and unstoppable.": "मैं अनुशासित, जमीनी और अदम्य हूँ।",
+        // 5
+        "I embrace change as my greatest teacher.": "मैं बदलाव को अपने सबसे बड़े शिक्षक के रूप में स्वीकार करता हूँ।",
+        "Freedom fuels my highest potential.": "स्वतंत्रता मेरी उच्चतम क्षमता को बढ़ावा देती है।",
+        "Adventure is my natural state of being.": "रोमांच मेरी स्वाभाविक स्थिति है।",
+        // 6
+        "I nurture myself as deeply as I nurture others.": "मैं खुद की उतनी ही देखभाल करता हूँ जितनी दूसरों की।",
+        "Love flows through me endlessly.": "मुझसे प्यार अंतहीन रूप से बहता है।",
+        "My home is a sanctuary of beauty.": "मेरा घर सुंदरता का एक अभयारण्य है।",
+        // 7
+        "I trust my inner wisdom completely.": "मैं अपने आंतरिक ज्ञान पर पूरी तरह भरोसा करता हूँ।",
+        "The universe reveals its secrets to me.": "ब्रह्मांड मेरे सामने अपने रहस्य उजागर करता है।",
+        "My spiritual path is unique and sacred.": "मेरा आध्यात्मिक मार्ग अनूठा और पवित्र है।",
+        // 8
+        "I attract abundance in all forms.": "मैं सभी रूपों में प्रचुरता को आकर्षित करता हूँ।",
+        "My power creates positive change.": "मेरी शक्ति सकारात्मक बदलाव लाती हूँ।",
+        "I am worthy of great success and wealth.": "मैं बड़ी सफलता और धन के योग्य हूँ।",
+        // 9
+        "I serve the world with an open heart.": "मैं खुले दिल से दुनिया की सेवा करता हूँ।",
+        "My compassion creates ripples of love.": "मेरी करुणा प्रेम की लहरें पैदा करती है।",
+        "I release the old to welcome the new.": "मैं नए का स्वागत करने के लिए पुराने को छोड़ता हूँ।",
+        // 11
+        "I am a channel of divine inspiration.": "मैं दिव्य प्रेरणा का एक माध्यम हूँ।",
+        "My intuition guides me perfectly.": "मेरा अंतर्ज्ञान मेरा मार्गदर्शन करता है।",
+        "I illuminate the path for others.": "मैं दूसरों के लिए मार्ग रोशन करता हूँ।",
+        // 22
+        "I build bridges between vision and reality.": "मैं दृष्टि और वास्तविकता के बीच पुल बनाता हूँ।",
+        "My work changes the world.": "मेरा काम दुनिया को बदलता है।",
+        "I manifest miracles through dedicated action.": "मैं समर्पित कार्रवाई के माध्यम से चमत्कार प्रकट करता हूँ।",
+        // 33
+        "I teach through unconditional love.": "मैं बिना किसी शर्त के प्यार के जरिए सिखाता हूँ।",
+        "My compassion heals hearts.": "मेरी करुणा दिलों को ठीक करती है।",
+        "I am a vessel of divine wisdom.": "मैं दिव्य ज्ञान का पात्र हूँ।"
+      };
+      return map[aff] || aff;
+    };
+
+    let affY = 38;
+    reportData.affirmations.forEach((affirmation, index) => {
+      // Draw a soft background card for each affirmation
+      doc.setFillColor(255, 254, 249);
+      doc.roundedRect(15, affY, pageWidth - 30, 20, 3, 3, "F");
+      doc.setDrawColor(...goldPrimary);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(15, affY, pageWidth - 30, 20, 3, 3, "D");
+
+      // Draw a bullet indicator
+      doc.setFillColor(...goldPrimary);
+      doc.circle(21, affY + 10, 1.5, "F");
+
+      // Draw affirmation text
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      const translatedText = isHi ? getAffirmationTranslation(affirmation) : affirmation;
+      const affTextLines = doc.splitTextToSize(translatedText, pageWidth - 42);
+      doc.text(affTextLines, 26, affY + 11.5);
+
+      affY += 24;
+    });
   }
 
   // ════════════════════════════════════════════════════════════════════════

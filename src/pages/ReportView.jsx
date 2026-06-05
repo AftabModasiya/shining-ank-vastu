@@ -551,6 +551,100 @@ function ReportView() {
               )}
             </div>
 
+            {/* ── 2. ♦ Core Numbers ♦ DIVIDER ─────────────── */}
+            <div className="core-divider">
+              <div className="core-divider-line"></div>
+              <div className="core-divider-label">
+                <span className="core-diamond">♦</span>
+                <span className="core-divider-text">{rpt.coreNumbers}</span>
+                <span className="core-diamond">♦</span>
+              </div>
+              <div className="core-divider-line"></div>
+            </div>
+
+            {/* ── 3. CORE NUMBER CARDS (2-col grid) ─────────── */}
+            <div className="core-numbers-grid">
+              {/* Driver / Mulank — date digits only */}
+              <div className="core-num-card core-yellow">
+                <div className="title-deco-ring crd-ring-1"></div>
+                <div className="title-deco-ring crd-ring-2"></div>
+                <span className="core-num-label">MULANK</span>
+                <span className="core-num-value">{mulank}</span>
+
+                {isEditing && (
+                  <div className="core-edit-block">
+                    <input type="text" name="report.lifePathTraits.planet" value={report.lifePathTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
+                    <textarea name="report.lifePathTraits.desc" value={report.lifePathTraits.desc} onChange={handleInputChange} className="edit-textarea" />
+                  </div>
+                )}
+              </div>
+
+              {/* Conductor / Bhagyank — full DOB digit sum */}
+              <div className="core-num-card core-yellow">
+                <div className="title-deco-ring crd-ring-1"></div>
+                <div className="title-deco-ring crd-ring-2"></div>
+                <span className="core-num-label">BHAGYANK</span>
+                <span className="core-num-value">{bhagyank}</span>
+
+                {isEditing && (
+                  <div className="core-edit-block">
+                    <input type="text" name="report.expressionTraits.planet" value={report.expressionTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
+                    <textarea name="report.expressionTraits.desc" value={report.expressionTraits.desc} onChange={handleInputChange} className="edit-textarea" />
+                  </div>
+                )}
+              </div>
+
+              {/* Kua Number — gender-based formula */}
+              <div className="core-num-card core-pink">
+                <div className="title-deco-ring crd-ring-1"></div>
+                <div className="title-deco-ring crd-ring-2"></div>
+                <span className="core-num-label">KUA NUMBER</span>
+                <span className="core-num-value">{kuaNum}</span>
+
+              </div>
+
+              {/* Name Number */}
+              <div className="core-num-card core-yellow">
+                <div className="title-deco-ring crd-ring-1"></div>
+                <div className="title-deco-ring crd-ring-2"></div>
+                <span className="core-num-label">NAME NUMBER</span>
+                <div className="core-num-value-row">
+                  <span className="core-num-value">{nameCompatData.nameNumber}</span>
+                  <span className="core-num-compound">(Chaldean)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.chaldeanTitle}</h3>
+              <div className="name-compatibility-container">
+                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
+                  <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
+                  <div className="name-badge-row">
+                    <span className="badge" style={{
+                      background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
+                        compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
+                      color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
+                        compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
+                      border: '1px solid currentColor'
+                    }}>
+                      <strong>
+                        {compatibilityAnalysis.overallStatus === 'friend' ? rpt.highlyCompatible :
+                          compatibilityAnalysis.overallStatus === 'enemy' ? rpt.challenging : rpt.neutral}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+                <div className="name-detail-card" style={{ display: 'block' }}>
+                  <span className="detail-label">{rpt.chaldeanRelationship}</span>
+                  <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
+                    {compatibilityAnalysis.description}
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* ── 4. DATE INFLUENCER ───────────────────────── */}
             {(() => {
               const rDob = report?.dob || editedData?.dob || '';
@@ -716,115 +810,7 @@ function ReportView() {
               </div>
             </section>
 
-            {/* ── 2. ♦ Core Numbers ♦ DIVIDER ─────────────── */}
-            <div className="core-divider">
-              <div className="core-divider-line"></div>
-              <div className="core-divider-label">
-                <span className="core-diamond">♦</span>
-                <span className="core-divider-text">{rpt.coreNumbers}</span>
-                <span className="core-diamond">♦</span>
-              </div>
-              <div className="core-divider-line"></div>
-            </div>
 
-            {/* ── 3. CORE NUMBER CARDS (2-col grid) ─────────── */}
-            <div className="core-numbers-grid">
-              {/* Driver / Mulank — date digits only */}
-              <div className="core-num-card core-yellow">
-                <div className="title-deco-ring crd-ring-1"></div>
-                <div className="title-deco-ring crd-ring-2"></div>
-                <span className="core-num-label">MULANK</span>
-                <span className="core-num-value">{mulank}</span>
-
-                {isEditing && (
-                  <div className="core-edit-block">
-                    <input type="text" name="report.lifePathTraits.planet" value={report.lifePathTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
-                    <textarea name="report.lifePathTraits.desc" value={report.lifePathTraits.desc} onChange={handleInputChange} className="edit-textarea" />
-                  </div>
-                )}
-              </div>
-
-              {/* Conductor / Bhagyank — full DOB digit sum */}
-              <div className="core-num-card core-yellow">
-                <div className="title-deco-ring crd-ring-1"></div>
-                <div className="title-deco-ring crd-ring-2"></div>
-                <span className="core-num-label">BHAGYANK</span>
-                <span className="core-num-value">{bhagyank}</span>
-
-                {isEditing && (
-                  <div className="core-edit-block">
-                    <input type="text" name="report.expressionTraits.planet" value={report.expressionTraits.planet} onChange={handleInputChange} className="edit-input-small" placeholder="Planet" />
-                    <textarea name="report.expressionTraits.desc" value={report.expressionTraits.desc} onChange={handleInputChange} className="edit-textarea" />
-                  </div>
-                )}
-              </div>
-
-              {/* Kua Number — gender-based formula */}
-              <div className="core-num-card core-pink">
-                <div className="title-deco-ring crd-ring-1"></div>
-                <div className="title-deco-ring crd-ring-2"></div>
-                <span className="core-num-label">KUA NUMBER</span>
-                <span className="core-num-value">{kuaNum}</span>
-
-              </div>
-
-              {/* Name Number */}
-              <div className="core-num-card core-yellow">
-                <div className="title-deco-ring crd-ring-1"></div>
-                <div className="title-deco-ring crd-ring-2"></div>
-                <span className="core-num-label">NAME NUMBER</span>
-                <div className="core-num-value-row">
-                  <span className="core-num-value">{nameCompatData.nameNumber}</span>
-                  <span className="core-num-compound">(Chaldean)</span>
-                </div>
-              </div>
-
-              {/* Soul Urge */}
-              {/* <div className="core-num-card core-blue">
-              <div className="title-deco-ring crd-ring-1"></div>
-              <div className="title-deco-ring crd-ring-2"></div>
-              <span className="core-num-label">SOUL URGE</span>
-              <span className="core-num-value">{report.soulUrge}</span>
-            </div> */}
-
-              {/* Personality */}
-              {/* <div className="core-num-card core-blue">
-              <div className="title-deco-ring crd-ring-1"></div>
-              <div className="title-deco-ring crd-ring-2"></div>
-              <span className="core-num-label">PERSONALITY</span>
-              <span className="core-num-value">{report.personality}</span>
-            </div> */}
-            </div>
-
-            {/* ── 5c2. CHALDEAN NUMBER COMPATIBILITY ANALYSIS ─── */}
-            <section className="report-section">
-              <h3 className="section-title">{rpt.chaldeanTitle}</h3>
-              <div className="name-compatibility-container">
-                <div className="name-header-card" style={{ background: 'linear-gradient(135deg, #fffcf3, #fdf6e2)', border: '1.5px solid #d4a017' }}>
-                  <h4>Mulank {mulank} ({compatibilityAnalysis.mulankPlanet}) vs Bhagyank {bhagyank} ({compatibilityAnalysis.bhagyankPlanet})</h4>
-                  <div className="name-badge-row">
-                    <span className="badge" style={{
-                      background: compatibilityAnalysis.overallStatus === 'friend' ? '#e6f4ea' :
-                        compatibilityAnalysis.overallStatus === 'enemy' ? '#fce8e6' : '#fff7e6',
-                      color: compatibilityAnalysis.overallStatus === 'friend' ? '#137333' :
-                        compatibilityAnalysis.overallStatus === 'enemy' ? '#c5221f' : '#b06000',
-                      border: '1px solid currentColor'
-                    }}>
-                      <strong>
-                        {compatibilityAnalysis.overallStatus === 'friend' ? rpt.highlyCompatible :
-                          compatibilityAnalysis.overallStatus === 'enemy' ? rpt.challenging : rpt.neutral}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-                <div className="name-detail-card" style={{ display: 'block' }}>
-                  <span className="detail-label">{rpt.chaldeanRelationship}</span>
-                  <div className="detail-value" style={{ whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6' }}>
-                    {compatibilityAnalysis.description}
-                  </div>
-                </div>
-              </div>
-            </section>
 
             {/* ── 5. LUCKY ELEMENTS ────────────────────────── */}
             <section className="report-section">
@@ -847,26 +833,6 @@ function ReportView() {
                   </div>
                 ))}
               </div>
-
-              {/* Signature Style for Success */}
-              <div className="name-detail-card" style={{ marginTop: '16px', background: 'linear-gradient(135deg, #fffcf5, #fdf6e2)', border: '1.5px solid #d4a017' }}>
-                <span className="detail-label" style={{ color: '#8a6207' }}>
-                  {language === 'hi' ? '💎 सफलता के लिए हस्ताक्षर शैली' : '💎 SIGNATURE STYLE FOR SUCCESS'}
-                </span>
-                <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', fontSize: '0.88rem', lineHeight: '1.6', color: '#4a3728' }}>
-                  {(() => {
-                    const sigRules = [
-                      language === 'hi' ? '• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।' : '• Sign at a continuous rising angle of approximately 45 degrees.',
-                      language === 'hi' ? '• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।' : '• Never put a line cutting through any letters of your name.',
-                      language === 'hi' ? '• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।' : '• Always end your signature with a forward and rising stroke.',
-                      language === 'hi' ? '• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।' : '• Use two parallel underlines below the signature with a rising ending.',
-                      language === 'hi' ? '• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।' : '• Ensure the first alphabet of your name is larger and clearly readable.'
-                    ];
-                    return sigRules.map((rule, idx) => <li key={idx} style={{ marginBottom: '6px' }}>{rule}</li>);
-                  })()}
-                </ul>
-              </div>
-
             </section>
 
             {/* ── 7. MISSING NUMBERS & REMEDIES ───────────── */}
@@ -2140,18 +2106,24 @@ function ReportView() {
               })()}
             </section>
 
-            {/* ── 12. DAILY AFFIRMATIONS ───────────────────── */}
+            {/* ── SIGNATURE STYLE FOR SUCCESS ─────────────────── */}
             <section className="report-section">
-              <h3 className="section-title">{rpt.affirmationsTitle}</h3>
-              <div className="affirmations-list">
-                {report.affirmations.map((affirmation, index) => (
-                  <div key={index} className="affirmation-item">
-                    <span className="affirmation-icon">✨</span>
-                    {isEditing ? (
-                      <input value={affirmation} onChange={(e) => handleArrayChange(e, 'report.affirmations', index)} className="edit-input" />
-                    ) : <p>{affirmation}</p>}
-                  </div>
-                ))}
+              <h3 className="section-title">{language === 'hi' ? '💎 सफलता के लिए हस्ताक्षर शैली' : '💎 SIGNATURE STYLE FOR SUCCESS'}</h3>
+              <div className="lucky-container">
+                <div className="name-detail-card" style={{ background: 'linear-gradient(135deg, #fffcf5, #fdf6e2)', border: '1.5px solid #d4a017', padding: '16px' }}>
+                  <ul style={{ margin: '0', paddingLeft: '18px', fontSize: '0.88rem', lineHeight: '1.6', color: '#4a3728' }}>
+                    {(() => {
+                      const sigRules = [
+                        language === 'hi' ? '• लगभग 45 डिग्री के निरंतर बढ़ते कोण पर हस्ताक्षर करें।' : '• Sign at a continuous rising angle of approximately 45 degrees.',
+                        language === 'hi' ? '• अपने नाम के किसी भी अक्षर को काटती हुई रेखा कभी न खींचें।' : '• Never put a line cutting through any letters of your name.',
+                        language === 'hi' ? '• अपने हस्ताक्षर को हमेशा आगे और ऊपर की ओर बढ़ते हुए स्ट्रोक के साथ समाप्त करें।' : '• Always end your signature with a forward and rising stroke.',
+                        language === 'hi' ? '• बढ़ते हुए अंत के साथ हस्ताक्षर के नीचे दो समानांतर रेखाएं खींचें।' : '• Use two parallel underlines below the signature with a rising ending.',
+                        language === 'hi' ? '• सुनिश्चित करें कि आपके नाम का पहला अक्षर बड़ा और स्पष्ट रूप से पठनीय हो।' : '• Ensure the first alphabet of your name is larger and clearly readable.'
+                      ];
+                      return sigRules.map((rule, idx) => <li key={idx} style={{ marginBottom: '6px' }}>{rule}</li>);
+                    })()}
+                  </ul>
+                </div>
               </div>
             </section>
 
@@ -2655,6 +2627,21 @@ function ReportView() {
               ) : (
                 <p className="custom-page-content">{report.customPage3.content || rpt.noNotes}</p>
               )}
+            </section>
+
+            {/* ── 12. DAILY AFFIRMATIONS ───────────────────── */}
+            <section className="report-section">
+              <h3 className="section-title">{rpt.affirmationsTitle}</h3>
+              <div className="affirmations-list">
+                {report.affirmations.map((affirmation, index) => (
+                  <div key={index} className="affirmation-item">
+                    <span className="affirmation-icon">✨</span>
+                    {isEditing ? (
+                      <input value={affirmation} onChange={(e) => handleArrayChange(e, 'report.affirmations', index)} className="edit-input" />
+                    ) : <p>{affirmation}</p>}
+                  </div>
+                ))}
+              </div>
             </section>
 
             {/* ── 15. CONTACT INFO (edit mode only) ───────── */}
