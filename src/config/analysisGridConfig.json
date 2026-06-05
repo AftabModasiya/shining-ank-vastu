@@ -1,0 +1,66 @@
+[
+  {
+    "id": "mobile_analysis",
+    "title": "Mobile Number Analysis",
+    "tag": "📱 PHONE VIBES",
+    "gradient": ["#021B79", "#0575E6"],
+    "subtext": "10-Digit Frequency • Wealth Calculator",
+    "icon": "phone"
+  },
+  {
+    "id": "marriage_prediction",
+    "title": "Love vs Arranged Marriage Prediction",
+    "tag": "💖 RELATIONSHIP",
+    "gradient": ["#4A00E0", "#8E2DE2"],
+    "subtext": "Lo Shu Affinity • Life Partner Vibe",
+    "icon": "heart"
+  },
+  {
+    "id": "match_making",
+    "title": "Match Making Compatibility",
+    "tag": "🤝 36 GUNAS",
+    "gradient": ["#7303C0", "#F3071E"],
+    "subtext": "Couple Score • Conflict Analysis",
+    "icon": "users"
+  },
+  {
+    "id": "stock_suitability",
+    "title": "Stock Market Suitability",
+    "tag": "📈 WEALTH PLANES",
+    "gradient": ["#0A503A", "#38EF7D"],
+    "subtext": "Intraday vs Long-Term • Lucky Sectors",
+    "icon": "trending-up"
+  },
+  {
+    "id": "logo_analysis",
+    "title": "Logo Analysis",
+    "tag": "🏢 BUSINESS VIBES",
+    "gradient": ["#D35400", "#F1C40F"],
+    "subtext": "Brand Power • Color Compatibility",
+    "icon": "briefcase"
+  },
+  {
+    "id": "foreign_settlement",
+    "title": "Foreign Settlement Prediction",
+    "tag": "✈️ GLOBE TRAVELLER",
+    "gradient": ["#0B486B", "#F56217"],
+    "subtext": "Visa PR Chances • Lucky Directions",
+    "icon": "plane"
+  },
+  {
+    "id": "baby_birth_calc",
+    "title": "Baby Birth Date Calculator",
+    "tag": "👶 PERFECT DATES",
+    "gradient": ["#1A2A6C", "#B21F1F"],
+    "subtext": "Expected Delivery Range • Gender Fit",
+    "icon": "baby"
+  },
+  {
+    "id": "baby_name_suggest",
+    "title": "Baby Name Spelling Suggestion",
+    "tag": "💯 CHALDEAN VIBE",
+    "gradient": ["#800080", "#FF007F"],
+    "subtext": "Missing Core Balance • 15+ Names",
+    "icon": "award"
+  }
+]

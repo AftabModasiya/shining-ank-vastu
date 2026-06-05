@@ -87,7 +87,7 @@ const fetchFontAsBase64 = async (url) => {
   });
 };
 
-export const generatePDF = async (clientData, language = 'en') => {
+export const generatePDF = async (clientData, language = 'en', activeTopicId = null, customLines = []) => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -132,6 +132,129 @@ export const generatePDF = async (clientData, language = 'en') => {
       right: t("Action Plane (2-7-6)", "कर्म/क्रिया तल (2-7-6)")
     };
     return names[key] || key;
+  };
+
+  const translateMobileBullet = (bullet) => {
+    if (!isHi) return bullet;
+
+    if (bullet.includes("mobile number compound total is")) {
+      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
+      if (match) {
+        const [_, compound, single, planet] = match;
+        const cleanPlanet = planet.split(" (")[0];
+        const tPlanet = getPlanetTranslation(cleanPlanet);
+        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
+      }
+    }
+
+    if (bullet.includes("with your Driver")) {
+      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
+      if (match) {
+        const [_, single, relation, driver] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
+        const descText = relation === 'friendly' 
+          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
+          : (relation === 'non-friendly'
+             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
+             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
+        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
+      }
+    }
+
+    if (bullet.includes("with your Conductor")) {
+      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
+      if (match) {
+        const [_, relation, conductor] = match;
+        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
+        const descText = relation === 'friendly'
+          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
+          : (relation === 'conflicts'
+             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
+             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
+        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
+      }
+    }
+
+    if (bullet.includes("already present in your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
+      if (match) {
+        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
+      }
+    }
+    if (bullet.includes("is missing from your birth date")) {
+      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
+      if (match) {
+        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
+      }
+    }
+
+    if (bullet.includes("Using this vibration regularly")) {
+      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
+    }
+    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
+      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
+    }
+    if (bullet.includes("It serves as a reliable, balanced connection")) {
+      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
+    }
+
+    if (bullet.includes("this mobile number is highly favorable")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
+    }
+    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
+      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
+    }
+    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
+      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
+    }
+
+    return bullet;
+  };
+
+  const translateNameItemText = (text) => {
+    if (!isHi) return text;
+    if (text.includes("ideal range")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
+    }
+    if (text.includes("should be 1, 3, 5 or 6")) {
+      const match = text.match(/is\s+(\d+)/);
+      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
+    }
+
+    const isFirst = text.includes("First Name");
+    const isLast = text.includes("Last Name");
+    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
+
+    if (text.includes("Combination Count is")) {
+      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
+      if (match) {
+        const [_, compound, label, rating] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
+      }
+    }
+    if (text.includes("Combination Count is") || text.includes("rating is")) {
+      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
+      if (match) {
+        const [_, compound, rating, label] = match;
+        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
+        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
+      }
+    }
+
+    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
+    if (compatMatch) {
+      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
+      const getLabel = (l) => {
+        if (l === 'Good Friend') return 'मित्र';
+        if (l === 'Non-Friend') return 'शत्रु';
+        return 'तटस्थ';
+      };
+      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
+    }
+
+    return text;
   };
 
   const getPlaneInterpretation = (plane) => {
@@ -419,6 +542,43 @@ export const generatePDF = async (clientData, language = 'en') => {
   const textMuted = [140, 111, 88];     // Muted label brown
   const greenText = [26, 128, 46];     // Vibrant green for "Thank You,"
 
+  // Helper: Draw custom lines (administrative observations)
+  const drawCustomLines = (currentY) => {
+    if (!customLines || customLines.length === 0) return currentY;
+    if (currentY > 230) {
+      doc.addPage();
+      drawPageShell(doc);
+      currentY = 36;
+    } else {
+      currentY += 10;
+    }
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(...goldPrimary);
+    doc.text(isHi ? "प्रशासकीय टिप्पणियां और नोट्स (Administrative Observations & Notes):" : "Administrative Observations & Notes:", 15, currentY);
+    currentY += 7;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...textDark);
+    
+    customLines.forEach((line, index) => {
+      const splitText = doc.splitTextToSize(`${index + 1}. ${line}`, pageWidth - 30);
+      splitText.forEach((textLine) => {
+        if (currentY > 270) {
+          doc.addPage();
+          drawPageShell(doc);
+          currentY = 36;
+        }
+        doc.text(textLine, 18, currentY);
+        currentY += 5.5;
+      });
+    });
+    
+    return currentY;
+  };
+
   // Helper: Draw background gradient + watermark + border on each page
   const drawPageShell = (doc, skipWatermark = false) => {
     // Gradient pastel & ivory background
@@ -565,6 +725,7 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFontSize(11);
   doc.text(`${t("Report Date", "रिपोर्ट की तारीख")}: ${reportDate}`, 55.5, 174, { align: "center" });
 
+  if (!activeTopicId) {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 3: MULANK-BHAGYANK ALIGNMENT & YOGAS
   // ════════════════════════════════════════════════════════════════════════
@@ -794,6 +955,7 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFontSize(9.5);
   const diLines = doc.splitTextToSize(displayContent, pageWidth - 42);
   doc.text(diLines, 20, 64);
+  }
 // PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1035,6 +1197,7 @@ export const generatePDF = async (clientData, language = 'en') => {
 
 
 
+  if (!activeTopicId) {
   // PAGE 7: LUCKY/UNLUCKY ELEMENTS, COLORS & SIGNATURE STYLE
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1734,7 +1897,9 @@ export const generatePDF = async (clientData, language = 'en') => {
     doc.setTextColor(...textMuted);
     doc.text(t("No mobile number has been provided for this client profile.", "इस ग्राहक प्रोफ़ाइल के लिए कोई मोबाइल नंबर प्रदान नहीं किया गया है।"), 20, 52);
   }
+  }
 
+  if (!activeTopicId || activeTopicId === 'mobile_analysis') {
   // PAGE 12b: MOBILE NUMBER ANALYSIS (Strict Planetary Matrix)
   // ════════════════════════════════════════════════════════════════════════
   doc.addPage();
@@ -1748,130 +1913,6 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.text(t("MOBILE NUMBER ANALYSIS", "मोबाइल नंबर विश्लेषण"), 14, 27);
 
   let mbY = 36;
-
-  // Helpers for final pages translations
-  const translateMobileBullet = (bullet) => {
-    if (!isHi) return bullet;
-
-    if (bullet.includes("mobile number compound total is")) {
-      const match = bullet.match(/total\s+is\s+(\d+),\s+reducing\s+to\s+single\s+digit\s+(\d+),\s+which\s+is\s+ruled\s+by\s+(.*?)\s+and/);
-      if (match) {
-        const [_, compound, single, planet] = match;
-        const cleanPlanet = planet.split(" (")[0];
-        const tPlanet = getPlanetTranslation(cleanPlanet);
-        return `मोबाइल नंबर का संयुक्त योग ${compound} है, जो घटकर एकल अंक ${single} बनता है, जो कि ${tPlanet} द्वारा शासित है और इसके बुनियादी गुणों का प्रतिनिधित्व करता है।`;
-      }
-    }
-
-    if (bullet.includes("with your Driver")) {
-      const match = bullet.match(/sum\s+(\d+)\s+is\s+(friendly|non-friendly|neutral)\s+with\s+your\s+Driver\s+(\d+)/);
-      if (match) {
-        const [_, single, relation, driver] = match;
-        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'non-friendly' ? 'गैर-अनुकूल (शत्रु)' : 'तटस्थ');
-        const descText = relation === 'friendly' 
-          ? 'है, जो सहायक और रचनात्मक ऊर्जा का एक सक्रिय प्रवाह बनाता है।'
-          : (relation === 'non-friendly'
-             ? 'है, जो आपके दैनिक कार्यों में ग्रहीय घर्षण और संभावित बाधाएं उत्पन्न करता है।'
-             : 'है, जो आपकी मूल ऊर्जा के साथ एक स्थिर और संतुलित संबंध प्रदान करता है।');
-        return `एकल अंक का योग ${single} आपके मूलांक ${driver} के साथ ${relText} ${descText}`;
-      }
-    }
-
-    if (bullet.includes("with your Conductor")) {
-      const match = bullet.match(/(friendly|conflicts|neutral)\s+relationship\s+with\s+your\s+Conductor\s+(\d+)/);
-      if (match) {
-        const [_, relation, conductor] = match;
-        const relText = relation === 'friendly' ? 'अनुकूल' : (relation === 'conflicts' ? 'गैर-अनुकूल' : 'तटस्थ');
-        const descText = relation === 'friendly'
-          ? 'है, जो आपके भाग्य पथ के साथ संरेखित होता है और समग्र प्रगति का समर्थन करता है।'
-          : (relation === 'conflicts'
-             ? 'है, जिससे आंतरिक घर्षण उत्पन्न होता है जो महत्वपूर्ण लक्ष्यों या भाग्य के परिणामों में देरी कर सकता है।'
-             : 'है, जो टकराव से बचाता है और आपके भाग्य पथ को निर्बाध रखता है।');
-        return `यह आपके भाग्यांक ${conductor} के साथ एक ${relText} संबंध ${descText}`;
-      }
-    }
-
-    if (bullet.includes("already present in your birth date")) {
-      const match = bullet.match(/number\s+(\d+)\s+is\s+already/);
-      if (match) {
-        return `अंक ${match[1]} आपकी जन्म तिथि में पहले से मौजूद है, जो आपकी मूल ग्रहीय ऊर्जा को मजबूत करता है और आपके ग्रिड की स्थिरता को बढ़ाता है।`;
-      }
-    }
-    if (bullet.includes("is missing from your birth date")) {
-      const match = bullet.match(/number\s+(\d+)\s+is\s+missing/);
-      if (match) {
-        return `चूंकि अंक ${match[1]} आपकी जन्म तिथि से गायब है, इसलिए इस मोबाइल नंबर का उपयोग करना एक ऊर्जावान उपाय के रूप में कार्य करता है, जिससे आपके जीवन में इस आवश्यक कंपन का समावेश होता है।`;
-      }
-    }
-
-    if (bullet.includes("Using this vibration regularly")) {
-      return "नियमित रूप से इस कंपन का उपयोग करने से सकारात्मक संचार, उपयोगी व्यावसायिक अवसर और सहज व्यक्तिगत संबंध आकर्षित होंगे।";
-    }
-    if (bullet.includes("this frequency may trigger sudden misunderstandings")) {
-      return "सावधानी बरतने की सलाह दी जाती है: यह आवृत्ति अचानक गलतफहमी, व्यावसायिक अवसरों में कमी या करियर में अप्रत्याशित देरी का कारण बन सकती है।";
-    }
-    if (bullet.includes("It serves as a reliable, balanced connection")) {
-      return "यह किसी भी बड़े सकारात्मक या नकारात्मक व्यवधान के बिना दैनिक बातचीत के लिए एक विश्वसनीय, संतुलित संपर्क प्रदान करता है।";
-    }
-
-    if (bullet.includes("this mobile number is highly favorable")) {
-      return "कुल मिलाकर, यह मोबाइल नंबर आपके लिए अत्यधिक अनुकूल है, और इसे सक्रिय रखने से आपकी समृद्धि और संचार क्षमता में वृद्धि होगी।";
-    }
-    if (bullet.includes("this mobile number is not recommended due to direct planetary clashes")) {
-      return "कुल मिलाकर, सीधे ग्रहीय टकराव के कारण इस मोबाइल नंबर की सिफारिश नहीं की जाती है, और एक अनुकूल योग पर स्थानांतरित होने का सुझाव दिया जाता है।";
-    }
-    if (bullet.includes("this mobile number is neutral, offering steady performance")) {
-      return "कुल मिलाकर, यह मोबाइल नंबर तटस्थ है, जो बिना किसी प्रतिकूल ग्रहीय घर्षण के स्थिर प्रदर्शन प्रदान करता है।";
-    }
-
-    return bullet;
-  };
-
-  const translateNameItemText = (text) => {
-    if (!isHi) return text;
-    if (text.includes("ideal range")) {
-      const match = text.match(/is\s+(\d+)/);
-      return `पूर्ण नाम का योग ${match ? match[1] : ""} है जो आदर्श श्रेणी (1, 3, 5 या 6) में है। ✓`;
-    }
-    if (text.includes("should be 1, 3, 5 or 6")) {
-      const match = text.match(/is\s+(\d+)/);
-      return `पूर्ण नाम का योग 1, 3, 5 या 6 होना चाहिए। वर्तमान में यह ${match ? match[1] : ""} है।`;
-    }
-
-    const isFirst = text.includes("First Name");
-    const isLast = text.includes("Last Name");
-    const nameType = isFirst ? "प्रथम नाम" : (isLast ? "अंतिम नाम" : "पूर्ण नाम");
-
-    if (text.includes("Combination Count is")) {
-      const match = text.match(/is\s+(\d+)\s+which\s+is\s+(\w+\s?\w*)\s+and\s+rating\s+is\s+(\S+)/);
-      if (match) {
-        const [_, compound, label, rating] = match;
-        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यम');
-        return `${nameType} संयोजन का योग ${compound} है जो ${tLabel} है और रेटिंग ${rating} है।`;
-      }
-    }
-    if (text.includes("Combination Count is") || text.includes("rating is")) {
-      const match = text.match(/is\s+(\d+)\s+—\s+rating\s+is\s+(\S+)\s+\((\w+\s?\w*)\)/);
-      if (match) {
-        const [_, compound, rating, label] = match;
-        const tLabel = label === 'Very Good' ? 'बहुत अच्छा' : (label === 'Bad' ? 'अशुभ' : 'औसत/मध्यen');
-        return `${nameType} संयोजन का योग ${compound} है — रेटिंग ${rating} (${tLabel}) है।`;
-      }
-    }
-
-    const compatMatch = text.match(/is\s+(\d+)\s+which\s+is\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Driver\s+(\d+)\s+and\s+(Good Friend|Non-Friend|Neutral)\s+with\s+Conductor\s+(\d+)/i);
-    if (compatMatch) {
-      const [_, single, driverCompat, driver, conductorCompat, conductor] = compatMatch;
-      const getLabel = (l) => {
-        if (l === 'Good Friend') return 'मित्र';
-        if (l === 'Non-Friend') return 'शत्रु';
-        return 'तटस्थ';
-      };
-      return `${nameType} संख्या का योग ${single} है जो मूलांक ${driver} के साथ ${getLabel(driverCompat)} है और भाग्यांक ${conductor} के साथ ${getLabel(conductorCompat)} है।`;
-    }
-
-    return text;
-  };
 
   if (mobileCheck.isValid) {
     // Header card
@@ -2010,7 +2051,12 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...goldPrimary);
   doc.text(`${t("Name Number Compatibility Status", "नाम अंक संगतता स्थिति")}: ${isHi ? getCompatStatusTranslation(nameCompatData.status) : nameCompatData.status}`, 20, statusY);
+  if (activeTopicId === 'mobile_analysis') {
+    drawCustomLines(statusY);
+  }
+  }
 
+  if (!activeTopicId || activeTopicId === 'baby_name_suggest') {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE 12c: NAME NUMEROLOGY ANALYSIS (Strict Planetary Matrix)
   // ════════════════════════════════════════════════════════════════════════
@@ -2122,7 +2168,9 @@ export const generatePDF = async (clientData, language = 'en') => {
     doc.setFontSize(9.5);
     doc.text(t("No name data available for analysis.", "विश्लेषण के लिए कोई नाम डेटा उपलब्ध नहीं है।"), 20, nmY + 10);
   }
+  }
 
+  if (!activeTopicId || activeTopicId === 'foreign_settlement') {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: FOREIGN SETTLEMENT PREDICTION
   // ════════════════════════════════════════════════════════════════════════
@@ -2218,7 +2266,14 @@ export const generatePDF = async (clientData, language = 'en') => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.text(pnLines, 20, fsY + 12);
+  
+  if (activeTopicId === 'foreign_settlement') {
+    const endFsY = fsY + 12 + pnLines.length * 4.5;
+    drawCustomLines(endFsY);
+  }
+  }
 
+  if (!activeTopicId || activeTopicId === 'marriage_prediction') {
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: LOVE vs ARRANGED MARRIAGE PREDICTION
   // ════════════════════════════════════════════════════════════════════════
@@ -2303,9 +2358,15 @@ export const generatePDF = async (clientData, language = 'en') => {
     cmY += cl.length * 4.2 + 3;
   });
 
+  if (activeTopicId === 'marriage_prediction') {
+    drawCustomLines(cmY);
+  }
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: MATCH MAKING COMPATIBILITY (only if consultant filled the data)
   // ════════════════════════════════════════════════════════════════════════
+  if (!activeTopicId || activeTopicId === 'match_making') {
   if (mmResult) {
     doc.addPage();
     drawPageShell(doc);
@@ -2380,6 +2441,7 @@ export const generatePDF = async (clientData, language = 'en') => {
 
     // Boost logs
     const blH = 10 + mmResult.boostLogs.length * 9;
+    let finalMmY = mmY;
     if (mmY + blH < pageHeight - 30) {
       doc.setFillColor(255, 254, 249);
       doc.roundedRect(15, mmY, pageWidth - 30, blH, 2, 2, "F");
@@ -2401,12 +2463,19 @@ export const generatePDF = async (clientData, language = 'en') => {
         doc.text(bl, 26, blY + 1);
         blY += bl.length * 4.2 + 3;
       });
+      finalMmY = blY;
     }
+
+    if (activeTopicId === 'match_making') {
+      drawCustomLines(finalMmY);
+    }
+  }
   }
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: STOCK MARKET SUITABILITY ANALYSIS
   // ════════════════════════════════════════════════════════════════════════
+  if (!activeTopicId || activeTopicId === 'stock_suitability') {
   if (rawDob) {
     doc.addPage();
     drawPageShell(doc);
@@ -2569,13 +2638,20 @@ export const generatePDF = async (clientData, language = 'en') => {
       doc.setFontSize(6.5);
       const disclaimerLines = doc.splitTextToSize(`⚠️ ${suitability.disclaimer}`, pageWidth - 36);
       doc.text(disclaimerLines, pageWidth / 2, smY + 4, { align: "center" });
+
+      if (activeTopicId === 'stock_suitability') {
+        const endSmY = smY + 4 + disclaimerLines.length * 4;
+        drawCustomLines(endSmY);
+      }
     }
 
+  }
   }
 
   // ════════════════════════════════════════════════════════════════════════
   // PAGE: BABY BIRTH DATE CALCULATOR
   // ════════════════════════════════════════════════════════════════════════
+  if (!activeTopicId || activeTopicId === 'baby_birth_calc') {
   const babyBirthInfo = reportData.babyBirth || {};
   const babyStart = babyBirthInfo.startDate || '';
   const babyEnd   = babyBirthInfo.endDate   || '';
@@ -2583,6 +2659,7 @@ export const generatePDF = async (clientData, language = 'en') => {
   if (babyStart && babyEnd) {
     const babyResults = analyzeBirthDateRange(babyStart, babyEnd);
     if (babyResults.length > 0) {
+      let babyBirthEndY = 40;
       // Two pages: one for boy, one for girl
       ['boy', 'girl'].forEach(gender => {
         doc.addPage();
@@ -2888,11 +2965,18 @@ export const generatePDF = async (clientData, language = 'en') => {
               nY += 9.5;
             });
           }
+          babyBirthEndY = typeof nY !== 'undefined' ? nY : 40;
         }
       });
     }
   }
 
+  if (activeTopicId === 'baby_birth_calc') {
+    drawCustomLines(babyBirthEndY);
+  }
+  }
+
+  if (!activeTopicId || activeTopicId === 'baby_name_suggest') {
   // ── PAGE: NAME SPELLING SUGGESTION ───────────────────
   const clientDobForName = rawDob;
   const clientGenderForName = (gender === 'male' || gender === 'boy') ? 'boy' : 'girl';
@@ -3098,9 +3182,16 @@ export const generatePDF = async (clientData, language = 'en') => {
     sigY += 9;
   });
 
+  if (activeTopicId === 'baby_name_suggest') {
+    drawCustomLines(sigY);
+  }
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   // PAGES: BRAND LOGO ANALYSIS & AUDIT (2 PAGES)
   // ════════════════════════════════════════════════════════════════════════
+  if (!activeTopicId || activeTopicId === 'logo_analysis') {
+  let logoEndY = 40;
   const logoInfo = reportData.logoAnalysis || {};
   if (logoInfo.companyName) {
     const logoReport = analyzeLogo(logoInfo, language);
@@ -3719,6 +3810,12 @@ export const generatePDF = async (clientData, language = 'en') => {
 
       affY += 24;
     });
+    logoEndY = affY;
+  }
+
+  if (activeTopicId === 'logo_analysis') {
+    drawCustomLines(logoEndY);
+  }
   }
 
   // ════════════════════════════════════════════════════════════════════════

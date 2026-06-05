@@ -6,7 +6,9 @@ import { updateClient, getClientById } from '../services/clientService';
 import { calculateLoShuGrid, calculateKua, getMissingNumbers, getPresentNumbers, calcMulank, calcBhagyank, getLuckyElements, calcPersonalYearForYear, getMobileAnalysis, getNameCompatibilityAnalysis, getCareerOutlook, getArrows, getRepeatedNumbers, getKuaVastuData, getMissingNumberRemedyData, getNumberCompatibilityAnalysis, getMobileCompatibilityCheck, getNameNumerologyCheck, getForeignSettlement, getMatchMaking, getMarriageType, analyzeStock, getStockComments, analyzeStockSuitability, analyzeBirthDateRange, getBirthDateGenderJustification, getNameSuggestions, analyzeLogo, DATE_INFLUENCER_EN, DATE_INFLUENCER_HI } from '../utils/numerology';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import AnalysisGrid from '../components/AnalysisGrid';
 import './ReportView.css';
+
 
 const formatDateToDDMMYYYY = (dateStr) => {
   if (!dateStr) return '';
@@ -81,6 +83,7 @@ function ReportView() {
   };
 
     const [clientData, setClientData] = useState(() => getSafeClientData(location.state?.clientData || null));
+    const [activeView, setActiveView] = useState('dashboard');
     const [loading, setLoading] = useState(!location.state?.clientData);
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState(null);
@@ -550,6 +553,31 @@ function ReportView() {
                 </p>
               )}
             </div>
+
+            {/* View Selector Tabs */}
+            <div className="report-view-selector">
+              <button 
+                className={`view-tab-btn ${activeView === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setActiveView('dashboard')}
+              >
+                ✨ Premium Dashboard
+              </button>
+              <button 
+                className={`view-tab-btn ${activeView === 'report' ? 'active' : ''}`}
+                onClick={() => setActiveView('report')}
+              >
+                📄 Complete Report
+              </button>
+            </div>
+
+            {activeView === 'dashboard' && (
+              <AnalysisGrid 
+                clientData={clientData} 
+                onCardClick={(card) => navigate(`/report/${id}/analysis/${card.id}`)} 
+              />
+            )}
+
+            <div className={activeView === 'dashboard' ? 'hidden-report-view' : ''}>
 
             {/* ── 2. ♦ Core Numbers ♦ DIVIDER ─────────────── */}
             <div className="core-divider">
@@ -2666,6 +2694,7 @@ function ReportView() {
                 </div>
               </section>
             )}
+            </div>
           </div>
         </div>
 

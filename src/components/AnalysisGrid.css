@@ -1,0 +1,220 @@
+.analysis-grid-container {
+  padding: 28px 20px;
+  background-color: rgba(255, 254, 249, 0.9);
+  border-radius: 24px;
+  margin: 30px auto;
+  max-width: 900px;
+  border: 1.5px solid rgba(232, 213, 191, 0.85);
+  box-shadow: 0 12px 36px rgba(181, 130, 10, 0.08);
+}
+
+.analysis-grid-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.analysis-grid-title {
+  font-family: 'Playfair Display', 'Outfit', serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #b5820a 0%, #8c6f58 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.analysis-grid-subtitle {
+  color: #5a4230;
+  font-size: 13.5px;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.55;
+  opacity: 0.85;
+}
+
+/* Uniform Grid: Every box has the exact same height */
+.uniform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 200px; /* Exact same height for all grid boxes */
+  gap: 16px;
+}
+
+/* InkWell Wrapper with Active Visual Splash State */
+.grid-card-wrapper {
+  position: relative;
+  cursor: pointer;
+  perspective: 1000px;
+  height: 100%;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease;
+}
+
+.grid-card-wrapper:hover {
+  transform: translateY(-4px) scale(1.015);
+}
+
+.grid-card-wrapper:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.card-inkwell {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Card Body with Linear Gradient & 24px border-radius */
+.grid-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  padding: 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05),
+              0 8px 18px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: border-color 0.3s ease;
+}
+
+.grid-card-wrapper:hover .grid-card {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Luxury Grid Lines Overlay */
+.card-overlay-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 15px 15px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Top Left Pill Tag */
+.card-tag-pill {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  z-index: 2;
+}
+
+.card-tag-text {
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  font-family: 'Outfit', sans-serif;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Center Left Neon Vector Icon */
+.card-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+  z-index: 2;
+  padding-left: 2px;
+}
+
+.card-neon-icon {
+  color: #ffffff;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7))
+          drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.grid-card-wrapper:hover .card-neon-icon {
+  transform: rotate(6deg) scale(1.08);
+}
+
+/* Backdrop Radial Neon Glow */
+.neon-glow-backdrop {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Bottom Card Details */
+.card-bottom-info {
+  margin-top: auto;
+  z-index: 2;
+}
+
+.card-title {
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  line-height: 1.25;
+  text-shadow: 0 1.5px 3px rgba(0,0,0,0.25);
+  letter-spacing: 0.1px;
+}
+
+.card-subtext-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-subtext-item {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.subtext-divider {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10.5px;
+  margin: 0 1px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  .uniform-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 175px;
+    gap: 10px;
+  }
+  
+  .analysis-grid-container {
+    padding: 18px 12px;
+    border-radius: 20px;
+    margin: 20px 8px;
+  }
+  
+  .card-title {
+    font-size: 14px;
+  }
+  
+  .card-subtext-item {
+    font-size: 9px;
+  }
+}

@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import ReportView from './pages/ReportView';
 import ClientHistory from './pages/ClientHistory';
 import Login from './pages/Login';
+import GlobalAnalysisScreen from './pages/GlobalAnalysisScreen';
 import { LanguageProvider } from './context/LanguageContext';
 import './App.css';
 
@@ -45,6 +46,14 @@ function App() {
               } 
             />
             <Route 
+              path="/report/:id/analysis/:topicId" 
+              element={
+                <ProtectedRoute>
+                  <GlobalAnalysisScreen />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/history" 
               element={
                 <ProtectedRoute>
@@ -60,3 +69,4 @@ function App() {
 }
 
 export default App;
+
