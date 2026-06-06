@@ -812,149 +812,6 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
     doc.setFontSize(10);
     doc.text(`${t("KUA NUMBER", "कुआ नंबर")}: ${kuaNum}`, pageWidth / 2, kuaBoxY + 10, { align: "center" });
 
-    // PAGE 6b: CHALDEAN COMPATIBILITY + REMAINING LO SHU PLANES
-    // ════════════════════════════════════════════════════════════════════════
-    doc.addPage();
-    drawPageShell(doc);
-
-    // ── Chaldean Number Compatibility ──────────────────────────────────────
-    doc.setFillColor(...goldPrimary);
-    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(t("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", "चाल्डियन अंक संगतता विश्लेषण"), 14, 27);
-
-    const ca = compatibilityAnalysis;
-    const compatBg = ca.overallStatus === "friend" ? [234, 248, 240] :
-      ca.overallStatus === "enemy" ? [253, 234, 234] : [254, 249, 231];
-    const compatLabel = ca.overallStatus === "friend" ? t("HIGHLY COMPATIBLE ✓", "उच्च संगत ✓") :
-      ca.overallStatus === "enemy" ? t("CHALLENGING — REMEDY RECOMMENDED", "चुनौतीपूर्ण — उपाय अनुशंसित") : t("NEUTRAL", "तटस्थ");
-    const compatLabelColor = ca.overallStatus === "friend" ? [0, 128, 0] :
-      ca.overallStatus === "enemy" ? [200, 50, 50] : [...goldPrimary];
-
-    // Two number boxes side by side
-    doc.setFillColor(254, 249, 231);
-    doc.roundedRect(15, 36, 55, 36, 3, 3, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(15, 36, 55, 36, 3, 3, "D");
-    doc.setFillColor(...goldPrimary);
-    doc.circle(42.5, 47, 9, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(String(mulank), 42.5, 50, { align: "center" });
-    doc.setTextColor(...textDark);
-    doc.setFontSize(8.5);
-    doc.text(t("Mulank", "मूलांक"), 42.5, 60, { align: "center" });
-    doc.setFontSize(7.5);
-    doc.setTextColor(...textMuted);
-    doc.text(isHi ? getPlanetTranslation(ca.mulankPlanet) : ca.mulankPlanet, 42.5, 65, { align: "center" });
-
-    // "vs" connector
-    doc.setTextColor(...goldPrimary);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(t("vs", "बनाम"), pageWidth / 2, 56, { align: "center" });
-
-    // Bhagyank box
-    doc.setFillColor(254, 249, 231);
-    doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "D");
-    doc.setFillColor(...goldPrimary);
-    doc.circle(pageWidth - 42.5, 47, 9, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
-    doc.setTextColor(...textDark);
-    doc.setFontSize(8.5);
-    doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 42.5, 60, { align: "center" });
-    doc.setFontSize(7.5);
-    doc.setTextColor(...textMuted);
-    doc.text(isHi ? getPlanetTranslation(ca.bhagyankPlanet) : ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
-
-    // Compatibility status badge
-    doc.setFillColor(...compatBg);
-    doc.roundedRect(15, 78, pageWidth - 30, 8, 2, 2, "F");
-    doc.setTextColor(...compatLabelColor);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text(compatLabel, pageWidth / 2, 83.5, { align: "center" });
-
-    // Description
-    doc.setFillColor(255, 254, 249);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
-    doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "D");
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(caDescLines, 20, 96);
-
-    // PAGE: DATE INFLUENCER
-    // ════════════════════════════════════════════════════════════════════════
-    doc.addPage();
-    drawPageShell(doc);
-
-    // Section Header
-    doc.setFillColor(...goldPrimary);
-    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(t("DATE INFLUENCER", "जन्म तिथि प्रभाव"), 14, 27);
-
-    const dayNum = parseInt(rawDob.split("-")[2]) || 1;
-    const defaultEnTitle = `Date Influencer — Born on ${dayNum}`;
-    const defaultEnDesc = `People born on ${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} share this birth energy.`.trim();
-    const defaultEnContent = DATE_INFLUENCER_EN[dayNum] || '';
-
-    const defaultHiTitle = `जन्म तिथि प्रभाव — ${dayNum} तारीख को जन्म`;
-    const defaultHiDesc = `${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} तारीखों को जन्मे लोगों में भी समान ऊर्जा होती है।`.trim();
-    const defaultHiContent = DATE_INFLUENCER_HI[dayNum] || '';
-
-    const isTitleEdited = reportData?.dateInfluencer?.title && reportData.dateInfluencer.title !== defaultEnTitle;
-    const isDescEdited = reportData?.dateInfluencer?.desc && reportData.dateInfluencer.desc !== defaultEnDesc;
-    const isContentEdited = reportData?.dateInfluencer?.content && reportData.dateInfluencer.content !== defaultEnContent;
-
-    const displayTitle = (isHi && !isTitleEdited) ? defaultHiTitle : (reportData?.dateInfluencer?.title || defaultEnTitle);
-    const displayDesc = (isHi && !isDescEdited) ? defaultHiDesc : (reportData?.dateInfluencer?.desc || defaultEnDesc);
-    const displayContent = (isHi && !isContentEdited) ? defaultHiContent : (reportData?.dateInfluencer?.content || defaultEnContent);
-
-    doc.setFillColor(255, 254, 249);
-    doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "F");
-    doc.setDrawColor(...goldPrimary);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "D");
-
-    doc.setTextColor(...goldPrimary);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(displayTitle, 20, 46);
-
-    doc.setTextColor(...textMuted);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9.5);
-    doc.text(displayDesc, 20, 53);
-
-    // Divider line
-    doc.setDrawColor(232, 213, 191);
-    doc.setLineWidth(0.15);
-    doc.line(18, 57, pageWidth - 18, 57);
-
-    doc.setTextColor(...textDark);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    const diLines = doc.splitTextToSize(displayContent, pageWidth - 42);
-    doc.text(diLines, 20, 64);
   }
   // PAGE 2: BIRTH CHART OVERVIEW & CORE PERSONALITY INSIGHTS
   // ════════════════════════════════════════════════════════════════════════
@@ -1197,6 +1054,151 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
 
 
 
+  if (!activeTopicId) {
+    // PAGE 6b: CHALDEAN COMPATIBILITY
+    // ════════════════════════════════════════════════════════════════════════
+    doc.addPage();
+    drawPageShell(doc);
+
+    // ── Chaldean Number Compatibility ──────────────────────────────────────
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(t("CHALDEAN NUMBER COMPATIBILITY ANALYSIS", "चाल्डियन अंक संगतता विश्लेषण"), 14, 27);
+
+    const ca = compatibilityAnalysis;
+    const compatBg = ca.overallStatus === "friend" ? [234, 248, 240] :
+      ca.overallStatus === "enemy" ? [253, 234, 234] : [254, 249, 231];
+    const compatLabel = ca.overallStatus === "friend" ? t("HIGHLY COMPATIBLE ✓", "उच्च संगत ✓") :
+      ca.overallStatus === "enemy" ? t("CHALLENGING — REMEDY RECOMMENDED", "चुनौतीपूर्ण — उपाय अनुशंसित") : t("NEUTRAL", "तटस्थ");
+    const compatLabelColor = ca.overallStatus === "friend" ? [0, 128, 0] :
+      ca.overallStatus === "enemy" ? [200, 50, 50] : [...goldPrimary];
+
+    // Two number boxes side by side
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(15, 36, 55, 36, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(15, 36, 55, 36, 3, 3, "D");
+    doc.setFillColor(...goldPrimary);
+    doc.circle(42.5, 47, 9, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(String(mulank), 42.5, 50, { align: "center" });
+    doc.setTextColor(...textDark);
+    doc.setFontSize(8.5);
+    doc.text(t("Mulank", "मूलांक"), 42.5, 60, { align: "center" });
+    doc.setFontSize(7.5);
+    doc.setTextColor(...textMuted);
+    doc.text(isHi ? getPlanetTranslation(ca.mulankPlanet) : ca.mulankPlanet, 42.5, 65, { align: "center" });
+
+    // "vs" connector
+    doc.setTextColor(...goldPrimary);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(t("vs", "बनाम"), pageWidth / 2, 56, { align: "center" });
+
+    // Bhagyank box
+    doc.setFillColor(254, 249, 231);
+    doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(pageWidth - 70, 36, 55, 36, 3, 3, "D");
+    doc.setFillColor(...goldPrimary);
+    doc.circle(pageWidth - 42.5, 47, 9, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(String(bhagyank), pageWidth - 42.5, 50, { align: "center" });
+    doc.setTextColor(...textDark);
+    doc.setFontSize(8.5);
+    doc.text(t("Bhagyank", "भाग्यांक"), pageWidth - 42.5, 60, { align: "center" });
+    doc.setFontSize(7.5);
+    doc.setTextColor(...textMuted);
+    doc.text(isHi ? getPlanetTranslation(ca.bhagyankPlanet) : ca.bhagyankPlanet, pageWidth - 42.5, 65, { align: "center" });
+
+    // Compatibility status badge
+    doc.setFillColor(...compatBg);
+    doc.roundedRect(15, 78, pageWidth - 30, 8, 2, 2, "F");
+    doc.setTextColor(...compatLabelColor);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(compatLabel, pageWidth / 2, 83.5, { align: "center" });
+
+    // Description
+    doc.setFillColor(255, 254, 249);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const caDescLines = doc.splitTextToSize(ca.description, pageWidth - 42);
+    doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, 90, pageWidth - 30, caDescLines.length * 5.5 + 6, 2, 2, "D");
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(caDescLines, 20, 96);
+
+    // PAGE: DATE INFLUENCER
+    // ════════════════════════════════════════════════════════════════════════
+    doc.addPage();
+    drawPageShell(doc);
+
+    // Section Header
+    doc.setFillColor(...goldPrimary);
+    doc.roundedRect(10, 20, pageWidth - 20, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(t("DATE INFLUENCER", "जन्म तिथि प्रभाव"), 14, 27);
+
+    const dayNum = parseInt(rawDob.split("-")[2]) || 1;
+    const defaultEnTitle = `Date Influencer — Born on ${dayNum}`;
+    const defaultEnDesc = `People born on ${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} share this birth energy.`.trim();
+    const defaultEnContent = DATE_INFLUENCER_EN[dayNum] || '';
+
+    const defaultHiTitle = `जन्म तिथि प्रभाव — ${dayNum} तारीख को जन्म`;
+    const defaultHiDesc = `${dayNum}, ${dayNum + 9 <= 31 ? dayNum + 9 : ''} ${dayNum + 18 <= 31 ? ', ' + (dayNum + 18) : ''} तारीखों को जन्मे लोगों में भी समान ऊर्जा होती है।`.trim();
+    const defaultHiContent = DATE_INFLUENCER_HI[dayNum] || '';
+
+    const isTitleEdited = reportData?.dateInfluencer?.title && reportData.dateInfluencer.title !== defaultEnTitle;
+    const isDescEdited = reportData?.dateInfluencer?.desc && reportData.dateInfluencer.desc !== defaultEnDesc;
+    const isContentEdited = reportData?.dateInfluencer?.content && reportData.dateInfluencer.content !== defaultEnContent;
+
+    const displayTitle = (isHi && !isTitleEdited) ? defaultHiTitle : (reportData?.dateInfluencer?.title || defaultEnTitle);
+    const displayDesc = (isHi && !isDescEdited) ? defaultHiDesc : (reportData?.dateInfluencer?.desc || defaultEnDesc);
+    const displayContent = (isHi && !isContentEdited) ? defaultHiContent : (reportData?.dateInfluencer?.content || defaultEnContent);
+
+    doc.setFillColor(255, 254, 249);
+    doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "F");
+    doc.setDrawColor(...goldPrimary);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(15, 36, pageWidth - 30, 120, 3, 3, "D");
+
+    doc.setTextColor(...goldPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(displayTitle, 20, 46);
+
+    doc.setTextColor(...textMuted);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9.5);
+    doc.text(displayDesc, 20, 53);
+
+    // Divider line
+    doc.setDrawColor(232, 213, 191);
+    doc.setLineWidth(0.15);
+    doc.line(18, 57, pageWidth - 18, 57);
+
+    doc.setTextColor(...textDark);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    const diLines = doc.splitTextToSize(displayContent, pageWidth - 42);
+    doc.text(diLines, 20, 64);
+  }
   if (!activeTopicId) {
     // PAGE 7: LUCKY/UNLUCKY ELEMENTS, COLORS & SIGNATURE STYLE
     // ════════════════════════════════════════════════════════════════════════
