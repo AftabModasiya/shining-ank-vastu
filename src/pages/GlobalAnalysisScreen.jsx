@@ -668,278 +668,211 @@ function GlobalAnalysisScreen() {
           return map[col.toLowerCase()] || '#9ca3af';
         };
 
+        const audit = logoReport.auditReport;
+
         return (
-          <div className="logo-analysis-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Executive Summary Card */}
-            <div className="logo-summary-card" style={{ background: 'rgba(255, 254, 249, 0.95)', border: '1px solid rgba(232, 213, 191, 0.8)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(181, 130, 10, 0.05)' }}>
-              <div style={{ fontSize: '0.85rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '4px' }}>
-                {isHi ? 'कार्यकारी सारांश' : 'EXECUTIVE SUMMARY'}
+          <div className="logo-analysis-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: "'Outfit', sans-serif" }}>
+            
+            {/* Logo Image Preview */}
+            {report.logoAnalysis.logoImage && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                <div style={{ padding: '16px', border: '1px solid rgba(232, 213, 191, 0.6)', borderRadius: '16px', background: '#fff', boxShadow: '0 8px 24px rgba(181, 130, 10, 0.05)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <img src={report.logoAnalysis.logoImage} alt="Uploaded Logo" style={{ maxHeight: '150px', objectFit: 'contain', maxWidth: '100%', borderRadius: '8px' }} />
+                  <span style={{ fontSize: '0.75rem', color: '#b5820a', marginTop: '10px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {isHi ? 'ऑडिट किया गया लोगो' : 'AUDITED BRAND LOGO'}
+                  </span>
+                </div>
               </div>
-              <p style={{ fontSize: '0.95rem', lineHeight: '1.6', color: '#3d2c1e', fontStyle: 'italic', margin: 0 }}>
-                "{logoReport.executiveSummary}"
-              </p>
-            </div>
+            )}
 
-            {/* 1. Design Quality Audit Grid */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '१. दृश्य डिज़ाइन ऑडिट (12-बिंदु ढांचा)' : '1. VISUAL DESIGN AUDIT (12-POINT FRAMEWORK)'}
-            </div>
-            <div className="logo-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
-                  {isHi ? 'लोगो प्रकार विश्लेषण' : 'LOGO CLASSIFICATION'}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
-                  {logoReport.designAudit.logoTypeInfo}
-                </p>
+            {/* Brand Basics Box */}
+            <div style={{ background: 'linear-gradient(135deg, #fefdf9, #fbf8f0)', border: '1px solid rgba(232, 213, 191, 0.8)', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.02)' }}>
+              <div style={{ fontSize: '0.78rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px dashed rgba(232, 213, 191, 0.6)', paddingBottom: '6px', letterSpacing: '1px' }}>
+                {isHi ? 'ब्रांड बुनियादी जानकारी' : 'BRAND IDENTITY PROFILE'}
               </div>
-              <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
-                  {isHi ? 'आकार और ज्यामिति मनोविज्ञान' : 'SHAPE & GEOMETRY PSYCHOLOGY'}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
-                  {logoReport.designAudit.shapeInfo}
-                </p>
-              </div>
-              <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
-                  {isHi ? 'टाइपोग्राफी और शैली' : 'TYPOGRAPHY STYLE & FIT'}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
-                  {logoReport.designAudit.typographyInfo}
-                </p>
-              </div>
-              <div className="logo-card" style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#8c6f58', fontWeight: 'bold' }}>
-                  {isHi ? 'तकनीकी स्केलेबिलिटी और प्रिंट' : 'TECHNICAL SCALABILITY & PRINT'}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.5' }}>
-                  {logoReport.designAudit.scalabilityInfo}
-                </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', fontSize: '0.88rem' }}>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'ब्रांड का नाम:' : 'Brand Name:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.companyName}</strong></div>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'उद्योग / डोमेन:' : 'Industry/Domain:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.industry}</strong></div>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'लक्षित दर्शक:' : 'Target Audience:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.targetAudience}</strong></div>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'मुख्य वादा:' : 'Main Promise:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.mainPromise}</strong></div>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'बाजार का दायरा:' : 'Market Scope:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.market}</strong></div>
+                <div><span style={{ color: '#8c6f58', fontWeight: 600 }}>{isHi ? 'ब्रांड शैली:' : 'Brand Style:'}</span> <strong style={{ color: '#3d2c1e' }}>{logoReport.basics.brandStyle}</strong></div>
               </div>
             </div>
 
-            {/* 2. Occult Metaphysical Layer */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '२. अवचेतन और आध्यात्मिक ऊर्जा परत' : '2. SUBCONSCIOUS & METAPHYSICAL ENERGY LAYER'}
-            </div>
-            <div className="logo-metaphysical-box" style={{ background: 'rgba(255, 254, 249, 0.88)', border: '1px solid rgba(232, 213, 191, 0.75)', padding: '20px', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                <span style={{ background: 'linear-gradient(135deg, #3d2c1e, #5a4230)', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px' }}>
-                  {isHi ? 'तत्व:' : 'Element:'} {logoReport.psychologyLayer.occultElement?.split(" (")[0]}
-                </span>
-                <span style={{ background: 'linear-gradient(135deg, #b5820a, #d4a326)', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px' }}>
-                  {isHi ? 'प्रवाह:' : 'Flow:'} {logoReport.psychologyLayer.energyFlow?.split(" - ")[0]}
-                </span>
-                <span style={{ background: '#f5efe6', color: '#8c6f58', fontSize: '0.82rem', fontWeight: 'bold', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                  {logoReport.predictions.trustSpeed}
-                </span>
-              </div>
-
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#3d2c1e', lineHeight: '1.6' }}>
-                <strong>{isHi ? 'ऊर्जा संरेखण व्याख्या:' : 'Metaphysical Balance Comment:'}</strong> {logoReport.psychologyLayer.metaphysicalBalance}
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
-                {report.logoAnalysis?.primaryColor && (
-                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(232, 213, 191, 0.4)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: getColorHex(report.logoAnalysis.primaryColor), border: '1.5px solid #fff', boxShadow: '0 2px 4px rgba(0,0,0,0.15)', flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase' }}>
-                        {isHi ? 'मुख्य रंग' : 'PRIMARY COLOR'} ({report.logoAnalysis.primaryColor})
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: '#5a4230', marginTop: '2px', lineHeight: '1.4' }}>
-                        {logoReport.designAudit.primaryColorInfo}
-                      </div>
+            {/* 1. EXECUTIVE SUMMARY */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '१. कार्यकारी सारांश (EXECUTIVE SUMMARY)' : '1. EXECUTIVE SUMMARY'}
+              </h3>
+              <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', color: '#3d2c1e', fontStyle: 'italic' }}>
+                  <strong>{isHi ? 'समग्र मूल्यांकन:' : 'Overall Assessment:'}</strong> "{audit.executiveSummary.overallAssessment}"
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '4px' }}>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#166534', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      {isHi ? 'सबसे बड़ी ताकत' : 'BIGGEST STRENGTH'}
                     </div>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#14532d', lineHeight: '1.5' }}>{audit.executiveSummary.biggestStrength}</p>
                   </div>
-                )}
-                {report.logoAnalysis?.secondaryColor && (
-                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(232, 213, 191, 0.4)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: getColorHex(report.logoAnalysis.secondaryColor), border: '1.5px solid #fff', boxShadow: '0 2px 4px rgba(0,0,0,0.15)', flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase' }}>
-                        {isHi ? 'सहायक रंग' : 'SECONDARY COLOR'} ({report.logoAnalysis.secondaryColor})
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: '#5a4230', marginTop: '2px', lineHeight: '1.4' }}>
-                        {logoReport.designAudit.secondaryColorInfo}
-                      </div>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#991b1b', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      {isHi ? 'घातक दोष' : 'FATAL FLAW'}
                     </div>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#7f1d1d', lineHeight: '1.5' }}>{audit.executiveSummary.fatalFlaw}</p>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* 3. Business Predictions */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '३. व्यावसायिक भविष्यवाणियाँ और प्रभाव' : '3. BUSINESS FUTURE PREDICTIONS'}
-            </div>
-            <div className="logo-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-              <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
-                  {isHi ? 'मूल्य निर्धारण समर्थन' : 'PRICING POWER'}
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
-                  {logoReport.predictions.pricingSupport}
-                </p>
-              </div>
-              <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
-                  {isHi ? 'बाजार पहुंच' : 'MARKET REACH'}
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
-                  {logoReport.predictions.marketReach}
-                </p>
-              </div>
-              <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '4px' }}>
-                  {isHi ? 'प्रथम प्रभाव संकेत' : 'FIRST IMPRESSION'}
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>
-                  {logoReport.psychologyLayer.emotionalSignal}
-                </p>
-              </div>
-            </div>
-
-            {/* Timeline predictions */}
-            <div className="logo-predictions-timeline" style={{ background: 'rgba(255,254,249,0.5)', padding: '16px', borderRadius: '12px', border: '1px dashed rgba(232,213,191,0.8)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ minWidth: '80px', padding: '3px 8px', background: '#e8d5bf', color: '#5a4230', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
-                    0 - 1 {isHi ? 'वर्ष' : 'Year'}
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.shortTerm}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ minWidth: '80px', padding: '3px 8px', background: '#b5820a', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
-                    1 - 3 {isHi ? 'वर्ष' : 'Years'}
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.midTerm}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ minWidth: '80px', padding: '3px 8px', background: '#3d2c1e', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', textAlign: 'center', marginTop: '2px' }}>
-                    3 - 7 {isHi ? 'वर्ष' : 'Years'}
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{logoReport.predictions.longTerm}</div>
                 </div>
               </div>
             </div>
 
-            {/* 4. Competitor Benchmark */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '४. प्रतिस्पर्धी बेंचमार्क तुलना' : '4. COMPETITIVE BENCHMARK'}
-            </div>
-            <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left', background: '#fff' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(232, 213, 191, 0.15)', borderBottom: '1px solid rgba(232, 213, 191, 0.6)' }}>
-                    <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'ब्रांड / प्रतिस्पर्धी' : 'Brand / Competitor'}</th>
-                    <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'मुख्य ताकत' : 'Strongest Feature'}</th>
-                    <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold' }}>{isHi ? 'बड़ी कमजोरी' : 'Biggest Weakness'}</th>
-                    <th style={{ padding: '10px', color: '#8c6f58', fontWeight: 'bold', textAlign: 'center' }}>{isHi ? 'रैंक' : 'Rank'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.logoAnalysis?.companyName && (
-                    <tr style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.2)', background: 'rgba(181, 130, 10, 0.03)' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#b5820a' }}>{report.logoAnalysis.companyName} ({isHi ? 'आपका लोगो' : 'Your Logo'})</td>
-                      <td style={{ padding: '10px', color: '#3d2c1e' }}>{logoReport.strengths[0]}</td>
-                      <td style={{ padding: '10px', color: '#c05050' }}>{logoReport.weaknesses[0]}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#b5820a' }}>3</td>
-                    </tr>
-                  )}
-                  {logoReport.competitorBenchmark.items.map((comp) => (
-                    <tr key={comp.name} style={{ borderBottom: '1px solid rgba(232, 213, 191, 0.2)' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#5a4230' }}>{comp.name}</td>
-                      <td style={{ padding: '10px', color: '#5a4230' }}>{comp.strength}</td>
-                      <td style={{ padding: '10px', color: '#c05050' }}>{comp.weak}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', color: '#5a4230' }}>{comp.rank === 3 ? 4 : comp.rank}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{ fontSize: '0.8rem', color: '#8c6f58', fontStyle: 'italic', marginTop: '-4px' }}>
-              {logoReport.competitorBenchmark.rankingText}
-            </div>
-
-            {/* 5. Strengths & Weaknesses */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#15803d', marginBottom: '10px', borderBottom: '1.5px solid #15803d', paddingBottom: '4px' }}>
-                  {isHi ? '✓ मुख्य ताकतें (Strengths)' : '✓ KEY STRENGTHS'}
-                </div>
-                <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {logoReport.strengths.map((str, idx) => (
-                    <li key={idx} style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{str}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#c05050', marginBottom: '10px', borderBottom: '1.5px solid #c05050', paddingBottom: '4px' }}>
-                  {isHi ? '✗ छिपे हुए दोष व जोखिम (Flaws)' : '✗ HIDDEN FLAWS & RISKS'}
-                </div>
-                <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {logoReport.weaknesses.map((weak, idx) => (
-                    <li key={idx} style={{ fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.4' }}>{weak}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* 6. Improvement Recommendations */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '५. पेशेवर सुधार सुझाव' : '5. STRATEGIC RECOMMENDATIONS'}
-            </div>
-            <div style={{ background: 'rgba(181, 130, 10, 0.05)', borderLeft: '4px solid #b5820a', padding: '16px', borderRadius: '0 8px 8px 0' }}>
-              <div style={{ fontWeight: 'bold', color: '#b5820a', marginBottom: '6px', fontSize: '0.92rem' }}>
-                {isHi ? 'अनुशंसित प्राथमिकता स्तर:' : 'Recommended Priority:'} {logoReport.recommendations.action}
-              </div>
-              <div style={{ fontSize: '0.88rem', color: '#5a4230', whiteSpace: 'pre-line', lineHeight: '1.5' }}>
-                {logoReport.recommendations.details}
-              </div>
-            </div>
-
-            {/* 7. Final Scoring Matrix */}
-            <div className="logo-section-subtitle" style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#b5820a', marginTop: '10px' }}>
-              {isHi ? '६. समग्र लोगो स्कोर मैट्रिक्स' : '6. FINAL AUDIT SCORING MATRIX'}
-            </div>
-            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid rgba(232, 213, 191, 0.75)', padding: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* 2. FULL VISUAL DESIGN ANALYSIS */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '२. पूर्ण दृश्य डिज़ाइन विश्लेषण (VISUAL DESIGN ANALYSIS)' : '2. FULL VISUAL DESIGN ANALYSIS'}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
-                  { label: isHi ? 'ब्रांड अनुकूलन (Brand Fit)' : 'Brand Fit', val: logoReport.scores.brandFit },
-                  { label: isHi ? 'दृश्य स्पष्टता (Clarity)' : 'Visual Clarity', val: logoReport.scores.visualClarity },
-                  { label: isHi ? 'याद रखने की क्षमता (Memorability)' : 'Memorability', val: logoReport.scores.memorability },
-                  { label: isHi ? 'भरोसा कारक (Trust Factor)' : 'Trust Factor', val: logoReport.scores.trustFactor },
-                  { label: isHi ? 'प्रीमियम महसूस होना (Premium Feel)' : 'Premium Feel', val: logoReport.scores.premiumFeel },
-                  { label: isHi ? 'मापने की क्षमता (Scalability)' : 'Scalability', val: logoReport.scores.scalability },
-                ].map((scoreItem) => (
-                  <div key={scoreItem.label} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: '#5a4230' }}>
-                      <span>{scoreItem.label}</span>
-                      <span>{scoreItem.val} / 10</span>
-                    </div>
-                    <div style={{ height: '8px', background: '#f3ece3', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${scoreItem.val * 10}%`, height: '100%', background: 'linear-gradient(90deg, #b5820a, #d4a326)', borderRadius: '4px' }} />
-                    </div>
+                  { title: isHi ? 'दृश्य संरचना और ज्यामिति' : 'Visual Structure & Geometry', desc: audit.visualAnalysis.structureGeometry },
+                  { title: isHi ? 'रंग मनोविज्ञान और प्रभाव' : 'Color Psychology & Impact', desc: audit.visualAnalysis.colorPsychology },
+                  { title: isHi ? 'टाइपोग्राफी मनोविज्ञान और सुपाठ्यता' : 'Typography Psychology & Legibility', desc: audit.visualAnalysis.typographyLegibility },
+                  { title: isHi ? 'संतुलन और संरचना' : 'Balance & Composition', desc: audit.visualAnalysis.balanceComposition },
+                  { title: isHi ? 'बाजार विशिष्टता' : 'Market Distinctiveness', desc: audit.visualAnalysis.marketDistinctiveness }
+                ].map((item, idx) => (
+                  <div key={idx} style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.4)', padding: '14px 16px', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      {item.title}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#3d2c1e', lineHeight: '1.5' }}>{item.desc}</p>
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* Overall Potential Block */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed rgba(232, 213, 191, 0.6)' }}>
-                <span style={{ fontSize: '0.98rem', fontWeight: 'bold', color: '#3d2c1e' }}>
-                  {isHi ? 'समग्र सफलता क्षमता (Overall Potential)' : 'Overall Success Potential'}
-                </span>
-                <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#b5820a' }}>
-                  {logoReport.scores.potential} / 10
-                </span>
+            {/* 3. TRUST & TECHNICAL ASSESSMENT */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '३. विश्वास और तकनीकी मूल्यांकन (TRUST & TECHNICAL ASSESSMENT)' : '3. TRUST & TECHNICAL ASSESSMENT'}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '16px', borderRadius: '12px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.88rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                    {isHi ? 'विश्वास और प्रीमियम धारणा' : 'Trust & Premium Perception'}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.5' }}>{audit.trustTechnical.trustPerception}</p>
+                </div>
+                <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '16px', borderRadius: '12px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.88rem', color: '#8c6f58', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                    {isHi ? 'तकनीकी सुगमता (Usability)' : 'Technical Usability'}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.5' }}>{audit.trustTechnical.technicalUsability}</p>
+                </div>
               </div>
             </div>
+
+            {/* 4. EXPERT OBSERVATIONS & HIDDEN FLAWS */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '४. विशेषज्ञ अवलोकन और छिपे हुए दोष (EXPERT OBSERVATIONS)' : '4. EXPERT OBSERVATIONS & HIDDEN FLAWS'}
+              </h3>
+              <div style={{ background: '#fff5f5', border: '1px solid #feb2b2', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {audit.expertObservations.map((obs, idx) => (
+                  <div key={idx} style={{ fontSize: '0.88rem', color: '#742a2a', display: 'flex', gap: '8px', alignItems: 'flex-start', lineHeight: '1.4' }}>
+                    <span style={{ fontSize: '1rem', color: '#c53030' }}>⚠️</span>
+                    <span>{obs}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. PREDICTED BUSINESS IMPACT */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '५. अनुमानित व्यावसायिक प्रभाव (PREDICTED BUSINESS IMPACT)' : '5. PREDICTED BUSINESS IMPACT'}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '14px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    {isHi ? 'ग्राहक धारणा' : 'CUSTOMER PERCEPTION'}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>{audit.predictedImpact.customerPerception}</p>
+                </div>
+                <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '14px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    {isHi ? 'ब्रांड स्मरण' : 'BRAND RECALL'}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>{audit.predictedImpact.brandRecall}</p>
+                </div>
+                <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.5)', padding: '14px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#8c6f58', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    {isHi ? 'बाजार स्थिति' : 'MARKET POSITION'}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#3d2c1e', lineHeight: '1.4' }}>{audit.predictedImpact.marketPosition}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. ACTIONABLE IMPROVEMENTS & ACTION PLAN */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '६. सुधारात्मक कार्य योजना (ACTIONABLE IMPROVEMENTS)' : '6. ACTIONABLE IMPROVEMENTS & ACTION PLAN'}
+              </h3>
+              <div style={{ background: 'rgba(181, 130, 10, 0.04)', border: '1px solid rgba(232, 213, 191, 0.6)', padding: '18px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {audit.actionPlan.map((act, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', borderRadius: '50%', background: '#b5820a', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold', marginTop: '2px' }}>
+                      {idx + 1}
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#5a4230', lineHeight: '1.4', fontWeight: 500 }}>{act}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 7. EVALUATION SCORECARD */}
+            <div style={{ borderLeft: '4px solid #b5820a', paddingLeft: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#b5820a', letterSpacing: '0.5px' }}>
+                {isHi ? '७. मूल्यांकन स्कोरकार्ड (EVALUATION SCORECARD)' : '7. EVALUATION SCORECARD'}
+              </h3>
+              <div style={{ background: '#fff', border: '1px solid rgba(232, 213, 191, 0.75)', borderRadius: '14px', padding: '20px', boxShadow: '0 4px 12px rgba(181, 130, 10, 0.03)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
+                  {[
+                    { label: isHi ? 'दृश्य संरचना और आकार (Visual Structure & Shape)' : 'Visual Structure & Shape', val: audit.scorecard.visualStructure },
+                    { label: isHi ? 'रंग और टाइपोग्राफी प्रभाव (Color & Typography Impact)' : 'Color & Typography Impact', val: audit.scorecard.colorTypography },
+                    { label: isHi ? 'बाजार विशिष्टता और स्मरण (Market Distinction & Recall)' : 'Market Distinction & Recall', val: audit.scorecard.marketDistinction },
+                    { label: isHi ? 'तकनीकी स्केलेबिलिटी (Technical Scalability)' : 'Technical Scalability', val: audit.scorecard.technicalScalability },
+                    { label: isHi ? 'विश्वास और प्रीमियम एहसास (Trust & Premium Feel)' : 'Trust & Premium Feel', val: audit.scorecard.trustPremium }
+                  ].map((scoreItem) => (
+                    <div key={scoreItem.label} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: '#5a4230' }}>
+                        <span>{scoreItem.label}</span>
+                        <span>{scoreItem.val} / 10</span>
+                      </div>
+                      <div style={{ height: '8px', background: '#f3ece3', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${scoreItem.val * 10}%`, height: '100%', background: 'linear-gradient(90deg, #b5820a, #d4a326)', borderRadius: '4px' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Overall Score Badge */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1.5px dashed rgba(232, 213, 191, 0.6)' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#3d2c1e' }}>
+                    {isHi ? 'समग्र लोगो स्कोर (OVERALL LOGO SCORE)' : 'OVERALL LOGO SCORE'}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#b5820a' }}>
+                      {audit.scorecard.overallScore}
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#8c6f58', fontWeight: 600 }}>/ 10</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         );
       }
-
       case 'foreign_settlement': {
         const foreignSettlement = getForeignSettlement(dob || '', mulank, bhagyank);
         return (

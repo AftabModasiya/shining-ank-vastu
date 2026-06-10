@@ -3197,10 +3197,13 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
     const logoReport = analyzeLogo(logoInfo, language);
     if (logoReport) {
       // ----------------------------------------------------
-      // PAGE 1: Brand Basics, Design Audit & Occult Layer
+      // PAGE 1: Brand Basics, Executive Summary, Visual Analysis
       // ----------------------------------------------------
       doc.addPage();
       drawPageShell(doc);
+
+      const isHi = language === 'hi';
+      const audit = logoReport.auditReport || {};
 
       // Section Header
       doc.setFillColor(...goldPrimary);
@@ -3208,188 +3211,193 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      doc.text(t("BRAND LOGO ANALYSIS & AUDIT (DESIGN & ENERGY)", "ब्रांड लोगो विश्लेषण और ऑडिट (डिज़ाइन और ऊर्जा)"), 14, 27);
+      doc.text(t("BRAND LOGO AUDIT & DESIGN CRITIQUE", "ब्रांड लोगो ऑडिट और डिजाइन आलोचना"), 14, 27);
 
-      // Brand Basics Banner
+      // Brand Basics Banner (Narrower)
       doc.setFillColor(254, 252, 245);
       doc.setDrawColor(...goldPrimary);
       doc.setLineWidth(0.35);
-      doc.roundedRect(15, 34, pageWidth - 30, 24, 3, 3, "FD");
+      doc.roundedRect(15, 34, 120, 24, 3, 3, "FD");
 
       doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${t("Brand Name", "ब्रांड का नाम")}: ${logoReport.basics.companyName}`, 19, 40);
-      doc.text(`${t("Industry/Domain", "उद्योग / डोमेन")}: ${logoReport.basics.industry}`, 19, 46);
-      doc.text(`${t("Target Audience", "लक्षित दर्शक")}: ${logoInfo.targetAudience || "-"}`, 19, 52);
-
-      doc.text(`${t("Market Scope", "बाजार का दायरा")}: ${logoInfo.market ? logoInfo.market.toUpperCase() : "NATIONAL"}`, 110, 40);
-      doc.text(`${t("Brand Position", "ब्रांड स्थिति")}: ${logoInfo.brandStyle ? logoInfo.brandStyle.toUpperCase() : "MODERN"}`, 110, 46);
-      doc.text(`${t("Main Promise", "मुख्य वादा")}: ${logoInfo.mainPromise || "-"}`, 110, 52);
-
-      // Executive Summary Card
-      let lY = 64;
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(230, 225, 215);
-      doc.roundedRect(15, lY, pageWidth - 30, 20, 2, 2, "FD");
-
-      doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
-      doc.text(t("EXECUTIVE SUMMARY / कार्यपालक सारांश", "EXECUTIVE SUMMARY / कार्यपालक सारांश"), 19, lY + 5);
+      doc.text(`${t("Brand Name", "ब्रांड का नाम")}: ${logoReport.basics.companyName}`, 18, 40);
+      doc.text(`${t("Industry/Domain", "उद्योग / डोमेन")}: ${logoReport.basics.industry}`, 18, 46);
+      doc.text(`${t("Target Audience", "लक्षित दर्शक")}: ${logoInfo.targetAudience || "-"}`, 18, 52);
 
+      doc.text(`${t("Market Scope", "बाजार का दायरा")}: ${logoReport.basics.market}`, 75, 40);
+      doc.text(`${t("Brand Style", "ब्रांड शैली")}: ${logoReport.basics.brandStyle}`, 75, 46);
+      doc.text(`${t("Main Promise", "मुख्य वादा")}: ${logoInfo.mainPromise || "-"}`, 75, 52);
+
+      // Logo Image Card
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(230, 225, 215);
+      doc.roundedRect(140, 34, 55, 24, 3, 3, "FD");
+
+      if (logoInfo.logoImage) {
+        try {
+          const format = logoInfo.logoImage.includes("png") ? "PNG" : "JPEG";
+          doc.addImage(logoInfo.logoImage, format, 142.5, 36, 50, 20, undefined, 'FAST');
+        } catch (e) {
+          console.warn("Could not render logo image:", e);
+        }
+      } else {
+        doc.setTextColor(...textMuted);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.text(t("NO LOGO UPLOADED", "कोई लोगो अपलोड नहीं"), 167, 47, { align: "center" });
+      }
+
+      // 1. Executive Summary Card
+      let lY = 64;
+      const exec = audit.executiveSummary || {};
+      const assessmentText = exec.overallAssessment || logoReport.executiveSummary;
+      const strengthText = exec.biggestStrength || (logoReport.strengths && logoReport.strengths[0]) || "";
+      const flawText = exec.fatalFlaw || (logoReport.weaknesses && logoReport.weaknesses[0]) || "";
+
+      const summLines = doc.splitTextToSize(`"${assessmentText}"`, pageWidth - 38);
+      const strLines = doc.splitTextToSize(`${t("Biggest Strength", "सबसे बड़ी ताकत")}: ${strengthText}`, pageWidth - 38);
+      const flawLines = doc.splitTextToSize(`${t("Fatal Flaw", "घातक दोष")}: ${flawText}`, pageWidth - 38);
+      const summaryHeight = (summLines.length + strLines.length + flawLines.length) * 3.3 + 8;
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(230, 225, 215);
+      doc.roundedRect(15, lY, pageWidth - 30, summaryHeight, 2, 2, "FD");
+
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(t("1. EXECUTIVE SUMMARY", "1. कार्यकारी सारांश"), 19, lY + 5);
+
+      let textY = lY + 9;
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "italic");
-      doc.setFontSize(8);
-      const summLines = doc.splitTextToSize(`"${logoReport.executiveSummary}"`, pageWidth - 38);
-      doc.text(summLines, 19, lY + 10);
+      doc.setFontSize(7.2);
+      doc.text(summLines, 19, textY);
+      
+      textY += summLines.length * 3.3 + 0.5;
+      doc.setTextColor(26, 128, 46); // Green
+      doc.setFont("helvetica", "bold");
+      doc.text(strLines, 19, textY);
 
-      // 1. Visual Design Audit (12-Point Framework)
-      lY += 26;
+      textY += strLines.length * 3.3 + 0.5;
+      doc.setTextColor(192, 80, 80); // Red
+      doc.setFont("helvetica", "bold");
+      doc.text(flawLines, 19, textY);
+
+      // 2. Full Visual Design Analysis
+      lY += summaryHeight + 5;
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(t("1. Visual Design Audit (12-Point Framework)", "1. विजुअल डिजाइन ऑडिट (12-बिंदु ढांचा)"), 15, lY);
+      doc.text(t("2. Visual Design Analysis & Occult Vastu Energy", "2. दृश्य डिज़ाइन विश्लेषण और वास्तु ऊर्जा"), 15, lY);
 
       lY += 4;
-      // 4 boxes for design audit
       const boxW = (pageWidth - 36) / 2;
+      const vis = audit.visualAnalysis || {};
 
-      // Split texts first to measure height
-      const classLines = doc.splitTextToSize(logoReport.designAudit.logoTypeInfo, boxW - 6);
-      const shapeLines = doc.splitTextToSize(logoReport.designAudit.shapeInfo, boxW - 6);
-      const typeLines = doc.splitTextToSize(logoReport.designAudit.typographyInfo, boxW - 6);
-      const scaleLines = doc.splitTextToSize(logoReport.designAudit.scalabilityInfo, boxW - 6);
+      const visLines1 = doc.splitTextToSize(vis.structureGeometry || logoReport.designAudit.shapeInfo, boxW - 6);
+      const visLines2 = doc.splitTextToSize(vis.colorPsychology || logoReport.designAudit.primaryColorInfo, boxW - 6);
+      const visLines3 = doc.splitTextToSize(vis.typographyLegibility || logoReport.designAudit.typographyInfo, boxW - 6);
+      const visLines4 = doc.splitTextToSize(vis.balanceComposition || logoReport.designAudit.scalabilityInfo, boxW - 6);
 
-      // Enforce a minimum height of 20mm
-      const row1H = Math.max(classLines.length * 3.2 + 10, shapeLines.length * 3.2 + 10, 20);
-      const row2H = Math.max(typeLines.length * 3.2 + 10, scaleLines.length * 3.2 + 10, 20);
+      const row1H = Math.max(visLines1.length * 3.2 + 8, visLines2.length * 3.2 + 8, 20);
+      const row2H = Math.max(visLines3.length * 3.2 + 8, visLines4.length * 3.2 + 8, 20);
 
-      // Box 1: Classification
+      // Box 1: Visual Structure & Geometry
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(230, 225, 215);
       doc.roundedRect(15, lY, boxW, row1H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
-      doc.text(t("Classification", "वर्गीकरण"), 18, lY + 5);
+      doc.text(t("Visual Structure & Geometry", "दृश्य संरचना और ज्यामिति"), 18, lY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.text(classLines, 18, lY + 9);
+      doc.setFontSize(7);
+      doc.text(visLines1, 18, lY + 8.5);
 
-      // Box 2: Shape Geometry
+      // Box 2: Color Psychology & Impact
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(15 + boxW + 6, lY, boxW, row1H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
-      doc.text(t("Shape & Geometry Psychology", "आकार और ज्यामिति मनोविज्ञान"), 15 + boxW + 9, lY + 5);
+      doc.text(t("Color Psychology & Impact", "रंग मनोविज्ञान और प्रभाव"), 15 + boxW + 9, lY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.text(shapeLines, 15 + boxW + 9, lY + 9);
+      doc.setFontSize(7);
+      doc.text(visLines2, 15 + boxW + 9, lY + 8.5);
 
       lY += row1H + 4;
 
-      // Box 3: Typography Style
+      // Box 3: Typography & Legibility
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(15, lY, boxW, row2H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
-      doc.text(t("Typography Style & Fit", "टाइपोग्राफी और शैली"), 18, lY + 5);
+      doc.text(t("Typography & Legibility", "टाइपोग्राफी और सुपाठ्यता"), 18, lY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.text(typeLines, 18, lY + 9);
+      doc.setFontSize(7);
+      doc.text(visLines3, 18, lY + 8.5);
 
-      // Box 4: Scalability
+      // Box 4: Balance & Composition
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(15 + boxW + 6, lY, boxW, row2H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
-      doc.text(t("Technical Scalability", "तकनीकी स्केलेबिलिटी"), 15 + boxW + 9, lY + 5);
+      doc.text(t("Balance & Composition", "संतुलन और संरचना"), 15 + boxW + 9, lY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.text(scaleLines, 15 + boxW + 9, lY + 9);
+      doc.setFontSize(7);
+      doc.text(visLines4, 15 + boxW + 9, lY + 8.5);
 
       lY += row2H;
 
-      // 2. Subconscious & Metaphysical Energy Layer
-      lY += 8;
+      // Subconscious Vastu Energy Layer
+      lY += 7;
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(t("2. Subconscious & Metaphysical Energy Layer", "2. अवचेतन और आध्यात्मिक ऊर्जा परत"), 15, lY);
+      doc.setFontSize(9.5);
+      doc.text(t("Subconscious & Metaphysical Vastu Energy", "अवचेतन और आध्यात्मिक वास्तु ऊर्जा"), 15, lY);
 
-      lY += 4;
-
-      // Calculate dynamic text lines and heights first
-      const energyLines = doc.splitTextToSize(`${t("Energy Alignment Interpretation:", "ऊर्जा संरेखण व्याख्या:")} ${logoReport.psychologyLayer.metaphysicalBalance}`, pageWidth - 38);
-      const energyHeight = energyLines.length * 3.6;
-
-      const colLines = doc.splitTextToSize(`${t("Primary Color", "मुख्य रंग")} (${logoInfo.primaryColor}): ${logoReport.designAudit.primaryColorInfo} | ${t("Secondary Color", "सहायक रंग")} (${logoInfo.secondaryColor}): ${logoReport.designAudit.secondaryColorInfo}`, pageWidth - 38);
-      const colHeight = colLines.length * 3.5;
-
-      const cardHeight = Math.max(13 + energyHeight + 5 + 4 + 4 + colHeight + 4, 48);
+      lY += 3;
+      const energyLines = doc.splitTextToSize(`${t("Energy Alignment:", "ऊर्जा संरेखण:")} ${logoReport.psychologyLayer.metaphysicalBalance}`, pageWidth - 38);
+      const energyHeight = energyLines.length * 3.4;
+      const cardHeight = Math.max(10 + energyHeight, 20);
 
       doc.setFillColor(255, 254, 248);
       doc.setDrawColor(...goldPrimary);
       doc.setLineWidth(0.3);
       doc.roundedRect(15, lY, pageWidth - 30, cardHeight, 3, 3, "FD");
 
-      // Dynamic badges
+      // Badges
       const badgeText1 = `${t("ELEMENT:", "तत्व:")} ${logoReport.psychologyLayer.occultElement.split(" (")[0].toUpperCase()}`;
       const badgeText2 = `${t("ENERGY FLOW:", "ऊर्जा प्रवाह:")} ${logoReport.psychologyLayer.energyFlow.split(" - ")[0].split(" (")[0].toUpperCase()}`;
-      const badgeText3 = logoReport.predictions.trustSpeed.split(" (")[0].toUpperCase();
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.8);
-      
+      doc.setFontSize(6.5);
       const badgeW1 = doc.getTextWidth(badgeText1) + 6;
       const badgeW2 = doc.getTextWidth(badgeText2) + 6;
-      const badgeW3 = doc.getTextWidth(badgeText3) + 6;
 
-      const badgeGap = 3.5;
-      const x1 = 19;
-      const x2 = x1 + badgeW1 + badgeGap;
-      const x3 = x2 + badgeW2 + badgeGap;
-
-      // Draw Badge 1
       doc.setFillColor(...textDark);
-      doc.roundedRect(x1, lY + 4, badgeW1, 6, 1.5, 1.5, "F");
+      doc.roundedRect(19, lY + 3.5, badgeW1, 5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
-      doc.text(badgeText1, x1 + badgeW1 / 2, lY + 8.2, { align: "center" });
+      doc.text(badgeText1, 19 + badgeW1 / 2, lY + 7, { align: "center" });
 
-      // Draw Badge 2
       doc.setFillColor(...goldPrimary);
-      doc.roundedRect(x2, lY + 4, badgeW2, 6, 1.5, 1.5, "F");
+      doc.roundedRect(19 + badgeW1 + 4, lY + 3.5, badgeW2, 5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
-      doc.text(badgeText2, x2 + badgeW2 / 2, lY + 8.2, { align: "center" });
+      doc.text(badgeText2, 19 + badgeW1 + 4 + badgeW2 / 2, lY + 7, { align: "center" });
 
-      // Draw Badge 3
-      doc.setFillColor(245, 239, 230);
-      doc.roundedRect(x3, lY + 4, badgeW3, 6, 1.5, 1.5, "F");
-      doc.setTextColor(...textDark);
-      doc.text(badgeText3, x3 + badgeW3 / 2, lY + 8.2, { align: "center" });
-
-      // Energy Balance details
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.text(energyLines, 19, lY + 14);
-
-      // Color Psychology interpretation
-      const colTitleY = lY + 14 + energyHeight + 5;
-      doc.setFont("helvetica", "bold");
-      doc.text(t("Color Energy & Psychology:", "रंग ऊर्जा और मनोविज्ञान:"), 19, colTitleY);
-      
-      const colTextY = colTitleY + 4;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.8);
-      doc.text(colLines, 19, colTextY);
+      doc.setFontSize(7.2);
+      doc.text(energyLines, 19, lY + 11.5);
 
       // ----------------------------------------------------
-      // PAGE 2: Predictions, Benchmark & Strengths
+      // PAGE 2: Trust & Technical, Expert Observations, Business Impact, Benchmarks
       // ----------------------------------------------------
       doc.addPage();
       drawPageShell(doc);
@@ -3400,63 +3408,125 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      doc.text(t("BRAND LOGO ANALYSIS (PREDICTIONS & POSITIONING)", "ब्रांड लोगो विश्लेषण (भविष्यवाणियाँ और स्थिति)"), 14, 27);
+      doc.text(t("BRAND LOGO AUDIT (TRUST, USABILITY & IMPACT)", "ब्रांड लोगो ऑडिट (विश्वास, उपयोगिता और प्रभाव)"), 14, 27);
 
-      // 3. Business Future Predictions
       let pY = 34;
+
+      // 3. Trust & Technical Assessment
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(t("3. Business Future Predictions & Commercial Impact", "3. व्यावसायिक भविष्यवाणियाँ और व्यावसायिक प्रभाव"), 15, pY);
+      doc.text(t("3. Trust & Technical Assessment", "3. विश्वास और तकनीकी मूल्यांकन"), 15, pY);
 
       pY += 4;
-      // 3 cards for predictions metrics
-      const predW = (pageWidth - 36) / 3;
+      const tech = audit.trustTechnical || {};
+      const trustLines = doc.splitTextToSize(tech.trustPerception || "", boxW - 6);
+      const usabilityLines = doc.splitTextToSize(tech.technicalUsability || "", boxW - 6);
+      const row3H = Math.max(trustLines.length * 3.2 + 8, usabilityLines.length * 3.2 + 8, 20);
 
-      const pr1Lines = doc.splitTextToSize(logoReport.predictions.pricingSupport, predW - 6);
-      const pr2Lines = doc.splitTextToSize(logoReport.predictions.marketReach, predW - 6);
-      const pr3Lines = doc.splitTextToSize(logoReport.psychologyLayer.emotionalSignal, predW - 6);
-      const maxLines = Math.max(pr1Lines.length, pr2Lines.length, pr3Lines.length);
-      const predH = Math.max(maxLines * 3.2 + 9, 18);
-
-      // Card 1
+      // Box 1: Trust Perception
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(230, 225, 215);
-      doc.roundedRect(15, pY, predW, predH, 2, 2, "FD");
+      doc.roundedRect(15, pY, boxW, row3H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
-      doc.text(t("Pricing Power", "मूल्य निर्धारण समर्थन"), 18, pY + 5);
+      doc.text(t("Trust & Premium Perception", "विश्वास और प्रीमियम धारणा"), 18, pY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
-      doc.text(pr1Lines, 18, pY + 9);
+      doc.text(trustLines, 18, pY + 8.5);
 
-      // Card 2
+      // Box 2: Technical Usability
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(15 + predW + 3, pY, predW, predH, 2, 2, "FD");
+      doc.roundedRect(15 + boxW + 6, pY, boxW, row3H, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
-      doc.text(t("Market Reach", "बाजार पहुंच"), 15 + predW + 6, pY + 5);
+      doc.text(t("Technical Usability & Scalability", "तकनीकी सुगमता और स्केलेबिलिटी"), 15 + boxW + 9, pY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
-      doc.text(pr2Lines, 15 + predW + 6, pY + 9);
+      doc.text(usabilityLines, 15 + boxW + 9, pY + 8.5);
 
-      // Card 3
+      pY += row3H + 6;
+
+      // 4. Expert Observations & Hidden Flaws
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(t("4. Expert Observations & Hidden Flaws", "4. विशेषज्ञ अवलोकन और छिपे हुए दोष"), 15, pY);
+
+      pY += 4;
+      const obsList = audit.expertObservations || [];
+      const obsBoxH = obsList.length * 6 + 6;
+      doc.setFillColor(254, 245, 245); // Light red tint
+      doc.setDrawColor(254, 202, 202);
+      doc.roundedRect(15, pY, pageWidth - 30, obsBoxH, 2, 2, "FD");
+
+      doc.setTextColor(153, 27, 27);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.2);
+      obsList.forEach((obs, idx) => {
+        const wrappedObs = doc.splitTextToSize(`⚠️  ${obs}`, pageWidth - 38);
+        doc.text(wrappedObs, 19, pY + 5 + (idx * 6));
+      });
+
+      pY += obsBoxH + 6;
+
+      // 5. Predicted Business Impact
+      doc.setTextColor(...goldPrimary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(t("5. Predicted Business Impact", "5. अनुमानित व्यावसायिक प्रभाव"), 15, pY);
+
+      pY += 4;
+      const imp = audit.predictedImpact || {};
+      const impW = (pageWidth - 36) / 3;
+
+      const impLines1 = doc.splitTextToSize(imp.customerPerception || "", impW - 6);
+      const impLines2 = doc.splitTextToSize(imp.brandRecall || "", impW - 6);
+      const impLines3 = doc.splitTextToSize(imp.marketPosition || "", impW - 6);
+      const maxImpLines = Math.max(impLines1.length, impLines2.length, impLines3.length);
+      const impCardH = Math.max(maxImpLines * 3.2 + 8, 20);
+
+      // Card 1: Customer Perception
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(15 + (predW * 2) + 6, pY, predW, predH, 2, 2, "FD");
+      doc.setDrawColor(230, 225, 215);
+      doc.roundedRect(15, pY, impW, impCardH, 2, 2, "FD");
       doc.setTextColor(...textMuted);
       doc.setFont("helvetica", "bold");
-      doc.text(t("First Impression", "प्रथम प्रभाव संकेत"), 15 + (predW * 2) + 9, pY + 5);
+      doc.setFontSize(7.2);
+      doc.text(t("Customer Perception", "ग्राहक धारणा"), 18, pY + 5);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.text(pr3Lines, 15 + (predW * 2) + 9, pY + 9);
+      doc.setFontSize(6.8);
+      doc.text(impLines1, 18, pY + 8.5);
+
+      // Card 2: Brand Recall
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(15 + impW + 3, pY, impW, impCardH, 2, 2, "FD");
+      doc.setTextColor(...textMuted);
+      doc.setFont("helvetica", "bold");
+      doc.text(t("Brand Recall", "ब्रांड स्मरण"), 15 + impW + 6, pY + 5);
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.8);
+      doc.text(impLines2, 15 + impW + 6, pY + 8.5);
+
+      // Card 3: Market Position
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(15 + (impW * 2) + 6, pY, impW, impCardH, 2, 2, "FD");
+      doc.setTextColor(...textMuted);
+      doc.setFont("helvetica", "bold");
+      doc.text(t("Market Positioning", "बाजार स्थिति"), 15 + (impW * 2) + 9, pY + 5);
+      doc.setTextColor(...textDark);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.8);
+      doc.text(impLines3, 15 + (impW * 2) + 9, pY + 8.5);
+
+      pY += impCardH + 3;
 
       // Timeline box
-      pY += predH + 3;
-
       const stLines = doc.splitTextToSize(logoReport.predictions.shortTerm, pageWidth - 48);
       const mtLines = doc.splitTextToSize(logoReport.predictions.midTerm, pageWidth - 48);
       const ltLines = doc.splitTextToSize(logoReport.predictions.longTerm, pageWidth - 48);
@@ -3489,110 +3559,70 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
       doc.setFont("helvetica", "normal");
       doc.text(ltLines, 35, pY + y_lt);
 
-      // 4. Competitor Benchmark
-      pY += timelineBoxH + 6;
+      pY += timelineBoxH + 5;
+
+      // Competitor Benchmark
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(t("4. Competitive Benchmark & Positioning", "4. प्रतिस्पर्धी बेंचमार्क और स्थिति"), 15, pY);
+      doc.setFontSize(9.5);
+      doc.text(t("Competitive Benchmark & Positioning", "प्रतिस्पर्धी बेंचमार्क और स्थिति"), 15, pY);
 
-      pY += 4;
+      pY += 3.5;
       // Header row
       doc.setFillColor(...goldPrimary);
-      doc.roundedRect(15, pY, pageWidth - 30, 6, 1, 1, "F");
+      doc.roundedRect(15, pY, pageWidth - 30, 5, 0.8, 0.8, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.text(t("Brand / Competitor", "ब्रांड / प्रतिस्पर्धी"), 18, pY + 4.2);
-      doc.text(t("Strongest Feature", "मुख्य ताकत"), 60, pY + 4.2);
-      doc.text(t("Biggest Weakness", "बड़ी कमजोरी"), 120, pY + 4.2);
-      doc.text(t("Rank", "रैंक"), 180, pY + 4.2);
+      doc.setFontSize(7);
+      doc.text(t("Brand / Competitor", "ब्रांड / प्रतिस्पर्धी"), 18, pY + 3.5);
+      doc.text(t("Strongest Feature", "मुख्य ताकत"), 60, pY + 3.5);
+      doc.text(t("Biggest Weakness", "बड़ी कमजोरी"), 120, pY + 3.5);
+      doc.text(t("Rank", "रैंक"), 180, pY + 3.5);
 
-      pY += 6;
-      // Your logo row
+      pY += 5;
+      // User brand row
       const myStrength = doc.splitTextToSize(logoReport.strengths[0] || "", 55);
       const myWeak = doc.splitTextToSize(logoReport.weaknesses[0] || "", 55);
       const myLinesCount = Math.max(myStrength.length, myWeak.length, 1);
-      const myRowHeight = myLinesCount * 3 + 3.5;
+      const myRowHeight = myLinesCount * 3 + 2.5;
 
       doc.setFillColor(255, 252, 242);
-      doc.roundedRect(15, pY, pageWidth - 30, myRowHeight, 1, 1, "F");
+      doc.roundedRect(15, pY, pageWidth - 30, myRowHeight, 0.8, 0.8, "F");
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.8);
-      doc.text(`${logoReport.basics.companyName} (${t("Your Logo", "आपका लोगो")})`, 18, pY + 4);
+      doc.setFontSize(6.5);
+      doc.text(`${logoReport.basics.companyName} (${t("Your Logo", "आपका लोगो")})`, 18, pY + 3);
       doc.setFont("helvetica", "normal");
-      doc.text(myStrength, 60, pY + 4);
-      doc.text(myWeak, 120, pY + 4);
+      doc.text(myStrength, 60, pY + 3);
+      doc.text(myWeak, 120, pY + 3);
       doc.setFont("helvetica", "bold");
-      doc.text(String(logoReport.basics.rank || 3), 182, pY + 4);
+      doc.text(String(logoReport.basics.rank || 3), 182, pY + 3);
 
-      pY += myRowHeight + 1.2;
+      pY += myRowHeight + 0.8;
 
       // Competitors
       logoReport.competitorBenchmark.items.forEach((comp, idx) => {
         const compStrength = doc.splitTextToSize(comp.strength || "", 55);
         const compWeak = doc.splitTextToSize(comp.weak || "", 55);
         const compLinesCount = Math.max(compStrength.length, compWeak.length, 1);
-        const compRowHeight = compLinesCount * 3 + 3.5;
+        const compRowHeight = compLinesCount * 3 + 2.5;
 
         doc.setFillColor(idx % 2 === 0 ? 255 : 249, idx % 2 === 0 ? 255 : 247, idx % 2 === 0 ? 255 : 243);
-        doc.roundedRect(15, pY, pageWidth - 30, compRowHeight, 1, 1, "F");
+        doc.roundedRect(15, pY, pageWidth - 30, compRowHeight, 0.8, 0.8, "F");
         doc.setTextColor(...textDark);
         doc.setFont("helvetica", "bold");
-        doc.text(comp.name, 18, pY + 4);
+        doc.text(comp.name, 18, pY + 3);
         doc.setFont("helvetica", "normal");
-        doc.text(compStrength, 60, pY + 4);
-        doc.text(compWeak, 120, pY + 4);
+        doc.text(compStrength, 60, pY + 3);
+        doc.text(compWeak, 120, pY + 3);
         doc.setFont("helvetica", "bold");
-        doc.text(String(comp.rank), 182, pY + 4);
+        doc.text(String(comp.rank), 182, pY + 3);
 
-        pY += compRowHeight + 1.2;
-      });
-
-      // 5. Strengths and Weaknesses
-      pY += 8;
-      doc.setTextColor(...goldPrimary);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(t("5. Logo Key Strengths & Critical Flaws", "5. लोगो की मुख्य ताकतें और महत्वपूर्ण दोष"), 15, pY);
-
-      pY += 4;
-      const strW = (pageWidth - 36) / 2;
-      // Strengths column
-      doc.setTextColor(26, 128, 46);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text(t("✓ KEY STRENGTHS", "✓ मुख्य ताकतें"), 15, pY);
-
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      let sOffset = pY + 5;
-      logoReport.strengths.slice(0, 3).forEach((str) => {
-        const wrappedStr = doc.splitTextToSize(`- ${str}`, strW - 4);
-        doc.text(wrappedStr, 15, sOffset);
-        sOffset += wrappedStr.length * 3.2 + 1.2;
-      });
-
-      // Weaknesses column
-      doc.setTextColor(192, 80, 80);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text(t("✗ HIDDEN FLAWS & RISKS", "✗ छिपे हुए दोष व जोखिम"), 15 + strW + 6, pY);
-
-      doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      let wOffset = pY + 5;
-      logoReport.weaknesses.slice(0, 3).forEach((weak) => {
-        const wrappedWeak = doc.splitTextToSize(`- ${weak}`, strW - 4);
-        doc.text(wrappedWeak, 15 + strW + 6, wOffset);
-        wOffset += wrappedWeak.length * 3.2 + 1.2;
+        pY += compRowHeight + 0.8;
       });
 
       // ----------------------------------------------------
-      // PAGE 3: Strategic Recommendations & Scoring Matrix
+      // PAGE 3: Strategic Recommendations & Scoring matrix
       // ----------------------------------------------------
       doc.addPage();
       drawPageShell(doc);
@@ -3603,62 +3633,57 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      doc.text(t("BRAND LOGO ANALYSIS (RECOMMENDATIONS & SCORING)", "ब्रांड लोगो विश्लेषण (सुझाव और स्कोर)"), 14, 27);
+      doc.text(t("BRAND LOGO AUDIT (RECOMMENDATIONS & SCORECARD)", "ब्रांड लोगो ऑडिट (सुझाव और स्कोरकार्ड)"), 14, 27);
 
       let rY = 34;
 
-      // 6. Strategic Recommendations
+      // 6. Actionable Improvements & Action Plan
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(t("6. Strategic Recommendations for Redesign/Alignment", "6. लोगो सुधार व संरेखण के लिए सुझाव"), 15, rY);
+      doc.text(t("6. Actionable Improvements & Action Plan", "6. सुधारात्मक कार्य योजना"), 15, rY);
 
       rY += 4;
-      const actLines = doc.splitTextToSize(`${t("Action Needed:", "कार्रवाई आवश्यक:")} ${logoReport.recommendations.action}`, pageWidth - 38);
-      const recLines = doc.splitTextToSize(logoReport.recommendations.details || "", pageWidth - 38);
-      const boxHeight = actLines.length * 3.5 + recLines.length * 3.2 + 5;
-
+      const plans = audit.actionPlan || [];
+      const planBoxH = plans.length * 6 + 6;
       doc.setFillColor(254, 252, 245);
       doc.setDrawColor(...goldPrimary);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(15, rY, pageWidth - 30, boxHeight, 2, 2, "FD");
+      doc.setLineWidth(0.35);
+      doc.roundedRect(15, rY, pageWidth - 30, planBoxH, 2, 2, "FD");
 
       doc.setTextColor(...textDark);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.8);
-      doc.text(actLines, 18, rY + 5);
-
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.2);
-      doc.text(recLines, 18, rY + 5 + actLines.length * 3.5);
+      plans.forEach((plan, idx) => {
+        const wrappedPlan = doc.splitTextToSize(`${idx + 1}.  ${plan}`, pageWidth - 38);
+        doc.text(wrappedPlan, 19, rY + 5 + (idx * 6));
+      });
+
+      rY += planBoxH + 8;
 
       // 7. Final Scoring Matrix
-      rY += boxHeight + 8;
       doc.setTextColor(...goldPrimary);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(t("7. Final Scoring Matrix & Brand Success Potential", "7. लोगो मूल्यांकन स्कोर और सफलता क्षमता"), 15, rY);
+      doc.text(t("7. Final Scoring Matrix & Success Potential", "7. लोगो मूल्यांकन स्कोर और सफलता क्षमता"), 15, rY);
 
       rY += 4;
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(220, 215, 205);
-      doc.roundedRect(15, rY, pageWidth - 30, 34, 2.5, 2.5, "FD");
+      doc.roundedRect(15, rY, pageWidth - 30, 42, 2.5, 2.5, "FD");
 
       const scoreItems = [
-        { label: t("Brand Fit", "ब्रांड अनुकूलन"), val: logoReport.scores.brandFit },
-        { label: t("Visual Clarity", "स्पष्टता"), val: logoReport.scores.visualClarity },
-        { label: t("Memorability", "याद रखने योग्य"), val: logoReport.scores.memorability },
-        { label: t("Trust Factor", "भरोसा"), val: logoReport.scores.trustFactor },
-        { label: t("Premium Feel", "प्रीमियम एहसास"), val: logoReport.scores.premiumFeel },
-        { label: t("Scalability", "मापने की क्षमता"), val: logoReport.scores.scalability },
+        { label: t("Visual Structure & Shape", "दृश्य संरचना और आकार"), val: audit.scorecard.visualStructure },
+        { label: t("Color & Typography Impact", "रंग और टाइपोग्राफी प्रभाव"), val: audit.scorecard.colorTypography },
+        { label: t("Market Distinction & Recall", "बाजार विशिष्टता और स्मरण"), val: audit.scorecard.marketDistinction },
+        { label: t("Technical Scalability", "तकनीकी स्केलेबिलिटी"), val: audit.scorecard.technicalScalability },
+        { label: t("Trust & Premium Feel", "विश्वास और प्रीमियम एहसास"), val: audit.scorecard.trustPremium },
       ];
 
-      // Draw progress bars for scores (2 columns, 3 items each)
+      // Draw progress bars for scores
       scoreItems.forEach((item, idx) => {
-        const colIdx = idx % 2;
-        const rowIdx = Math.floor(idx / 2);
-        const scX = 18 + (colIdx * (strW + 6));
-        const scY = rY + 4 + (rowIdx * 9);
+        const scX = 18;
+        const scY = rY + 4 + (idx * 6.8);
 
         doc.setTextColor(...textDark);
         doc.setFont("helvetica", "bold");
@@ -3667,27 +3692,25 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
 
         // Bar background
         doc.setFillColor(242, 238, 230);
-        doc.roundedRect(scX, scY + 1.5, strW - 12, 2.5, 0.8, 0.8, "F");
+        doc.roundedRect(scX + 60, scY - 2, 100, 2.5, 0.8, 0.8, "F");
 
         // Bar fill
         doc.setFillColor(...goldPrimary);
-        doc.roundedRect(scX, scY + 1.5, (strW - 12) * (item.val / 10), 2.5, 0.8, 0.8, "F");
+        doc.roundedRect(scX + 60, scY - 2, 100 * (item.val / 10), 2.5, 0.8, 0.8, "F");
       });
 
       // Overall Potential
       doc.setDrawColor(230, 225, 215);
-      doc.line(15, rY + 27, pageWidth - 15, rY + 27);
+      doc.line(15, rY + 37, pageWidth - 15, rY + 37);
       doc.setTextColor(...textDark);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8.5);
-      doc.text(t("OVERALL BRAND SUCCESS POTENTIAL:", "समग्र ब्रांड सफलता क्षमता:"), 18, rY + 31.5);
+      doc.text(t("OVERALL BRAND SUCCESS POTENTIAL:", "समग्र ब्रांड सफलता क्षमता:"), 18, rY + 40.5);
       doc.setTextColor(...goldPrimary);
       doc.setFontSize(11);
-      doc.text(`${logoReport.scores.potential} / 10`, 172, rY + 31.5);
+      doc.text(`${audit.scorecard.overallScore || logoReport.scores.potential} / 10`, 172, rY + 40.5);
     }
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
+  }// ════════════════════════════════════════════════════════════════════════
   // PAGES: 3 BLANK PAGES FOR CONSULTANT NOTES / SUGGESTIONS
   // ════════════════════════════════════════════════════════════════════════
   for (let c = 1; c <= 3; c++) {

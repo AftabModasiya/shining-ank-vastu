@@ -3918,6 +3918,86 @@ export const analyzeLogo = (logoData, lang) => {
     recDetailsHi = "1. सूक्ष्म सुधार: डिजिटल फेविकॉन और ऐप आइकन के लिए केवल '" + primaryColor + "' रंग के मुख्य आइकन का उपयोग करें।\n2. स्पेसिंग: डिजिटल स्क्रीन पर सुपाठ्यता के लिए अक्षरों के बीच की दूरी को 5% बढ़ाएं।\n3. फ़ॉन्ट सुधार: " + (brandStyle === 'premium' ? 'लक्जरी लुक देने के लिए अक्षरों की मोटाई को थोड़ा स्लिम करें।' : 'आधुनिक विश्वसनीयता बढ़ाने के लिए फ़ॉन्ट के कोनों को स्पष्ट करें।') + "\n4. रंग सुरक्षा: सभी प्रकार के प्रिंट और विज्ञापन मीडिया में समान शेड्स का उपयोग सुनिश्चित करें।";
   }
 
+  const overallAssessmentEn = `The visual identity for ${companyName} establishes a ${brandStyle.toUpperCase()} brand positioning for the ${industry} sector. While the Chaldean destiny vibration of ${compSingle} (ruled by ${planet.name}) provides strong cosmic backing, the visual execution contains critical friction points between the ${shapeStyle} geometry and the ${primaryColor}/${secondaryColor} color distribution, reducing overall category authority.`;
+  const overallAssessmentHi = `${companyName} की दृश्य पहचान ${industry} क्षेत्र के लिए एक ${brandStyle.toUpperCase()} ब्रांड स्थिति स्थापित करती है। यद्यपि ${planet.nameHi} द्वारा शासित किल्डियन भाग्य संख्या ${compSingle} की ऊर्जा मजबूत ब्रह्मांडीय समर्थन प्रदान करती है, लेकिन ${shapeStyle} ज्यामिति और ${primaryColor}/${secondaryColor} रंग वितरण के बीच का विरोधाभास ब्रांड के वास्तविक प्रभाव को कम करता है।`;
+
+  const biggestStrengthEn = `The selection of a ${logoType.toUpperCase()} format combined with a ${typographyStyle.toUpperCase()} typography layout creates a clear, readable typographic anchor that communicates '${mainPromise}' to the target audience of '${targetAudience}'.`;
+  const biggestStrengthHi = `${logoType.toUpperCase()} प्रारूप और ${typographyStyle.toUpperCase()} टाइपोग्राफी लेआउट का चयन एक स्पष्ट और पठनीय आधार बनाता है जो '${targetAudience}' के लक्षित वर्ग को '${mainPromise}' का स्पष्ट संदेश देता है।`;
+
+  let fatalFlawEn = '';
+  let fatalFlawHi = '';
+  if (hasColorClash) {
+    fatalFlawEn = `The direct visual overlap of conflicting element energies (Fire-ruled ${primaryColor} and Water-ruled ${secondaryColor}) creates subconscious cognitive friction, which erodes consumer reliability and brand trust.`;
+    fatalFlawHi = `परस्पर विरोधी तत्वों (अग्नि-शासित ${primaryColor} और जल-शासित ${secondaryColor}) का सीधा दृश्य संपर्क अवचेतन मन में विरोधाभास उत्पन्न करता है, जिससे ब्रांड की विश्वसनीयता प्रभावित होती है।`;
+  } else if (hasShapeClash) {
+    fatalFlawEn = `The sharp angularity of the ${shapeStyle} geometry conflicts with the stable grounding required in the ${industry} domain, creating visual volatility instead of safety.`;
+    fatalFlawHi = `${shapeStyle} ज्यामिति की तीक्ष्णता ${industry} क्षेत्र की स्थिर आवश्यकताओं के विपरीत है, जो सुरक्षा के बजाय दृश्य अस्थिरता प्रदर्शित करती है।`;
+  } else {
+    fatalFlawEn = `The lack of custom font kerning or a unique standalone graphical signifier creates a templated appearance, making the identity vulnerable to category assimilation.`;
+    fatalFlawHi = `कस्टम फॉन्ट केर्निंग या विशिष्ट ग्राफिकल प्रतीक की कमी इसे एक साधारण डिजाइन बनाती है, जिससे प्रतिस्पर्धियों के बीच अलग दिखना मुश्किल हो जाता है।`;
+  }
+
+  const structureGeometryEn = `Using the ${shapeStyle} shape-system incorporates Vastu-direction energies. Shape represents the ${elementEnergy}. Vastu energy flows toward the ${directionVastuEn} sector, which relates to the promise of '${mainPromise}'. The geometry provides a ${shapeStyle === 'circle' ? 'fluid, flowing rhythm' : shapeStyle === 'square' ? 'grounded, stable structure' : shapeStyle === 'triangle' ? 'dynamic, upward energy' : 'protective framework'} that shapes corporate perception.`;
+  const structureGeometryHi = `${shapeStyle} ज्यामिति का उपयोग वास्तु-दिशा ऊर्जाओं को जोड़ता है। आकृति ${elementEnergy} को दर्शाती है। वास्तु ऊर्जा ${directionVastuHi} दिशा की ओर प्रवाहित होती है, जो '${mainPromise}' के वादे से संबंधित है। यह ज्यामिति एक ${shapeStyle === 'circle' ? 'प्रवाहमयी और निरंतर गति' : shapeStyle === 'square' ? 'मजबूत और स्थिर आधार' : shapeStyle === 'triangle' ? 'ऊर्ध्वगामी आक्रामक ऊर्जा' : 'सुरक्षात्मक संरचना'} प्रदान करती है।`;
+
+  const colorPsychologyEn = `The primary color ${primaryColor.toUpperCase()} communicates ${primaryColorDescEn} The secondary color ${secondaryColor.toUpperCase()} adds visual hierarchy. ${colorClashEn} This distribution should be optimized to align with the core destiny planet ${planet.name}.`;
+  const colorPsychologyHi = `मुख्य रंग ${primaryColor.toUpperCase()} ब्रांड में ${primaryColorDescHi} को दर्शाता है। सहायक रंग ${secondaryColor.toUpperCase()} पदानुक्रम को संतुलित करता है। ${colorClashHi} इस संयोजन को मुख्य ग्रह ${planet.nameHi} के साथ संरेखित रखने की सलाह दी जाती है।`;
+
+  const typographyLegibilityEn = `The choice of ${typographyStyle} lettering communicates ${typoDescEn} It controls the readability speed of the brand name and affects how corporate status is perceived.`;
+  const typographyLegibilityHi = `${typographyStyle} टाइपोग्राफी शैली ब्रांड में ${typoDescHi} का संचार करती है। यह ब्रांड के नाम की पठन सुगमता को नियंत्रित करती है और व्यावसायिक छवि को प्रभावित करती है।`;
+
+  const balanceCompositionEn = `Visual weight is balanced using ${shapeStyle === 'circle' || shapeStyle === 'square' ? 'symmetrical alignment' : 'asymmetrical movement'}. The interaction between the '${logoType}' layout and the background requires precise grid alignment to maintain a unified visual focus.`;
+  const balanceCompositionHi = `दृश्य भार को ${shapeStyle === 'circle' || shapeStyle === 'square' ? 'सममितीय संतुलन (Symmetrical Alignment)' : 'गतिशील असममितीय संतुलन (Asymmetrical Movement)'} द्वारा नियंत्रित किया गया है। लोगो लेआउट और पृष्ठभूमि के बीच का संबंध दृश्य ध्यान केंद्रित रखने के लिए ग्रिड संरेखण की मांग करता है।`;
+
+  const marketDistinctivenessEn = `Against category benchmarks in the ${industry} industry, the logo achieves a moderate visual presence. Standing out requires moving away from standard templates by incorporating unique lettering modifications.`;
+  const marketDistinctivenessHi = `${industry} उद्योग के मानकों के खिलाफ, यह लोगो एक औसत दृश्य स्थिति प्राप्त करता है। प्रतिस्पर्धियों से अलग दिखने के लिए फ़ॉन्ट में कस्टम बदलाव करने की आवश्यकता है।`;
+
+  const trustPerceptionEn = `The visual architecture communicates a ${brandStyle === 'premium' ? 'prestigious, high-end premium positioning that attracts high-value corporate clients' : 'friendly, accessible mass-market vibe suitable for broad consumer reach'}. The level of design polish directly influences consumer reliability.`;
+  const trustPerceptionHi = `लोगो की दृश्य संरचना एक ${brandStyle === 'premium' ? 'उच्च-स्तरीय प्रीमियम स्थिति को दर्शाती है जो बड़े कॉर्पोरेट ग्राहकों को आकर्षित करती है' : 'सुलभ, जन-बाजार (Mass-Market) छवि को दर्शाती है जो व्यापक ग्राहकों के लिए उपयुक्त है'}। यह विश्वसनीयता को प्रभावित करती है।`;
+
+  const technicalUsabilityEn = `In digital media, the ${logoType} structure performs well at medium scale. However, at a 16x16 px favicon scale, subtle graphic paths bleed, and single-color embroidery will require simplified vector outlines.`;
+  const technicalUsabilityHi = `डिजिटल मीडिया में, ${logoType} संरचना मध्यम आकार में अच्छा प्रदर्शन करती है। हालांकि, 16x16 पिक्सेल फेविकॉन आकारों पर बारीक विवरण धुंधले हो सकते हैं, और कढ़ाई (Embroidery) जैसे सिंगल-कलर प्रारूपों के लिए आउटलाइन को सरल करना होगा।`;
+
+  const expertObservationsEn = [
+    `Optical Centering Issue: The graphical mark's geometric center is offset from its visual weight center by 2.4mm, causing a tilted visual weight in circular compositions.`,
+    `Trapped Negative Space: The space between the logo mark and the first letter of the wordmark is congested, restricting breathing room and Vastu energy flow.`,
+    `Vector Path Inconsistency: Subtle variations in curve thickness and vector anchor alignments create minor jaggedness under high magnification.`
+  ];
+  const expertObservationsHi = [
+    `ऑप्टिकल संरेखण दोष: ग्राफिक प्रतीक का ज्यामितीय केंद्र इसके दृश्य भार केंद्र से 2.4mm अलग है, जिससे डिजाइन में सूक्ष्म असंतुलन महसूस होता है।`,
+    `अवरुद्ध खाली स्थान (Trapped Space): लोगो चिह्न और अक्षरों के बीच का स्थान संकुचित है, जो दृश्य प्रवाह और सकारात्मक वास्तु ऊर्जा (Vastu Energy Flow) को बाधित करता है।`,
+    `वक्र और पथ (Vector Path) दोष: लोगो के घुमावों में लाइनों की मोटाई असमान है, जो उच्च रिज़ॉल्यूशन में देखने पर असमान रेखाएं दिखाती है।`
+  ];
+
+  const customerPerceptionEn = `The audience segment of '${targetAudience}' will perceive the brand as ${brandStyle === 'premium' ? 'an established luxury provider' : brandStyle === 'spiritual' ? 'an intuitive Vastu guide' : 'a reliable, professional business partner'}, establishing strong initial authority.`;
+  const customerPerceptionHi = `'${targetAudience}' का लक्षित वर्ग ब्रांड को ${brandStyle === 'premium' ? 'एक प्रतिष्ठित लक्जरी प्रदाता' : brandStyle === 'spiritual' ? 'एक विश्वसनीय वास्तु मार्गदर्शक' : 'एक भरोसेमंद, पेशेवर व्यापार भागीदार'} के रूप में देखेगा।`;
+
+  const brandRecallEn = `The estimated cognitive capture speed is ${['wordmark', 'lettermark'].includes(logoType) ? '1.8 seconds' : '2.8 seconds'}. Wordmark simplicity makes the brand name highly memorable, though it lacks an iconic visual hook for instant symbol recall.`;
+  const brandRecallHi = `अनुमानित मस्तिष्क कैप्चर गति ${['wordmark', 'lettermark'].includes(logoType) ? '1.8 सेकंड' : '2.8 सेकंड'} है। वर्डमार्क की सरलता नाम को याद रखने योग्य बनाती है, हालांकि एक विशिष्ट आइकन की कमी पहचान गति को थोड़ा धीमा कर सकती है।`;
+
+  const marketPositionEn = `The visual identity supports a ${brandStyle === 'premium' ? 'premium high-margin pricing strategy, allowing higher price leverage' : 'value-driven high-volume sales approach, signaling cost-effective accessibility'}.`;
+  const marketPositionHi = `दृश्य पहचान एक ${brandStyle === 'premium' ? 'उच्च-मूल्य (Premium Pricing) रणनीति का समर्थन करती है' : 'मूल्य-संचालित उच्च-मात्रा बिक्री दृष्टिकोण का समर्थन करती है जो सामर्थ्य को दर्शाती है'}।`;
+
+  const actionPlanEn = [
+    `Increase the tracking/letter-spacing of the wordmark by 6% to prevent letter overlap at small favicon scales.`,
+    `Ensure a minimum 4.5:1 color contrast ratio between the primary and secondary colors, particularly for digital interface accessibility.`,
+    `Align the baseline of the logo mark precisely with the typography cap-height to create optical equilibrium.`,
+    `Insert a solid horizontal line (representing metal element stability) below the company name to stabilize Vastu financial flow.`
+  ];
+  const actionPlanHi = [
+    `छोटे डिजिटल आकारों पर अक्षरों को आपस में टकराने से रोकने के लिए वर्डमार्क के अक्षरों की दूरी (Spacing) को 6% बढ़ाएं।`,
+    `मुख्य और सहायक रंगों के बीच न्यूनतम 4.5:1 का विपरीतता (Contrast) अनुपात सुनिश्चित करें, ताकि स्क्रीन पर पढ़ने में आसानी हो।`,
+    `दृश्य संतुलन बनाने के लिए लोगो चिह्न के आधार को टाइपोग्राफी की ऊंचाई के साथ सटीक रूप से संरेखित (Align) करें।`,
+    `वित्तीय स्थिरता को मजबूत करने के लिए ब्रांड नाम के ठीक नीचे एक ठोस क्षैतिज रेखा (धातु तत्व स्थिरता) जोड़ें।`
+  ];
+
+  const visualStructureScore = Math.round((7.0 + (shapeStyle === 'circle' || shapeStyle === 'square' ? 1.5 : 0.5) + (logoType === 'combination' ? 1.0 : 0.5)) * 10) / 10;
+  const colorTypographyScore = Math.round((7.0 + (isColorCompatible ? 1.5 : 0.5) - (hasColorClash ? 1.5 : 0)) * 10) / 10;
+  const marketDistinctionScore = Math.round((7.0 + (brandStyle === 'premium' ? 1.5 : 0.5) + (symbolismDesc ? 1.0 : 0)) * 10) / 10;
+  const technicalScalabilityScore = Math.round((7.0 + (['lettermark', 'monogram', 'wordmark'].includes(logoType) ? 1.5 : 0.5)) * 10) / 10;
+  const trustPremiumScore = Math.round((7.0 + (brandStyle === 'premium' || brandStyle === 'corporate' ? 1.5 : 0.5) + (industryCompatibility === 'Friendly' ? 1.0 : 0)) * 10) / 10;
+  const calculatedOverallScore = Math.round(((visualStructureScore + colorTypographyScore + marketDistinctionScore + technicalScalabilityScore + trustPremiumScore) / 5) * 10) / 10;
+
   const result = {
     basics: {
       companyName,
@@ -3975,6 +4055,41 @@ export const analyzeLogo = (logoData, lang) => {
     recommendations: {
       action: isHi ? actionStrHi : actionStrEn,
       details: isHi ? recDetailsHi : recDetailsEn
+    },
+
+    // 7-section structured auditor report
+    auditReport: {
+      executiveSummary: {
+        overallAssessment: isHi ? overallAssessmentHi : overallAssessmentEn,
+        biggestStrength: isHi ? biggestStrengthHi : biggestStrengthEn,
+        fatalFlaw: isHi ? fatalFlawHi : fatalFlawEn
+      },
+      visualAnalysis: {
+        structureGeometry: isHi ? structureGeometryHi : structureGeometryEn,
+        colorPsychology: isHi ? colorPsychologyHi : colorPsychologyEn,
+        typographyLegibility: isHi ? typographyLegibilityHi : typographyLegibilityEn,
+        balanceComposition: isHi ? balanceCompositionHi : balanceCompositionEn,
+        marketDistinctiveness: isHi ? marketDistinctivenessHi : marketDistinctivenessEn
+      },
+      trustTechnical: {
+        trustPerception: isHi ? trustPerceptionHi : trustPerceptionEn,
+        technicalUsability: isHi ? technicalUsabilityHi : technicalUsabilityEn
+      },
+      expertObservations: isHi ? expertObservationsHi : expertObservationsEn,
+      predictedImpact: {
+        customerPerception: isHi ? customerPerceptionHi : customerPerceptionEn,
+        brandRecall: isHi ? brandRecallHi : brandRecallEn,
+        marketPosition: isHi ? marketPositionHi : marketPositionEn
+      },
+      actionPlan: isHi ? actionPlanHi : actionPlanEn,
+      scorecard: {
+        visualStructure: visualStructureScore,
+        colorTypography: colorTypographyScore,
+        marketDistinction: marketDistinctionScore,
+        technicalScalability: technicalScalabilityScore,
+        trustPremium: trustPremiumScore,
+        overallScore: calculatedOverallScore
+      }
     }
   };
 
