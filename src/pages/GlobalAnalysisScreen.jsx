@@ -673,8 +673,26 @@ function GlobalAnalysisScreen() {
         return (
           <div className="logo-analysis-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: "'Outfit', sans-serif" }}>
             
-            {/* Logo Image Preview */}
-            {report.logoAnalysis.logoImage && (
+            {/* Logo Image or Monogram Preview */}
+            {(!report.logoAnalysis.logoImage || report.logoAnalysis.analysisMode === 'text') ? (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                <div style={{ padding: '24px', border: '2px solid rgba(181, 130, 10, 0.3)', borderRadius: '50%', background: 'radial-gradient(circle, #fff 60%, #fefcf5 100%)', boxShadow: '0 8px 24px rgba(181, 130, 10, 0.08)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', width: '120px', height: '120px', justifyContent: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#b5820a', fontFamily: "'Outfit', sans-serif", letterSpacing: '2px' }}>
+                    {(() => {
+                      const name = report.logoAnalysis.companyName || 'L';
+                      const parts = name.trim().split(/\s+/);
+                      if (parts.length >= 2) {
+                        return (parts[0][0] + parts[1][0]).toUpperCase();
+                      }
+                      return name.substring(0, 2).toUpperCase();
+                    })()}
+                  </div>
+                  <span style={{ fontSize: '0.55rem', color: '#b5820a', marginTop: '6px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'center' }}>
+                    {isHi ? 'वैचारिक लोगो' : 'CONCEPT MARK'}
+                  </span>
+                </div>
+              </div>
+            ) : (
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                 <div style={{ padding: '16px', border: '1px solid rgba(232, 213, 191, 0.6)', borderRadius: '16px', background: '#fff', boxShadow: '0 8px 24px rgba(181, 130, 10, 0.05)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
                   <img src={report.logoAnalysis.logoImage} alt="Uploaded Logo" style={{ maxHeight: '150px', objectFit: 'contain', maxWidth: '100%', borderRadius: '8px' }} />

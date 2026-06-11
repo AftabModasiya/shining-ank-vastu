@@ -3243,7 +3243,7 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
       doc.setDrawColor(230, 225, 215);
       doc.roundedRect(140, 34, 55, 24, 3, 3, "FD");
 
-      if (logoInfo.logoImage) {
+      if (logoInfo.logoImage && logoInfo.analysisMode !== 'text') {
         try {
           const format = logoInfo.logoImage.includes("png") ? "PNG" : "JPEG";
           doc.addImage(logoInfo.logoImage, format, 142.5, 36, 50, 20, undefined, 'FAST');
@@ -3251,10 +3251,34 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
           console.warn("Could not render logo image:", e);
         }
       } else {
-        doc.setTextColor(...textMuted);
+        // Draw a beautiful monogram seal
+        doc.setDrawColor(...goldPrimary);
+        doc.setLineWidth(0.35);
+        doc.setFillColor(254, 252, 245);
+        doc.circle(167.5, 46, 8.5, "FD");
+        
+        doc.setDrawColor(212, 175, 55); // gold tint accent
+        doc.setLineWidth(0.15);
+        doc.circle(167.5, 46, 7.5, "D");
+
+        const name = logoInfo.companyName || 'L';
+        const parts = name.trim().split(/\s+/);
+        let initials = '';
+        if (parts.length >= 2) {
+          initials = (parts[0][0] + parts[1][0]).toUpperCase();
+        } else {
+          initials = name.substring(0, 2).toUpperCase();
+        }
+
+        doc.setTextColor(...goldPrimary);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.text(initials, 167.5, 49.3, { align: "center" });
+
+        doc.setTextColor(...goldSecondary);
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.text(t("NO LOGO UPLOADED", "कोई लोगो अपलोड नहीं"), 167, 47, { align: "center" });
+        doc.setFontSize(4);
+        doc.text(t("CONCEPT MARK", "वैचारिक चिन्ह"), 167.5, 52.8, { align: "center" });
       }
 
       // 1. Executive Summary Card

@@ -274,6 +274,9 @@ export const translations = {
 
       // Logo Analysis
       logoTitle: '📐 Brand Logo Analysis & Audit',
+      logoAnalysisMode: 'Analysis Method',
+      logoModeText: 'Input-Based Configuration',
+      logoModeImage: 'Logo Image Upload',
       enterLogoDetails: 'Enter Logo Specifications & Brand Basics',
       logoCompanyName: 'Company / Brand Name',
       logoIndustry: 'Industry / Domain',
@@ -594,6 +597,9 @@ export const translations = {
 
       // Logo Analysis
       logoTitle: '📐 ब्रांड लोगो विश्लेषण और ऑडिट',
+      logoAnalysisMode: 'विश्लेषण का प्रकार',
+      logoModeText: 'विस्तृत विवरण द्वारा (Inputs)',
+      logoModeImage: 'लोगो छवि अपलोड द्वारा (Upload Logo)',
       enterLogoDetails: 'लोगो विनिर्देश और ब्रांड मूल विवरण दर्ज करें',
       logoCompanyName: 'कंपनी का नाम',
       logoIndustry: 'उद्योग / डोमेन',

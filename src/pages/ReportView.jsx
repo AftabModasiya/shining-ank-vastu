@@ -64,19 +64,21 @@ function ReportView() {
         startDate: '',
         endDate: ''
       },
-      logoAnalysis: safeData.report.logoAnalysis || {
-        companyName: '',
-        industry: '',
-        targetAudience: '',
-        market: 'national',
-        brandStyle: 'modern',
-        mainPromise: '',
-        logoType: 'combination',
-        shapeStyle: 'circle',
-        primaryColor: 'blue',
-        secondaryColor: 'gray',
-        typographyStyle: 'sans',
-        symbolismDesc: ''
+      logoAnalysis: {
+        analysisMode: safeData.report?.logoAnalysis?.analysisMode || 'text',
+        logoImage: safeData.report?.logoAnalysis?.logoImage || '',
+        companyName: safeData.report?.logoAnalysis?.companyName || '',
+        industry: safeData.report?.logoAnalysis?.industry || '',
+        targetAudience: safeData.report?.logoAnalysis?.targetAudience || '',
+        market: safeData.report?.logoAnalysis?.market || 'national',
+        brandStyle: safeData.report?.logoAnalysis?.brandStyle || 'modern',
+        mainPromise: safeData.report?.logoAnalysis?.mainPromise || '',
+        logoType: safeData.report?.logoAnalysis?.logoType || 'combination',
+        shapeStyle: safeData.report?.logoAnalysis?.shapeStyle || 'circle',
+        primaryColor: safeData.report?.logoAnalysis?.primaryColor || 'blue',
+        secondaryColor: safeData.report?.logoAnalysis?.secondaryColor || 'gray',
+        typographyStyle: safeData.report?.logoAnalysis?.typographyStyle || 'sans',
+        symbolismDesc: safeData.report?.logoAnalysis?.symbolismDesc || ''
       }
     };
     return safeData;
@@ -2162,6 +2164,53 @@ function ReportView() {
                 <div className="name-detail-card" style={{ display: 'block' }}>
                   <span className="detail-label">{rpt.enterLogoDetails}</span>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    
+                    {/* Mode Selection Toggle */}
+                    <div className="form-group" style={{ gridColumn: 'span 2', background: 'rgba(138, 98, 7, 0.05)', padding: '12px 16px', borderRadius: '12px', border: '1px dashed rgba(138, 98, 7, 0.2)', marginBottom: '8px' }}>
+                      <label className="form-label" style={{ fontSize: '0.88rem', color: '#8a6207', fontWeight: 700, marginBottom: '6px', display: 'block' }}>{rpt.logoAnalysisMode}</label>
+                      <div style={{ display: 'flex', gap: '24px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#3d2c1e', fontWeight: 500 }}>
+                          <input
+                            type="radio"
+                            name="report.logoAnalysis.analysisMode"
+                            value="text"
+                            checked={(editedData?.report?.logoAnalysis?.analysisMode || 'text') === 'text'}
+                            onChange={() => {
+                              setEditedData(prev => {
+                                const next = { ...prev };
+                                if (!next.report) next.report = {};
+                                if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
+                                next.report.logoAnalysis.analysisMode = 'text';
+                                return next;
+                              });
+                            }}
+                            style={{ accentColor: '#8a6207', width: '16px', height: '16px' }}
+                          />
+                          {rpt.logoModeText}
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#3d2c1e', fontWeight: 500 }}>
+                          <input
+                            type="radio"
+                            name="report.logoAnalysis.analysisMode"
+                            value="image"
+                            checked={(editedData?.report?.logoAnalysis?.analysisMode || 'text') === 'image'}
+                            onChange={() => {
+                              setEditedData(prev => {
+                                const next = { ...prev };
+                                if (!next.report) next.report = {};
+                                if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
+                                next.report.logoAnalysis.analysisMode = 'image';
+                                return next;
+                              });
+                            }}
+                            style={{ accentColor: '#8a6207', width: '16px', height: '16px' }}
+                          />
+                          {rpt.logoModeImage}
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Common Fields */}
                     <div className="form-group">
                       <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoCompanyName}</label>
                       <input
@@ -2202,191 +2251,282 @@ function ReportView() {
                         onChange={handleInputChange}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoMarket}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.market"
-                        value={editedData?.report?.logoAnalysis?.market || 'national'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="local">{rpt.logoMarketLocal}</option>
-                        <option value="regional">{rpt.logoMarketRegional}</option>
-                        <option value="national">{rpt.logoMarketNational}</option>
-                        <option value="global">{rpt.logoMarketGlobal}</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoBrandStyle}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.brandStyle"
-                        value={editedData?.report?.logoAnalysis?.brandStyle || 'modern'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="premium">{rpt.logoBrandStylePremium}</option>
-                        <option value="massmarket">{rpt.logoBrandStyleMassMarket}</option>
-                        <option value="spiritual">{rpt.logoBrandStyleSpiritual}</option>
-                        <option value="corporate">{rpt.logoBrandStyleCorporate}</option>
-                        <option value="modern">{rpt.logoBrandStyleModern}</option>
-                        <option value="traditional">{rpt.logoBrandStyleTraditional}</option>
-                        <option value="bold">{rpt.logoBrandStyleBold}</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypeLabel}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.logoType"
-                        value={editedData?.report?.logoAnalysis?.logoType || 'combination'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="wordmark">Wordmark</option>
-                        <option value="lettermark">Lettermark</option>
-                        <option value="monogram">Monogram</option>
-                        <option value="symbol">Symbol</option>
-                        <option value="emblem">Emblem</option>
-                        <option value="mascot">Mascot</option>
-                        <option value="abstract">Abstract Mark</option>
-                        <option value="combination">Combination Mark</option>
-                        <option value="hybrid">Hybrid</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoShapeLabel}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.shapeStyle"
-                        value={editedData?.report?.logoAnalysis?.shapeStyle || 'circle'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="circle">Circle (Circular/Curves)</option>
-                        <option value="square">Square / Rectangle</option>
-                        <option value="triangle">Triangle / Angular</option>
-                        <option value="shield">Shield</option>
-                        <option value="abstract">Abstract shape</option>
-                        <option value="lettermark">Lettermark / Initials based</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoPrimaryColorLabel}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.primaryColor"
-                        value={editedData?.report?.logoAnalysis?.primaryColor || 'blue'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="blue">Blue</option>
-                        <option value="red">Red</option>
-                        <option value="green">Green</option>
-                        <option value="gold">Gold / Yellow</option>
-                        <option value="orange">Orange</option>
-                        <option value="purple">Purple</option>
-                        <option value="black">Black</option>
-                        <option value="white">White / Gray</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSecondaryColorLabel}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.secondaryColor"
-                        value={editedData?.report?.logoAnalysis?.secondaryColor || 'gray'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="blue">Blue</option>
-                        <option value="red">Red</option>
-                        <option value="green">Green</option>
-                        <option value="gold">Gold / Yellow</option>
-                        <option value="orange">Orange</option>
-                        <option value="purple">Purple</option>
-                        <option value="black">Black</option>
-                        <option value="white">White / Gray</option>
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypographyLabel}</label>
-                      <select
-                        className="edit-input"
-                        name="report.logoAnalysis.typographyStyle"
-                        value={editedData?.report?.logoAnalysis?.typographyStyle || 'sans'}
-                        onChange={handleInputChange}
-                        style={{ height: '38px', padding: '6px' }}
-                      >
-                        <option value="serif">Serif (Traditional/Premium)</option>
-                        <option value="sans">Sans-serif (Modern/Tech)</option>
-                        <option value="geometric">Geometric (Structured/Clean)</option>
-                        <option value="script">Script (Personal/Feminine)</option>
-                        <option value="display">Display (Bold/Creative)</option>
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSymbolismLabel}</label>
-                      <input
-                        placeholder="e.g. An ascending arrow, a rising sun, or clean geometric lines"
-                        className="edit-input"
-                        name="report.logoAnalysis.symbolismDesc"
-                        value={editedData?.report?.logoAnalysis?.symbolismDesc || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>
-                        {isHi ? 'लोगो छवि अपलोड करें (Upload Logo Image)' : 'Upload Brand Logo Image'}
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setEditedData(prev => {
-                                const next = { ...prev };
-                                if (!next.report) next.report = {};
-                                if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
-                                next.report.logoAnalysis.logoImage = reader.result;
-                                return next;
-                              });
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        style={{ display: 'block', width: '100%', padding: '6px', fontSize: '0.88rem' }}
-                      />
-                      {editedData?.report?.logoAnalysis?.logoImage && (
-                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img
-                            src={editedData.report.logoAnalysis.logoImage}
-                            alt="Logo Thumbnail"
-                            style={{ height: '50px', borderRadius: '4px', border: '1px solid #ccc', objectFit: 'contain' }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditedData(prev => {
-                                const next = { ...prev };
-                                if (next.report?.logoAnalysis) {
-                                  next.report.logoAnalysis.logoImage = null;
-                                }
-                                return next;
-                              });
-                            }}
-                            className="btn btn-secondary"
-                            style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+
+                    {/* Conditional Rendering of Fields Based on Mode */}
+                    {(!editedData?.report?.logoAnalysis?.analysisMode || editedData?.report?.logoAnalysis?.analysisMode === 'text') ? (
+                      <>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoMarket}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.market"
+                            value={editedData?.report?.logoAnalysis?.market || 'national'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
                           >
-                            {isHi ? 'हटाएं' : 'Remove'}
-                          </button>
+                            <option value="local">{rpt.logoMarketLocal}</option>
+                            <option value="regional">{rpt.logoMarketRegional}</option>
+                            <option value="national">{rpt.logoMarketNational}</option>
+                            <option value="global">{rpt.logoMarketGlobal}</option>
+                          </select>
                         </div>
-                      )}
-                    </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoBrandStyle}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.brandStyle"
+                            value={editedData?.report?.logoAnalysis?.brandStyle || 'modern'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="premium">{rpt.logoBrandStylePremium}</option>
+                            <option value="massmarket">{rpt.logoBrandStyleMassMarket}</option>
+                            <option value="spiritual">{rpt.logoBrandStyleSpiritual}</option>
+                            <option value="corporate">{rpt.logoBrandStyleCorporate}</option>
+                            <option value="modern">{rpt.logoBrandStyleModern}</option>
+                            <option value="traditional">{rpt.logoBrandStyleTraditional}</option>
+                            <option value="bold">{rpt.logoBrandStyleBold}</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypeLabel}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.logoType"
+                            value={editedData?.report?.logoAnalysis?.logoType || 'combination'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="wordmark">Wordmark</option>
+                            <option value="lettermark">Lettermark</option>
+                            <option value="monogram">Monogram</option>
+                            <option value="symbol">Symbol</option>
+                            <option value="emblem">Emblem</option>
+                            <option value="mascot">Mascot</option>
+                            <option value="abstract">Abstract Mark</option>
+                            <option value="combination">Combination Mark</option>
+                            <option value="hybrid">Hybrid</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoShapeLabel}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.shapeStyle"
+                            value={editedData?.report?.logoAnalysis?.shapeStyle || 'circle'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="circle">Circle (Circular/Curves)</option>
+                            <option value="square">Square / Rectangle</option>
+                            <option value="triangle">Triangle / Angular</option>
+                            <option value="shield">Shield</option>
+                            <option value="abstract">Abstract shape</option>
+                            <option value="lettermark">Lettermark / Initials based</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoPrimaryColorLabel}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.primaryColor"
+                            value={editedData?.report?.logoAnalysis?.primaryColor || 'blue'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="blue">Blue</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="gold">Gold / Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="purple">Purple</option>
+                            <option value="black">Black</option>
+                            <option value="white">White / Gray</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSecondaryColorLabel}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.secondaryColor"
+                            value={editedData?.report?.logoAnalysis?.secondaryColor || 'gray'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="blue">Blue</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="gold">Gold / Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="purple">Purple</option>
+                            <option value="black">Black</option>
+                            <option value="white">White / Gray</option>
+                          </select>
+                        </div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoTypographyLabel}</label>
+                          <select
+                            className="edit-input"
+                            name="report.logoAnalysis.typographyStyle"
+                            value={editedData?.report?.logoAnalysis?.typographyStyle || 'sans'}
+                            onChange={handleInputChange}
+                            style={{ height: '38px', padding: '6px' }}
+                          >
+                            <option value="serif">Serif (Traditional/Premium)</option>
+                            <option value="sans">Sans-serif (Modern/Tech)</option>
+                            <option value="geometric">Geometric (Structured/Clean)</option>
+                            <option value="script">Script (Personal/Feminine)</option>
+                            <option value="display">Display (Bold/Creative)</option>
+                          </select>
+                        </div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>{rpt.logoSymbolismLabel}</label>
+                          <input
+                            placeholder="e.g. An ascending arrow, a rising sun, or clean geometric lines"
+                            className="edit-input"
+                            name="report.logoAnalysis.symbolismDesc"
+                            value={editedData?.report?.logoAnalysis?.symbolismDesc || ''}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label className="form-label" style={{ fontSize: '0.85rem', color: '#8a6207', fontWeight: 600 }}>
+                          {isHi ? 'लोगो छवि अपलोड करें (Upload Logo Image)' : 'Upload Brand Logo Image'}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const base64Data = reader.result;
+
+                                // Extract parameters from logo image
+                                const img = new Image();
+                                img.onload = () => {
+                                  // Determine aspect ratio
+                                  const aspect = img.width / img.height;
+                                  let detectedType = 'combination';
+                                  let detectedShape = 'circle';
+                                  if (aspect > 1.6) {
+                                    detectedType = 'wordmark';
+                                    detectedShape = 'lettermark';
+                                  } else if (aspect < 0.6) {
+                                    detectedType = 'emblem';
+                                    detectedShape = 'shield';
+                                  } else {
+                                    detectedType = 'symbol';
+                                    detectedShape = 'circle';
+                                  }
+
+                                  // Extract dominant color from image pixels
+                                  const canvas = document.createElement('canvas');
+                                  canvas.width = 10;
+                                  canvas.height = 10;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) {
+                                    ctx.drawImage(img, 0, 0, 10, 10);
+                                    const imgData = ctx.getImageData(0, 0, 10, 10).data;
+
+                                    const getClosestColor = (r, g, b) => {
+                                      const colors = [
+                                        { name: 'blue', r: 30, g: 64, b: 175 },
+                                        { name: 'red', r: 185, g: 28, b: 28 },
+                                        { name: 'green', r: 21, g: 128, b: 61 },
+                                        { name: 'gold', r: 181, g: 130, b: 10 },
+                                        { name: 'orange', r: 194, g: 65, b: 12 },
+                                        { name: 'purple', r: 107, g: 33, b: 168 },
+                                        { name: 'black', r: 17, g: 24, b: 39 },
+                                        { name: 'white', r: 240, g: 240, b: 240 }
+                                      ];
+                                      let minD = Infinity;
+                                      let closest = 'blue';
+                                      for (const c of colors) {
+                                        const d = Math.sqrt((r - c.r)**2 + (g - c.g)**2 + (b - c.b)**2);
+                                        if (d < minD) {
+                                          minD = d;
+                                          closest = c.name;
+                                        }
+                                      }
+                                      return closest;
+                                    };
+
+                                    const colorMap = {};
+                                    for (let i = 0; i < imgData.length; i += 4) {
+                                      const r = imgData[i];
+                                      const g = imgData[i+1];
+                                      const b = imgData[i+2];
+                                      const a = imgData[i+3];
+                                      if (a < 50) continue; // Skip transparency
+
+                                      const closest = getClosestColor(r, g, b);
+                                      colorMap[closest] = (colorMap[closest] || 0) + 1;
+                                    }
+
+                                    const sortedColors = Object.entries(colorMap).sort((a, b) => b[1] - a[1]);
+                                    const primaryColor = sortedColors[0] ? sortedColors[0][0] : 'blue';
+                                    const secondaryColor = sortedColors[1] ? sortedColors[1][0] : 'white';
+
+                                    setEditedData(prev => {
+                                      const next = { ...prev };
+                                      if (!next.report) next.report = {};
+                                      if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
+                                      next.report.logoAnalysis.logoImage = base64Data;
+                                      next.report.logoAnalysis.logoType = detectedType;
+                                      next.report.logoAnalysis.shapeStyle = detectedShape;
+                                      next.report.logoAnalysis.primaryColor = primaryColor;
+                                      next.report.logoAnalysis.secondaryColor = secondaryColor;
+                                      return next;
+                                    });
+                                  } else {
+                                    // Canvas Context Fail fallback
+                                    setEditedData(prev => {
+                                      const next = { ...prev };
+                                      if (!next.report) next.report = {};
+                                      if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
+                                      next.report.logoAnalysis.logoImage = base64Data;
+                                      return next;
+                                    });
+                                  }
+                                };
+                                img.src = base64Data;
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          style={{ display: 'block', width: '100%', padding: '6px', fontSize: '0.88rem' }}
+                        />
+                        {editedData?.report?.logoAnalysis?.logoImage && (
+                          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img
+                              src={editedData.report.logoAnalysis.logoImage}
+                              alt="Logo Thumbnail"
+                              style={{ height: '50px', borderRadius: '4px', border: '1px solid #ccc', objectFit: 'contain' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditedData(prev => {
+                                  const next = { ...prev };
+                                  if (next.report?.logoAnalysis) {
+                                    next.report.logoAnalysis.logoImage = null;
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="btn btn-secondary"
+                              style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                            >
+                              {isHi ? 'हटाएं' : 'Remove'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
