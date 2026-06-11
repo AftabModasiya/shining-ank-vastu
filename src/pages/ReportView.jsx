@@ -280,14 +280,35 @@ function ReportView() {
       setIsEditing(false);
     };
 
+    const sanitizeForFirestore = (obj) => {
+      if (obj === null || obj === undefined) return null;
+      if (Array.isArray(obj)) {
+        return obj.map(sanitizeForFirestore);
+      }
+      if (typeof obj === 'object') {
+        const clean = {};
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            if (value !== undefined) {
+              clean[key] = sanitizeForFirestore(value);
+            }
+          }
+        }
+        return clean;
+      }
+      return obj;
+    };
+
     const handleSave = async () => {
       setSaving(true);
       try {
-        const result = await updateClient(id, editedData);
+        const cleanData = sanitizeForFirestore(editedData);
+        const result = await updateClient(id, cleanData);
         if (result.success) {
-          setClientData(editedData);
+          setClientData(cleanData);
           setIsEditing(false);
-          navigate(location.pathname, { replace: true, state: { clientData: editedData } });
+          navigate(location.pathname, { replace: true, state: { clientData: cleanData } });
         } else {
           alert('Failed to save changes');
         }
@@ -2405,7 +2426,7 @@ function ReportView() {
                               reader.onloadend = () => {
                                 const base64Data = reader.result;
 
-                                // Extract parameters from logo image
+                                // Compress and analyze logo image
                                 const img = new Image();
                                 img.onload = () => {
                                   // Determine aspect ratio
@@ -2423,14 +2444,41 @@ function ReportView() {
                                     detectedShape = 'circle';
                                   }
 
-                                  // Extract dominant color from image pixels
+                                  // Client-side compression to max 300px
+                                  const maxDim = 300;
+                                  let width = img.width;
+                                  let height = img.height;
+                                  if (width > maxDim || height > maxDim) {
+                                    if (width > height) {
+                                      height = Math.round((height * maxDim) / width);
+                                      width = maxDim;
+                                    } else {
+                                      width = Math.round((width * maxDim) / height);
+                                      height = maxDim;
+                                    }
+                                  }
+
                                   const canvas = document.createElement('canvas');
-                                  canvas.width = 10;
-                                  canvas.height = 10;
+                                  canvas.width = width;
+                                  canvas.height = height;
                                   const ctx = canvas.getContext('2d');
+                                  let finalBase64 = base64Data;
                                   if (ctx) {
-                                    ctx.drawImage(img, 0, 0, 10, 10);
-                                    const imgData = ctx.getImageData(0, 0, 10, 10).data;
+                                    ctx.drawImage(img, 0, 0, width, height);
+                                    finalBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                                  }
+
+                                  // Extract dominant color from image pixels using small 10x10 canvas
+                                  const colorCanvas = document.createElement('canvas');
+                                  colorCanvas.width = 10;
+                                  colorCanvas.height = 10;
+                                  const colorCtx = colorCanvas.getContext('2d');
+                                  let primaryColor = 'blue';
+                                  let secondaryColor = 'white';
+
+                                  if (colorCtx) {
+                                    colorCtx.drawImage(img, 0, 0, 10, 10);
+                                    const imgData = colorCtx.getImageData(0, 0, 10, 10).data;
 
                                     const getClosestColor = (r, g, b) => {
                                       const colors = [
@@ -2468,30 +2516,21 @@ function ReportView() {
                                     }
 
                                     const sortedColors = Object.entries(colorMap).sort((a, b) => b[1] - a[1]);
-                                    const primaryColor = sortedColors[0] ? sortedColors[0][0] : 'blue';
-                                    const secondaryColor = sortedColors[1] ? sortedColors[1][0] : 'white';
-
-                                    setEditedData(prev => {
-                                      const next = { ...prev };
-                                      if (!next.report) next.report = {};
-                                      if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
-                                      next.report.logoAnalysis.logoImage = base64Data;
-                                      next.report.logoAnalysis.logoType = detectedType;
-                                      next.report.logoAnalysis.shapeStyle = detectedShape;
-                                      next.report.logoAnalysis.primaryColor = primaryColor;
-                                      next.report.logoAnalysis.secondaryColor = secondaryColor;
-                                      return next;
-                                    });
-                                  } else {
-                                    // Canvas Context Fail fallback
-                                    setEditedData(prev => {
-                                      const next = { ...prev };
-                                      if (!next.report) next.report = {};
-                                      if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
-                                      next.report.logoAnalysis.logoImage = base64Data;
-                                      return next;
-                                    });
+                                    primaryColor = sortedColors[0] ? sortedColors[0][0] : 'blue';
+                                    secondaryColor = sortedColors[1] ? sortedColors[1][0] : 'white';
                                   }
+
+                                  setEditedData(prev => {
+                                    const next = { ...prev };
+                                    if (!next.report) next.report = {};
+                                    if (!next.report.logoAnalysis) next.report.logoAnalysis = {};
+                                    next.report.logoAnalysis.logoImage = finalBase64;
+                                    next.report.logoAnalysis.logoType = detectedType;
+                                    next.report.logoAnalysis.shapeStyle = detectedShape;
+                                    next.report.logoAnalysis.primaryColor = primaryColor;
+                                    next.report.logoAnalysis.secondaryColor = secondaryColor;
+                                    return next;
+                                  });
                                 };
                                 img.src = base64Data;
                               };
