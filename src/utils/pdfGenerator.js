@@ -538,6 +538,7 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
   const peachBg = [252, 246, 238];     // Ivory base
   const ivoryMid = [249, 240, 228];    // Slightly deeper ivory
   const goldPrimary = [181, 130, 10];   // Luxury gold #b5820a
+  const goldSecondary = [212, 175, 55]; // Gold tint accent #d4af37
   const textDark = [61, 44, 30];       // Rich brown text
   const textMuted = [140, 111, 88];     // Muted label brown
   const greenText = [26, 128, 46];     // Vibrant green for "Thank You,"
@@ -2660,6 +2661,7 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
   // PAGE: BABY BIRTH DATE CALCULATOR
   // ════════════════════════════════════════════════════════════════════════
   if (!activeTopicId || activeTopicId === 'baby_birth_calc') {
+    let babyBirthEndY = 40;
     const babyBirthInfo = reportData.babyBirth || {};
     const babyStart = babyBirthInfo.startDate || '';
     const babyEnd = babyBirthInfo.endDate || '';
@@ -2667,9 +2669,9 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
     if (babyStart && babyEnd) {
       const babyResults = analyzeBirthDateRange(babyStart, babyEnd);
       if (babyResults.length > 0) {
-        let babyBirthEndY = 40;
         // Two pages: one for boy, one for girl
         ['boy', 'girl'].forEach(gender => {
+          let nY;
           doc.addPage();
           drawPageShell(doc);
 
@@ -2847,7 +2849,7 @@ export const generatePDF = async (clientData, language = 'en', activeTopicId = n
                 14, 27
               );
 
-              let nY = 38;
+              nY = 38;
 
               // Core Numerology Analysis box
               doc.setFillColor(250, 245, 235);
